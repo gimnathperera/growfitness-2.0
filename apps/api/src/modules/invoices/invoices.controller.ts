@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { InvoicesService } from './invoices.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -20,6 +20,32 @@ export class InvoicesController {
 
   @Get()
   @ApiOperation({ summary: 'Get all invoices' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['PARENT_INVOICE', 'COACH_PAYOUT'],
+    description: 'Filter by invoice type',
+  })
+  @ApiQuery({ name: 'parentId', required: false, type: String, description: 'Filter by parent ID' })
+  @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'PAID', 'OVERDUE'],
+    description: 'Filter by invoice status',
+  })
   @ApiResponse({ status: 200, description: 'List of invoices' })
   findAll(
     @Query() pagination: PaginationDto,
@@ -60,6 +86,20 @@ export class InvoicesController {
 
   @Get('export/csv')
   @ApiOperation({ summary: 'Export invoices as CSV' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['PARENT_INVOICE', 'COACH_PAYOUT'],
+    description: 'Filter by invoice type',
+  })
+  @ApiQuery({ name: 'parentId', required: false, type: String, description: 'Filter by parent ID' })
+  @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'PAID', 'OVERDUE'],
+    description: 'Filter by invoice status',
+  })
   @ApiResponse({ status: 200, description: 'CSV file download' })
   async exportCSV(
     @Res() res: Response,

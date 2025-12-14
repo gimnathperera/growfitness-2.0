@@ -1,10 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { Exclude } from 'class-transformer';
 import { UserRole, UserStatus } from '@grow-fitness/shared-types';
 
 export type UserDocument = User & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class User {
   @Prop({ required: true, type: String, enum: UserRole })
   role: UserRole;
@@ -16,6 +17,7 @@ export class User {
   phone: string;
 
   @Prop({ required: true })
+  @Exclude()
   passwordHash: string;
 
   @Prop({ required: true, type: String, enum: UserStatus, default: UserStatus.ACTIVE })

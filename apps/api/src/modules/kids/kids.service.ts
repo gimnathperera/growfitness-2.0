@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
 import { UpdateKidDto } from '@grow-fitness/shared-schemas';
@@ -20,7 +20,7 @@ export class KidsService {
     const query: Record<string, unknown> = {};
 
     if (parentId) {
-      query.parentId = parentId;
+      query.parentId = new Types.ObjectId(parentId);
     }
 
     if (sessionType) {
@@ -31,18 +31,32 @@ export class KidsService {
     const [data, total] = await Promise.all([
       this.kidModel
         .find(query)
-        .populate('parentId', 'email parentProfile')
+        .populate('parentId', 'email parentProfile coachProfile')
         .skip(skip)
         .limit(pagination.limit)
+        .lean()
         .exec(),
       this.kidModel.countDocuments(query).exec(),
     ]);
 
-    return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
+    // Transform parentId to parent in the response
+    const transformedData = data.map((kid: any) => {
+      const { parentId, ...rest } = kid;
+      return {
+        ...rest,
+        parent: parentId || undefined,
+      };
+    });
+
+    return new PaginatedResponseDto(transformedData, total, pagination.page, pagination.limit);
   }
 
   async findById(id: string) {
-    const kid = await this.kidModel.findById(id).populate('parentId').exec();
+    const kid = await this.kidModel
+      .findById(id)
+      .populate('parentId', 'email parentProfile coachProfile')
+      .lean()
+      .exec();
 
     if (!kid) {
       throw new NotFoundException({
@@ -51,7 +65,12 @@ export class KidsService {
       });
     }
 
-    return kid;
+    // Transform parentId to parent in the response
+    const { parentId, ...rest } = kid as any;
+    return {
+      ...rest,
+      parent: parentId || undefined,
+    };
   }
 
   async update(id: string, updateKidDto: UpdateKidDto, actorId: string) {
@@ -86,7 +105,21 @@ export class KidsService {
       metadata: updateKidDto,
     });
 
-    return kid;
+    // Fetch updated kid with populated parent and transform
+    const updatedKid = await this.kidModel
+      .findById(id)
+      .populate('parentId', 'email parentProfile coachProfile')
+      .lean()
+      .exec();
+    if (!updatedKid) {
+      return kid;
+    }
+
+    const { parentId, ...rest } = updatedKid as any;
+    return {
+      ...rest,
+      parent: parentId || undefined,
+    };
   }
 
   async linkToParent(kidId: string, parentId: string, actorId: string) {
@@ -120,7 +153,21 @@ export class KidsService {
       metadata: { parentId },
     });
 
-    return kid;
+    // Fetch updated kid with populated parent and transform
+    const updatedKid = await this.kidModel
+      .findById(kidId)
+      .populate('parentId', 'email parentProfile coachProfile')
+      .lean()
+      .exec();
+    if (!updatedKid) {
+      return kid;
+    }
+
+    const { parentId: updatedParentId, ...rest } = updatedKid as any;
+    return {
+      ...rest,
+      parent: updatedParentId || undefined,
+    };
   }
 
   async unlinkFromParent(kidId: string, actorId: string) {
@@ -143,7 +190,16 @@ export class KidsService {
       entityId: kidId,
     });
 
-    return kid;
+    // Fetch updated kid and transform
+    const updatedKid = await this.kidModel.findById(kidId).lean().exec();
+    if (!updatedKid) {
+      return kid;
+    }
+
+    const { parentId, ...rest } = updatedKid as any;
+    return {
+      ...rest,
+      parent: undefined,
+    };
   }
 }
-

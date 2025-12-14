@@ -5,6 +5,7 @@ import { Location, LocationDocument } from '../../infra/database/schemas/locatio
 import { CreateLocationDto, UpdateLocationDto } from '@grow-fitness/shared-schemas';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
+import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class LocationsService {
@@ -13,8 +14,14 @@ export class LocationsService {
     private auditService: AuditService
   ) {}
 
-  async findAll() {
-    return this.locationModel.find().sort({ name: 1 }).exec();
+  async findAll(pagination: PaginationDto) {
+    const skip = (pagination.page - 1) * pagination.limit;
+    const [data, total] = await Promise.all([
+      this.locationModel.find().sort({ name: 1 }).skip(skip).limit(pagination.limit).exec(),
+      this.locationModel.countDocuments().exec(),
+    ]);
+
+    return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
 
   async findById(id: string) {
@@ -91,4 +98,3 @@ export class LocationsService {
     return { message: 'Location deleted successfully' };
   }
 }
-

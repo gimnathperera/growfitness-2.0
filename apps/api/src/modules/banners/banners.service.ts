@@ -5,6 +5,7 @@ import { Banner, BannerDocument } from '../../infra/database/schemas/banner.sche
 import { CreateBannerDto, UpdateBannerDto, ReorderBannersDto } from '@grow-fitness/shared-schemas';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
+import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class BannersService {
@@ -13,8 +14,14 @@ export class BannersService {
     private auditService: AuditService
   ) {}
 
-  async findAll() {
-    return this.bannerModel.find().sort({ order: 1 }).exec();
+  async findAll(pagination: PaginationDto) {
+    const skip = (pagination.page - 1) * pagination.limit;
+    const [data, total] = await Promise.all([
+      this.bannerModel.find().sort({ order: 1 }).skip(skip).limit(pagination.limit).exec(),
+      this.bannerModel.countDocuments().exec(),
+    ]);
+
+    return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
 
   async findById(id: string) {

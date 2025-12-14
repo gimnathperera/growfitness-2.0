@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { SessionsService } from './sessions.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -19,6 +19,43 @@ export class SessionsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all sessions' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
+  @ApiQuery({
+    name: 'locationId',
+    required: false,
+    type: String,
+    description: 'Filter by location ID',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['SCHEDULED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'],
+    description: 'Filter by session status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Filter sessions from this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Filter sessions until this date (ISO format)',
+  })
   @ApiResponse({ status: 200, description: 'List of sessions' })
   findAll(
     @Query() pagination: PaginationDto,

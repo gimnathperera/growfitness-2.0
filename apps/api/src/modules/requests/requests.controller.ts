@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RequestsService } from './requests.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -18,6 +18,18 @@ export class RequestsController {
 
   @Get('free-sessions')
   @ApiOperation({ summary: 'Get all free session requests' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
   @ApiResponse({ status: 200, description: 'List of free session requests' })
   findFreeSessionRequests(@Query() pagination: PaginationDto) {
     return this.requestsService.findFreeSessionRequests(pagination);
@@ -32,6 +44,18 @@ export class RequestsController {
 
   @Get('reschedules')
   @ApiOperation({ summary: 'Get all reschedule requests' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
   @ApiResponse({ status: 200, description: 'List of reschedule requests' })
   findRescheduleRequests(@Query() pagination: PaginationDto) {
     return this.requestsService.findRescheduleRequests(pagination);
@@ -53,6 +77,18 @@ export class RequestsController {
 
   @Get('extra-sessions')
   @ApiOperation({ summary: 'Get all extra session requests' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
   @ApiResponse({ status: 200, description: 'List of extra session requests' })
   findExtraSessionRequests(@Query() pagination: PaginationDto) {
     return this.requestsService.findExtraSessionRequests(pagination);

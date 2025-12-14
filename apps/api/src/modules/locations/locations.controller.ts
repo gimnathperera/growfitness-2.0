@@ -1,5 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { LocationsService } from './locations.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -7,6 +17,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CreateLocationDto, UpdateLocationDto } from '@grow-fitness/shared-schemas';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('locations')
 @ApiBearerAuth('JWT-auth')
@@ -18,9 +29,21 @@ export class LocationsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all locations' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
   @ApiResponse({ status: 200, description: 'List of locations' })
-  findAll() {
-    return this.locationsService.findAll();
+  findAll(@Query() pagination: PaginationDto) {
+    return this.locationsService.findAll(pagination);
   }
 
   @Get(':id')

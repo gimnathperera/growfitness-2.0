@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { KidsService } from './kids.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -17,7 +17,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { UpdateKidDto } from '@grow-fitness/shared-schemas';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { FindKidsQueryDto } from './dto/find-kids-query.dto';
 
 @ApiTags('kids')
 @ApiBearerAuth('JWT-auth')
@@ -29,12 +29,28 @@ export class KidsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all kids' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiQuery({ name: 'parentId', required: false, type: String, description: 'Filter by parent ID' })
+  @ApiQuery({
+    name: 'sessionType',
+    required: false,
+    enum: ['INDIVIDUAL', 'GROUP'],
+    description: 'Filter by session type',
+  })
   @ApiResponse({ status: 200, description: 'List of kids' })
-  findAll(
-    @Query() pagination: PaginationDto,
-    @Query('parentId') parentId?: string,
-    @Query('sessionType') sessionType?: string
-  ) {
+  findAll(@Query() query: FindKidsQueryDto) {
+    const { parentId, sessionType, ...pagination } = query;
     return this.kidsService.findAll(pagination, parentId, sessionType);
   }
 

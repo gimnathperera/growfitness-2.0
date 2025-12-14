@@ -4,7 +4,7 @@ import { SessionType } from '@grow-fitness/shared-types';
 
 export type KidDocument = Kid & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Kid {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   parentId: Types.ObjectId;

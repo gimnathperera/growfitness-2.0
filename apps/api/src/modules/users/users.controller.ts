@@ -42,6 +42,24 @@ export class UsersController {
   // Parents
   @Get('parents')
   @ApiOperation({ summary: 'Get all parents' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by email, phone, or name',
+  })
   @ApiResponse({ status: 200, description: 'List of parents' })
   findParents(@Query() pagination: PaginationDto, @Query('search') search?: string) {
     return this.usersService.findParents(pagination, search);
@@ -103,6 +121,26 @@ export class UsersController {
 
   // Coaches
   @Get('coaches')
+  @ApiOperation({ summary: 'Get all coaches' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by email, phone, or name',
+  })
+  @ApiResponse({ status: 200, description: 'List of coaches' })
   findCoaches(@Query() pagination: PaginationDto, @Query('search') search?: string) {
     return this.usersService.findCoaches(pagination, search);
   }
