@@ -200,4 +200,26 @@ export class SessionsService {
 
     return summary;
   }
+
+  async delete(id: string, actorId: string) {
+    const session = await this.sessionModel.findById(id).exec();
+
+    if (!session) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.SESSION_NOT_FOUND,
+        message: 'Session not found',
+      });
+    }
+
+    await this.sessionModel.findByIdAndDelete(id).exec();
+
+    await this.auditService.log({
+      actorId,
+      action: 'DELETE_SESSION',
+      entityType: 'Session',
+      entityId: id,
+    });
+
+    return { message: 'Session deleted successfully' };
+  }
 }

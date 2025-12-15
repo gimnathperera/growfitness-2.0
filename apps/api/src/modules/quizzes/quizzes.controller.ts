@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -38,6 +38,32 @@ export class QuizzesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new quiz' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Quiz title', example: 'Fitness Assessment Quiz' },
+        description: { type: 'string', description: 'Quiz description', example: 'A quiz to assess fitness knowledge' },
+        questions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: 'Question text' },
+              type: { type: 'string', description: 'Question type (e.g., multiple-choice, true-false)' },
+              options: { type: 'array', items: { type: 'string' }, description: 'Answer options (for multiple-choice)' },
+              correctAnswer: { type: 'string', description: 'Correct answer' },
+              points: { type: 'number', description: 'Points for this question', example: 10 },
+            },
+            required: ['question', 'type', 'correctAnswer'],
+          },
+        },
+        targetAudience: { type: 'string', description: 'Target audience for the quiz', example: 'PARENTS' },
+        passingScore: { type: 'number', description: 'Passing score percentage', example: 70 },
+      },
+      required: ['title', 'questions', 'targetAudience'],
+    },
+  })
   @ApiResponse({ status: 201, description: 'Quiz created successfully' })
   create(@Body() createQuizDto: CreateQuizDto, @CurrentUser('sub') actorId: string) {
     return this.quizzesService.create(createQuizDto, actorId);
@@ -45,6 +71,30 @@ export class QuizzesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a quiz' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Quiz title' },
+        description: { type: 'string', description: 'Quiz description' },
+        questions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              question: { type: 'string' },
+              type: { type: 'string' },
+              options: { type: 'array', items: { type: 'string' } },
+              correctAnswer: { type: 'string' },
+              points: { type: 'number' },
+            },
+          },
+        },
+        isActive: { type: 'boolean', description: 'Whether the quiz is active' },
+        passingScore: { type: 'number', description: 'Passing score percentage' },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Quiz updated successfully' })
   @ApiResponse({ status: 404, description: 'Quiz not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })

@@ -44,7 +44,7 @@ export class RequestsService {
     return this.freeSessionRequestModel.countDocuments({ status: RequestStatus.PENDING }).exec();
   }
 
-  async selectFreeSessionRequest(id: string, actorId: string) {
+  async selectFreeSessionRequest(id: string, actorId: string, sessionId?: string) {
     const request = await this.freeSessionRequestModel.findById(id).exec();
 
     if (!request) {
@@ -55,6 +55,9 @@ export class RequestsService {
     }
 
     request.status = RequestStatus.SELECTED;
+    if (sessionId) {
+      request.selectedSessionId = sessionId as any;
+    }
     await request.save();
 
     // Send notification
@@ -207,6 +210,170 @@ export class RequestsService {
       action: 'DENY_EXTRA_SESSION_REQUEST',
       entityType: 'ExtraSessionRequest',
       entityId: id,
+    });
+
+    return request;
+  }
+
+  // Delete methods
+  async deleteFreeSessionRequest(id: string, actorId: string) {
+    const request = await this.freeSessionRequestModel.findById(id).exec();
+
+    if (!request) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Free session request not found',
+      });
+    }
+
+    await this.freeSessionRequestModel.findByIdAndDelete(id).exec();
+
+    await this.auditService.log({
+      actorId,
+      action: 'DELETE_FREE_SESSION_REQUEST',
+      entityType: 'FreeSessionRequest',
+      entityId: id,
+    });
+
+    return { message: 'Free session request deleted successfully' };
+  }
+
+  async deleteRescheduleRequest(id: string, actorId: string) {
+    const request = await this.rescheduleRequestModel.findById(id).exec();
+
+    if (!request) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Reschedule request not found',
+      });
+    }
+
+    await this.rescheduleRequestModel.findByIdAndDelete(id).exec();
+
+    await this.auditService.log({
+      actorId,
+      action: 'DELETE_RESCHEDULE_REQUEST',
+      entityType: 'RescheduleRequest',
+      entityId: id,
+    });
+
+    return { message: 'Reschedule request deleted successfully' };
+  }
+
+  async deleteExtraSessionRequest(id: string, actorId: string) {
+    const request = await this.extraSessionRequestModel.findById(id).exec();
+
+    if (!request) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Extra session request not found',
+      });
+    }
+
+    await this.extraSessionRequestModel.findByIdAndDelete(id).exec();
+
+    await this.auditService.log({
+      actorId,
+      action: 'DELETE_EXTRA_SESSION_REQUEST',
+      entityType: 'ExtraSessionRequest',
+      entityId: id,
+    });
+
+    return { message: 'Extra session request deleted successfully' };
+  }
+
+  // Update/PATCH methods
+  async updateFreeSessionRequest(id: string, updateData: { status?: RequestStatus; selectedSessionId?: string }, actorId: string) {
+    const request = await this.freeSessionRequestModel.findById(id).exec();
+
+    if (!request) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Free session request not found',
+      });
+    }
+
+    if (updateData.status) {
+      request.status = updateData.status;
+    }
+    if (updateData.selectedSessionId) {
+      request.selectedSessionId = updateData.selectedSessionId as any;
+    }
+
+    await request.save();
+
+    await this.auditService.log({
+      actorId,
+      action: 'UPDATE_FREE_SESSION_REQUEST',
+      entityType: 'FreeSessionRequest',
+      entityId: id,
+      metadata: updateData,
+    });
+
+    return request;
+  }
+
+  async updateRescheduleRequest(id: string, updateData: { status?: RequestStatus; newDateTime?: Date; reason?: string }, actorId: string) {
+    const request = await this.rescheduleRequestModel.findById(id).exec();
+
+    if (!request) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Reschedule request not found',
+      });
+    }
+
+    if (updateData.status !== undefined) {
+      request.status = updateData.status;
+      if (updateData.status !== RequestStatus.PENDING) {
+        request.processedAt = new Date();
+      }
+    }
+    if (updateData.newDateTime) {
+      request.newDateTime = updateData.newDateTime;
+    }
+    if (updateData.reason) {
+      request.reason = updateData.reason;
+    }
+
+    await request.save();
+
+    await this.auditService.log({
+      actorId,
+      action: 'UPDATE_RESCHEDULE_REQUEST',
+      entityType: 'RescheduleRequest',
+      entityId: id,
+      metadata: updateData,
+    });
+
+    return request;
+  }
+
+  async updateExtraSessionRequest(id: string, updateData: { status?: RequestStatus; preferredDateTime?: Date }, actorId: string) {
+    const request = await this.extraSessionRequestModel.findById(id).exec();
+
+    if (!request) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Extra session request not found',
+      });
+    }
+
+    if (updateData.status !== undefined) {
+      request.status = updateData.status;
+    }
+    if (updateData.preferredDateTime) {
+      request.preferredDateTime = updateData.preferredDateTime;
+    }
+
+    await request.save();
+
+    await this.auditService.log({
+      actorId,
+      action: 'UPDATE_EXTRA_SESSION_REQUEST',
+      entityType: 'ExtraSessionRequest',
+      entityId: id,
+      metadata: updateData,
     });
 
     return request;

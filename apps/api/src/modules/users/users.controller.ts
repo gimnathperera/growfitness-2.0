@@ -21,6 +21,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import {
@@ -76,6 +77,7 @@ export class UsersController {
   }
 
   @Post('parents')
+  @Public()
   @ApiOperation({ summary: 'Create a new parent' })
   @ApiBody({
     schema: {
@@ -106,8 +108,9 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 201, description: 'Parent created successfully' })
-  createParent(@Body() createParentDto: CreateParentDto, @CurrentUser('sub') actorId: string) {
-    return this.usersService.createParent(createParentDto, actorId);
+  createParent(@Body() createParentDto: CreateParentDto) {
+    // For public endpoints, we don't have an authenticated user, so we pass null as actorId
+    return this.usersService.createParent(createParentDto, null);
   }
 
   @Patch('parents/:id')

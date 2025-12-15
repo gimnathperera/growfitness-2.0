@@ -70,7 +70,7 @@ export class UsersService {
     };
   }
 
-  async createParent(createParentDto: CreateParentDto, actorId: string) {
+  async createParent(createParentDto: CreateParentDto, actorId: string | null) {
     // Check if email already exists
     const existingUser = await this.userModel
       .findOne({ email: createParentDto.email.toLowerCase() })
@@ -111,13 +111,16 @@ export class UsersService {
       })
     );
 
-    await this.auditService.log({
-      actorId,
-      action: 'CREATE_PARENT',
-      entityType: 'User',
-      entityId: parent._id.toString(),
-      metadata: { email: parent.email, kidsCount: kids.length },
-    });
+    // Only log audit if actorId is provided (not a public registration)
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: 'CREATE_PARENT',
+        entityType: 'User',
+        entityId: parent._id.toString(),
+        metadata: { email: parent.email, kidsCount: kids.length },
+      });
+    }
 
     return {
       ...parent.toObject(),

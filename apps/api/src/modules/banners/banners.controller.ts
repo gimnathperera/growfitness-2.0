@@ -9,11 +9,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CreateBannerDto, UpdateBannerDto, ReorderBannersDto } from '@grow-fitness/shared-schemas';
@@ -29,6 +30,7 @@ export class BannersController {
   constructor(private readonly bannersService: BannersService) {}
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Get all banners' })
   @ApiQuery({
     name: 'page',
@@ -48,6 +50,7 @@ export class BannersController {
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get banner by ID' })
   @ApiResponse({ status: 200, description: 'Banner details' })
   @ApiResponse({ status: 404, description: 'Banner not found' })
@@ -58,6 +61,18 @@ export class BannersController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new banner' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        imageUrl: { type: 'string', format: 'uri', description: 'Banner image URL', example: 'https://example.com/banner.jpg' },
+        active: { type: 'boolean', description: 'Whether the banner is active', default: true },
+        order: { type: 'number', description: 'Display order (lower numbers appear first)', example: 0, minimum: 0 },
+        targetAudience: { type: 'string', enum: ['PARENTS', 'KIDS', 'ALL'], description: 'Target audience for the banner' },
+      },
+      required: ['imageUrl', 'order', 'targetAudience'],
+    },
+  })
   @ApiResponse({ status: 201, description: 'Banner created successfully' })
   create(@Body() createBannerDto: CreateBannerDto, @CurrentUser('sub') actorId: string) {
     return this.bannersService.create(createBannerDto, actorId);
@@ -65,6 +80,17 @@ export class BannersController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a banner' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        imageUrl: { type: 'string', format: 'uri', description: 'Banner image URL' },
+        active: { type: 'boolean', description: 'Whether the banner is active' },
+        order: { type: 'number', description: 'Display order', minimum: 0 },
+        targetAudience: { type: 'string', enum: ['PARENTS', 'KIDS', 'ALL'], description: 'Target audience' },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Banner updated successfully' })
   @ApiResponse({ status: 404, description: 'Banner not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
@@ -87,6 +113,20 @@ export class BannersController {
 
   @Patch('reorder')
   @ApiOperation({ summary: 'Reorder banners' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        bannerIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of banner IDs in the desired order',
+          example: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012'],
+        },
+      },
+      required: ['bannerIds'],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Banners reordered successfully' })
   reorder(@Body() reorderDto: ReorderBannersDto, @CurrentUser('sub') actorId: string) {
     return this.bannersService.reorder(reorderDto, actorId);

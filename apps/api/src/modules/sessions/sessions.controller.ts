@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { SessionsService } from './sessions.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -86,6 +86,23 @@ export class SessionsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new session' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', enum: ['INDIVIDUAL', 'GROUP'], description: 'Session type' },
+        coachId: { type: 'string', description: 'Coach ID', example: '507f1f77bcf86cd799439011' },
+        locationId: { type: 'string', description: 'Location ID', example: '507f1f77bcf86cd799439011' },
+        dateTime: { type: 'string', format: 'date-time', description: 'Session date and time (ISO format)' },
+        duration: { type: 'number', description: 'Duration in minutes', example: 60, minimum: 1 },
+        capacity: { type: 'number', description: 'Maximum capacity (for group sessions)', example: 10, minimum: 1 },
+        kids: { type: 'array', items: { type: 'string' }, description: 'Array of kid IDs (for group sessions)' },
+        kidId: { type: 'string', description: 'Kid ID (for individual sessions)' },
+        isFreeSession: { type: 'boolean', description: 'Whether this is a free session', default: false },
+      },
+      required: ['type', 'coachId', 'locationId', 'dateTime', 'duration'],
+    },
+  })
   @ApiResponse({ status: 201, description: 'Session created successfully' })
   create(@Body() createSessionDto: CreateSessionDto, @CurrentUser('sub') actorId: string) {
     return this.sessionsService.create(createSessionDto, actorId);
@@ -93,6 +110,21 @@ export class SessionsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a session' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        coachId: { type: 'string', description: 'Coach ID' },
+        locationId: { type: 'string', description: 'Location ID' },
+        dateTime: { type: 'string', format: 'date-time', description: 'Session date and time (ISO format)' },
+        duration: { type: 'number', description: 'Duration in minutes', minimum: 1 },
+        capacity: { type: 'number', description: 'Maximum capacity', minimum: 1 },
+        kids: { type: 'array', items: { type: 'string' }, description: 'Array of kid IDs' },
+        kidId: { type: 'string', description: 'Kid ID' },
+        status: { type: 'string', enum: ['SCHEDULED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'], description: 'Session status' },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Session updated successfully' })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
@@ -102,5 +134,14 @@ export class SessionsController {
     @CurrentUser('sub') actorId: string
   ) {
     return this.sessionsService.update(id, updateSessionDto, actorId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a session' })
+  @ApiResponse({ status: 200, description: 'Session deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
+    return this.sessionsService.delete(id, actorId);
   }
 }
