@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { ReportsService, CreateReportDto, GenerateReportDto } from './reports.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('reports')
 @ApiBearerAuth('JWT-auth')
@@ -30,7 +31,8 @@ export class ReportsController {
   @ApiOperation({ summary: 'Get report by ID' })
   @ApiResponse({ status: 200, description: 'Report details' })
   @ApiResponse({ status: 404, description: 'Report not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.reportsService.findById(id);
   }
 
@@ -52,7 +54,8 @@ export class ReportsController {
   @ApiOperation({ summary: 'Delete a report' })
   @ApiResponse({ status: 200, description: 'Report deleted successfully' })
   @ApiResponse({ status: 404, description: 'Report not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.reportsService.delete(id, actorId);
   }
 }

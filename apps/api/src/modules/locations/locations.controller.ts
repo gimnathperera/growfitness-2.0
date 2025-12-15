@@ -18,6 +18,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CreateLocationDto, UpdateLocationDto } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('locations')
 @ApiBearerAuth('JWT-auth')
@@ -50,7 +51,8 @@ export class LocationsController {
   @ApiOperation({ summary: 'Get location by ID' })
   @ApiResponse({ status: 200, description: 'Location details' })
   @ApiResponse({ status: 404, description: 'Location not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.locationsService.findById(id);
   }
 
@@ -65,8 +67,9 @@ export class LocationsController {
   @ApiOperation({ summary: 'Update a location' })
   @ApiResponse({ status: 200, description: 'Location updated successfully' })
   @ApiResponse({ status: 404, description: 'Location not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
   update(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateLocationDto: UpdateLocationDto,
     @CurrentUser('sub') actorId: string
   ) {
@@ -77,7 +80,8 @@ export class LocationsController {
   @ApiOperation({ summary: 'Delete a location' })
   @ApiResponse({ status: 200, description: 'Location deleted successfully' })
   @ApiResponse({ status: 404, description: 'Location not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.locationsService.delete(id, actorId);
   }
 }

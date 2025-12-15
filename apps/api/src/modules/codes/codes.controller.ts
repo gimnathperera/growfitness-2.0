@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CodesService, CreateCodeDto, UpdateCodeDto } from './codes.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('codes')
 @ApiBearerAuth('JWT-auth')
@@ -29,7 +30,8 @@ export class CodesController {
   @ApiOperation({ summary: 'Get code by ID' })
   @ApiResponse({ status: 200, description: 'Code details' })
   @ApiResponse({ status: 404, description: 'Code not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.codesService.findById(id);
   }
 
@@ -44,7 +46,8 @@ export class CodesController {
   @ApiOperation({ summary: 'Update a code' })
   @ApiResponse({ status: 200, description: 'Code updated successfully' })
   @ApiResponse({ status: 404, description: 'Code not found' })
-  update(@Param('id') id: string, @Body() updateCodeDto: UpdateCodeDto, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  update(@Param('id', ObjectIdValidationPipe) id: string, @Body() updateCodeDto: UpdateCodeDto, @CurrentUser('sub') actorId: string) {
     return this.codesService.update(id, updateCodeDto, actorId);
   }
 
@@ -52,7 +55,8 @@ export class CodesController {
   @ApiOperation({ summary: 'Delete a code' })
   @ApiResponse({ status: 200, description: 'Code deleted successfully' })
   @ApiResponse({ status: 404, description: 'Code not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.codesService.delete(id, actorId);
   }
 }

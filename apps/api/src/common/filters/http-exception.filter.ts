@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { Error as MongooseError } from 'mongoose';
 import { ErrorCode } from '../enums/error-codes.enum';
 
 export interface ErrorResponse {
@@ -27,7 +28,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let errorCode: ErrorCode = ErrorCode.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
 
-    if (exception instanceof HttpException) {
+    // Handle Mongoose CastError (invalid ObjectId)
+    if (exception instanceof MongooseError.CastError) {
+      status = HttpStatus.BAD_REQUEST;
+      errorCode = ErrorCode.INVALID_ID;
+      message = `Invalid ID format: ${exception.value}. Expected a valid MongoDB ObjectId.`;
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 

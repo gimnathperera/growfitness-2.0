@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { QuizzesService, CreateQuizDto, UpdateQuizDto } from './quizzes.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('quizzes')
 @ApiBearerAuth('JWT-auth')
@@ -30,7 +31,8 @@ export class QuizzesController {
   @ApiOperation({ summary: 'Get quiz by ID' })
   @ApiResponse({ status: 200, description: 'Quiz details' })
   @ApiResponse({ status: 404, description: 'Quiz not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.quizzesService.findById(id);
   }
 
@@ -45,7 +47,8 @@ export class QuizzesController {
   @ApiOperation({ summary: 'Update a quiz' })
   @ApiResponse({ status: 200, description: 'Quiz updated successfully' })
   @ApiResponse({ status: 404, description: 'Quiz not found' })
-  update(@Param('id') id: string, @Body() updateQuizDto: UpdateQuizDto, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  update(@Param('id', ObjectIdValidationPipe) id: string, @Body() updateQuizDto: UpdateQuizDto, @CurrentUser('sub') actorId: string) {
     return this.quizzesService.update(id, updateQuizDto, actorId);
   }
 
@@ -53,7 +56,8 @@ export class QuizzesController {
   @ApiOperation({ summary: 'Delete a quiz' })
   @ApiResponse({ status: 200, description: 'Quiz deleted successfully' })
   @ApiResponse({ status: 404, description: 'Quiz not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.quizzesService.delete(id, actorId);
   }
 }

@@ -16,6 +16,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole, InvoiceType, InvoiceStatus } from '@grow-fitness/shared-types';
 import { CreateInvoiceDto, UpdateInvoicePaymentStatusDto } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('invoices')
 @ApiBearerAuth('JWT-auth')
@@ -68,7 +69,8 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Get invoice by ID' })
   @ApiResponse({ status: 200, description: 'Invoice details' })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.invoicesService.findById(id);
   }
 
@@ -162,7 +164,7 @@ export class InvoicesController {
   @ApiResponse({ status: 404, description: 'Invoice not found' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   updatePaymentStatus(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateDto: UpdateInvoicePaymentStatusDto,
     @CurrentUser('sub') actorId: string
   ) {

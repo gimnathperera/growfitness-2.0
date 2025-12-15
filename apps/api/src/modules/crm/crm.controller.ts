@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CrmService, CreateCrmContactDto, UpdateCrmContactDto, AddNoteDto } from './crm.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('crm')
 @ApiBearerAuth('JWT-auth')
@@ -31,7 +32,8 @@ export class CrmController {
   @ApiOperation({ summary: 'Get CRM contact by ID' })
   @ApiResponse({ status: 200, description: 'CRM contact details' })
   @ApiResponse({ status: 404, description: 'CRM contact not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.crmService.findById(id);
   }
 
@@ -46,7 +48,8 @@ export class CrmController {
   @ApiOperation({ summary: 'Update a CRM contact' })
   @ApiResponse({ status: 200, description: 'CRM contact updated successfully' })
   @ApiResponse({ status: 404, description: 'CRM contact not found' })
-  update(@Param('id') id: string, @Body() updateCrmContactDto: UpdateCrmContactDto, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  update(@Param('id', ObjectIdValidationPipe) id: string, @Body() updateCrmContactDto: UpdateCrmContactDto, @CurrentUser('sub') actorId: string) {
     return this.crmService.update(id, updateCrmContactDto, actorId);
   }
 
@@ -54,7 +57,8 @@ export class CrmController {
   @ApiOperation({ summary: 'Add a note to CRM contact' })
   @ApiResponse({ status: 200, description: 'Note added successfully' })
   @ApiResponse({ status: 404, description: 'CRM contact not found' })
-  addNote(@Param('id') id: string, @Body() addNoteDto: AddNoteDto, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  addNote(@Param('id', ObjectIdValidationPipe) id: string, @Body() addNoteDto: AddNoteDto, @CurrentUser('sub') actorId: string) {
     return this.crmService.addNote(id, addNoteDto, actorId);
   }
 
@@ -62,7 +66,8 @@ export class CrmController {
   @ApiOperation({ summary: 'Delete a CRM contact' })
   @ApiResponse({ status: 200, description: 'CRM contact deleted successfully' })
   @ApiResponse({ status: 404, description: 'CRM contact not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.crmService.delete(id, actorId);
   }
 }

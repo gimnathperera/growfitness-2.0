@@ -8,6 +8,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole, SessionStatus } from '@grow-fitness/shared-types';
 import { CreateSessionDto, UpdateSessionDto } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('sessions')
 @ApiBearerAuth('JWT-auth')
@@ -78,7 +79,8 @@ export class SessionsController {
   @ApiOperation({ summary: 'Get session by ID' })
   @ApiResponse({ status: 200, description: 'Session details' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.sessionsService.findById(id);
   }
 
@@ -93,8 +95,9 @@ export class SessionsController {
   @ApiOperation({ summary: 'Update a session' })
   @ApiResponse({ status: 200, description: 'Session updated successfully' })
   @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
   update(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateSessionDto: UpdateSessionDto,
     @CurrentUser('sub') actorId: string
   ) {

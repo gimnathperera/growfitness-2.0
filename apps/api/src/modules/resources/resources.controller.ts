@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { ResourcesService, CreateResourceDto, UpdateResourceDto } from './resources.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('resources')
 @ApiBearerAuth('JWT-auth')
@@ -30,7 +31,8 @@ export class ResourcesController {
   @ApiOperation({ summary: 'Get resource by ID' })
   @ApiResponse({ status: 200, description: 'Resource details' })
   @ApiResponse({ status: 404, description: 'Resource not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.resourcesService.findById(id);
   }
 
@@ -45,7 +47,8 @@ export class ResourcesController {
   @ApiOperation({ summary: 'Update a resource' })
   @ApiResponse({ status: 200, description: 'Resource updated successfully' })
   @ApiResponse({ status: 404, description: 'Resource not found' })
-  update(@Param('id') id: string, @Body() updateResourceDto: UpdateResourceDto, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  update(@Param('id', ObjectIdValidationPipe) id: string, @Body() updateResourceDto: UpdateResourceDto, @CurrentUser('sub') actorId: string) {
     return this.resourcesService.update(id, updateResourceDto, actorId);
   }
 
@@ -53,7 +56,8 @@ export class ResourcesController {
   @ApiOperation({ summary: 'Delete a resource' })
   @ApiResponse({ status: 200, description: 'Resource deleted successfully' })
   @ApiResponse({ status: 404, description: 'Resource not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.resourcesService.delete(id, actorId);
   }
 }

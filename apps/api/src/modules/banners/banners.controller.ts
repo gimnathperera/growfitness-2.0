@@ -18,6 +18,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CreateBannerDto, UpdateBannerDto, ReorderBannersDto } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('banners')
 @ApiBearerAuth('JWT-auth')
@@ -50,7 +51,8 @@ export class BannersController {
   @ApiOperation({ summary: 'Get banner by ID' })
   @ApiResponse({ status: 200, description: 'Banner details' })
   @ApiResponse({ status: 404, description: 'Banner not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.bannersService.findById(id);
   }
 
@@ -65,8 +67,9 @@ export class BannersController {
   @ApiOperation({ summary: 'Update a banner' })
   @ApiResponse({ status: 200, description: 'Banner updated successfully' })
   @ApiResponse({ status: 404, description: 'Banner not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
   update(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateBannerDto: UpdateBannerDto,
     @CurrentUser('sub') actorId: string
   ) {
@@ -77,7 +80,8 @@ export class BannersController {
   @ApiOperation({ summary: 'Delete a banner' })
   @ApiResponse({ status: 200, description: 'Banner deleted successfully' })
   @ApiResponse({ status: 404, description: 'Banner not found' })
-  delete(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.bannersService.delete(id, actorId);
   }
 

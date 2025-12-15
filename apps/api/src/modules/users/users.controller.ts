@@ -30,6 +30,7 @@ import {
   UpdateCoachDto,
 } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -69,7 +70,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Get parent by ID' })
   @ApiResponse({ status: 200, description: 'Parent details' })
   @ApiResponse({ status: 404, description: 'Parent not found' })
-  findParentById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findParentById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.usersService.findParentById(id);
   }
 
@@ -128,8 +130,9 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'Parent updated successfully' })
   @ApiResponse({ status: 404, description: 'Parent not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
   updateParent(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateParentDto: UpdateParentDto,
     @CurrentUser('sub') actorId: string
   ) {
@@ -140,7 +143,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Delete parent' })
   @ApiResponse({ status: 200, description: 'Parent deleted successfully' })
   @ApiResponse({ status: 404, description: 'Parent not found' })
-  deleteParent(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  deleteParent(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.usersService.deleteParent(id, actorId);
   }
 
@@ -174,7 +178,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Get coach by ID' })
   @ApiResponse({ status: 200, description: 'Coach details' })
   @ApiResponse({ status: 404, description: 'Coach not found' })
-  findCoachById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findCoachById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.usersService.findCoachById(id);
   }
 
@@ -224,8 +229,9 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'Coach updated successfully' })
   @ApiResponse({ status: 404, description: 'Coach not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
   updateCoach(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateCoachDto: UpdateCoachDto,
     @CurrentUser('sub') actorId: string
   ) {
@@ -236,7 +242,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Deactivate coach' })
   @ApiResponse({ status: 200, description: 'Coach deactivated successfully' })
   @ApiResponse({ status: 404, description: 'Coach not found' })
-  deactivateCoach(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  deactivateCoach(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.usersService.deactivateCoach(id, actorId);
   }
 }

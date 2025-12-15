@@ -9,6 +9,7 @@ export enum ErrorCode {
   // Validation errors
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   INVALID_INPUT = 'INVALID_INPUT',
+  INVALID_ID = 'INVALID_ID',
 
   // Not found errors
   NOT_FOUND = 'NOT_FOUND',

@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -117,7 +118,8 @@ export class KidsController {
   @ApiOperation({ summary: 'Get kid by ID' })
   @ApiResponse({ status: 200, description: 'Kid details' })
   @ApiResponse({ status: 404, description: 'Kid not found' })
-  findById(@Param('id') id: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  findById(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.kidsService.findById(id);
   }
 
@@ -159,7 +161,7 @@ export class KidsController {
   @ApiResponse({ status: 404, description: 'Kid not found' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   update(
-    @Param('id') id: string,
+    @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateKidDto: UpdateKidDto,
     @CurrentUser('sub') actorId: string
   ) {
@@ -169,9 +171,10 @@ export class KidsController {
   @Post(':id/link-parent')
   @ApiOperation({ summary: 'Link kid to parent' })
   @ApiResponse({ status: 200, description: 'Kid linked to parent successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
   linkToParent(
-    @Param('id') kidId: string,
-    @Body('parentId') parentId: string,
+    @Param('id', ObjectIdValidationPipe) kidId: string,
+    @Body('parentId', ObjectIdValidationPipe) parentId: string,
     @CurrentUser('sub') actorId: string
   ) {
     return this.kidsService.linkToParent(kidId, parentId, actorId);
@@ -180,7 +183,8 @@ export class KidsController {
   @Delete(':id/unlink-parent')
   @ApiOperation({ summary: 'Unlink kid from parent' })
   @ApiResponse({ status: 200, description: 'Kid unlinked from parent successfully' })
-  unlinkFromParent(@Param('id') kidId: string, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  unlinkFromParent(@Param('id', ObjectIdValidationPipe) kidId: string, @CurrentUser('sub') actorId: string) {
     return this.kidsService.unlinkFromParent(kidId, actorId);
   }
 }

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import {
   User,
   UserDocument,
@@ -549,7 +549,8 @@ async function seedDatabase() {
     const resources = await resourceModel.insertMany([
       {
         title: 'Nutrition Guide for Young Athletes',
-        description: 'A comprehensive guide on proper nutrition for children engaged in sports activities',
+        description:
+          'A comprehensive guide on proper nutrition for children engaged in sports activities',
         type: ResourceType.PDF,
         fileUrl: 'https://example.com/resources/nutrition-guide.pdf',
         targetAudience: BannerTargetAudience.PARENT,
@@ -831,4 +832,7 @@ async function seedDatabase() {
   }
 }
 
-seedDatabase();
+seedDatabase().catch(error => {
+  console.error('Failed to seed database:', error);
+  process.exit(1);
+});
