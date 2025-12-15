@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
-import { UpdateKidDto } from '@grow-fitness/shared-schemas';
+import { CreateKidDto, UpdateKidDto } from '@grow-fitness/shared-schemas';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
@@ -67,6 +67,51 @@ export class KidsService {
 
     // Transform parentId to parent in the response
     const { parentId, ...rest } = kid as any;
+    return {
+      ...rest,
+      parent: parentId || undefined,
+    };
+  }
+
+  async create(createKidDto: CreateKidDto, actorId: string) {
+    // Verify parent exists
+    const parent = await this.userModel.findById(createKidDto.parentId).exec();
+    if (!parent) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.USER_NOT_FOUND,
+        message: 'Parent not found',
+      });
+    }
+
+    const kid = new this.kidModel({
+      ...createKidDto,
+      parentId: parent._id,
+      birthDate: new Date(createKidDto.birthDate),
+      medicalConditions: createKidDto.medicalConditions || [],
+    });
+
+    await kid.save();
+
+    await this.auditService.log({
+      actorId,
+      action: 'CREATE_KID',
+      entityType: 'Kid',
+      entityId: kid._id.toString(),
+      metadata: { name: kid.name, parentId: parent._id.toString() },
+    });
+
+    // Fetch created kid with populated parent and transform
+    const createdKid = await this.kidModel
+      .findById(kid._id)
+      .populate('parentId', 'email parentProfile coachProfile')
+      .lean()
+      .exec();
+
+    if (!createdKid) {
+      return kid;
+    }
+
+    const { parentId, ...rest } = createdKid as any;
     return {
       ...rest,
       parent: parentId || undefined,

@@ -24,6 +24,16 @@ import {
   ExtraSessionRequestDocument,
   AuditLog,
   AuditLogDocument,
+  Code,
+  CodeDocument,
+  Resource,
+  ResourceDocument,
+  Quiz,
+  QuizDocument,
+  CrmContact,
+  CrmContactDocument,
+  Report,
+  ReportDocument,
 } from '../src/infra/database/schemas';
 import {
   UserRole,
@@ -35,6 +45,11 @@ import {
   RequestStatus,
   BannerTargetAudience,
 } from '@grow-fitness/shared-types';
+import { CodeType, CodeStatus } from '../src/infra/database/schemas/code.schema';
+import { ResourceType } from '../src/infra/database/schemas/resource.schema';
+import { QuestionType } from '../src/infra/database/schemas/quiz.schema';
+import { CrmContactStatus } from '../src/infra/database/schemas/crm-contact.schema';
+import { ReportType, ReportStatus } from '../src/infra/database/schemas/report.schema';
 
 const DEFAULT_PASSWORD = 'password123';
 
@@ -58,6 +73,11 @@ async function seedDatabase() {
     getModelToken(ExtraSessionRequest.name)
   );
   const auditLogModel = app.get<Model<AuditLogDocument>>(getModelToken(AuditLog.name));
+  const codeModel = app.get<Model<CodeDocument>>(getModelToken(Code.name));
+  const resourceModel = app.get<Model<ResourceDocument>>(getModelToken(Resource.name));
+  const quizModel = app.get<Model<QuizDocument>>(getModelToken(Quiz.name));
+  const crmContactModel = app.get<Model<CrmContactDocument>>(getModelToken(CrmContact.name));
+  const reportModel = app.get<Model<ReportDocument>>(getModelToken(Report.name));
 
   try {
     console.log('\n🌱 Starting database seeding...\n');
@@ -478,6 +498,310 @@ async function seedDatabase() {
     ]);
     console.log(`   ✓ Created ${auditLogs.length} audit logs`);
 
+    // 12. Seed Codes
+    console.log('\n🎟️  Creating codes...');
+    const codes = await codeModel.insertMany([
+      {
+        code: 'SUMMER2024',
+        type: CodeType.DISCOUNT,
+        discountPercentage: 20,
+        status: CodeStatus.ACTIVE,
+        expiryDate: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
+        usageLimit: 100,
+        usageCount: 15,
+        description: 'Summer promotion - 20% off all sessions',
+      },
+      {
+        code: 'FIRSTFREE',
+        type: CodeType.PROMO,
+        discountAmount: 75,
+        status: CodeStatus.ACTIVE,
+        expiryDate: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
+        usageLimit: 50,
+        usageCount: 8,
+        description: 'First session free for new members',
+      },
+      {
+        code: 'REFER50',
+        type: CodeType.REFERRAL,
+        discountAmount: 50,
+        status: CodeStatus.ACTIVE,
+        expiryDate: new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000),
+        usageLimit: 200,
+        usageCount: 32,
+        description: 'Referral code - $50 off for both referrer and referee',
+      },
+      {
+        code: 'WINTER15',
+        type: CodeType.DISCOUNT,
+        discountPercentage: 15,
+        status: CodeStatus.EXPIRED,
+        expiryDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000), // Expired
+        usageLimit: 50,
+        usageCount: 45,
+        description: 'Winter promotion - expired',
+      },
+    ]);
+    console.log(`   ✓ Created ${codes.length} codes`);
+
+    // 13. Seed Resources
+    console.log('\n📚 Creating resources...');
+    const resources = await resourceModel.insertMany([
+      {
+        title: 'Nutrition Guide for Young Athletes',
+        description: 'A comprehensive guide on proper nutrition for children engaged in sports activities',
+        type: ResourceType.PDF,
+        fileUrl: 'https://example.com/resources/nutrition-guide.pdf',
+        targetAudience: BannerTargetAudience.PARENT,
+        isActive: true,
+        tags: ['nutrition', 'health', 'parenting'],
+      },
+      {
+        title: 'Warm-up Exercises Video',
+        description: 'Video demonstration of proper warm-up exercises for kids',
+        type: ResourceType.VIDEO,
+        fileUrl: 'https://example.com/resources/warmup-video.mp4',
+        targetAudience: BannerTargetAudience.ALL,
+        isActive: true,
+        tags: ['exercise', 'warmup', 'safety'],
+      },
+      {
+        title: 'Coaching Best Practices',
+        description: 'Essential coaching techniques and best practices for working with children',
+        type: ResourceType.DOCUMENT,
+        content: 'This document covers various coaching methodologies...',
+        targetAudience: BannerTargetAudience.COACH,
+        isActive: true,
+        tags: ['coaching', 'training', 'methodology'],
+      },
+      {
+        title: 'Injury Prevention Guide',
+        description: 'Learn how to prevent common sports injuries in children',
+        type: ResourceType.LINK,
+        externalUrl: 'https://example.com/injury-prevention',
+        targetAudience: BannerTargetAudience.ALL,
+        isActive: true,
+        tags: ['safety', 'injury', 'prevention'],
+      },
+      {
+        title: 'Parent Handbook',
+        description: 'Complete handbook for parents with all necessary information',
+        type: ResourceType.PDF,
+        fileUrl: 'https://example.com/resources/parent-handbook.pdf',
+        targetAudience: BannerTargetAudience.PARENT,
+        isActive: true,
+        tags: ['handbook', 'parenting', 'information'],
+      },
+    ]);
+    console.log(`   ✓ Created ${resources.length} resources`);
+
+    // 14. Seed Quizzes
+    console.log('\n📝 Creating quizzes...');
+    const quizzes = await quizModel.insertMany([
+      {
+        title: 'Fitness Knowledge Quiz',
+        description: 'Test your knowledge about fitness and exercise',
+        questions: [
+          {
+            question: 'What is the recommended daily water intake for children?',
+            type: QuestionType.MULTIPLE_CHOICE,
+            options: ['4-6 cups', '6-8 cups', '8-10 cups', '10-12 cups'],
+            correctAnswer: '6-8 cups',
+            points: 10,
+          },
+          {
+            question: 'Stretching before exercise is important.',
+            type: QuestionType.TRUE_FALSE,
+            correctAnswer: 'True',
+            points: 5,
+          },
+          {
+            question: 'What are the three main components of fitness?',
+            type: QuestionType.SHORT_ANSWER,
+            correctAnswer: 'Cardiovascular, Strength, Flexibility',
+            points: 15,
+          },
+        ],
+        targetAudience: BannerTargetAudience.ALL,
+        isActive: true,
+        passingScore: 70,
+      },
+      {
+        title: 'Nutrition Basics for Parents',
+        description: 'Quiz to test knowledge about children nutrition',
+        questions: [
+          {
+            question: 'How many servings of fruits and vegetables should children have daily?',
+            type: QuestionType.MULTIPLE_CHOICE,
+            options: ['2-3 servings', '3-4 servings', '4-5 servings', '5-6 servings'],
+            correctAnswer: '5-6 servings',
+            points: 10,
+          },
+          {
+            question: 'Protein is only important for adults.',
+            type: QuestionType.TRUE_FALSE,
+            correctAnswer: 'False',
+            points: 5,
+          },
+        ],
+        targetAudience: BannerTargetAudience.PARENT,
+        isActive: true,
+        passingScore: 60,
+      },
+      {
+        title: 'Coaching Techniques Assessment',
+        description: 'Assessment for coaches on effective coaching methods',
+        questions: [
+          {
+            question: 'What is the most important aspect when coaching children?',
+            type: QuestionType.MULTIPLE_CHOICE,
+            options: ['Winning', 'Having fun', 'Discipline', 'Competition'],
+            correctAnswer: 'Having fun',
+            points: 20,
+          },
+          {
+            question: 'Positive reinforcement is more effective than punishment for children.',
+            type: QuestionType.TRUE_FALSE,
+            correctAnswer: 'True',
+            points: 10,
+          },
+        ],
+        targetAudience: BannerTargetAudience.COACH,
+        isActive: true,
+        passingScore: 80,
+      },
+    ]);
+    console.log(`   ✓ Created ${quizzes.length} quizzes`);
+
+    // 15. Seed CRM Contacts
+    console.log('\n📞 Creating CRM contacts...');
+    const crmContacts = await crmContactModel.insertMany([
+      {
+        parentId: parents[0]._id,
+        status: CrmContactStatus.CONVERTED,
+        notes: [
+          {
+            note: 'Initial inquiry about individual sessions for daughter',
+            createdBy: adminId,
+            createdAt: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000),
+          },
+          {
+            note: 'Followed up with pricing information. Very interested.',
+            createdBy: adminId,
+            createdAt: new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000),
+          },
+          {
+            note: 'Converted to paying customer. Enrolled two kids.',
+            createdBy: adminId,
+            createdAt: new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000),
+          },
+        ],
+        source: 'Website',
+        metadata: { initialContactDate: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000) },
+      },
+      {
+        name: 'Jennifer Wilson',
+        email: 'jennifer.wilson@example.com',
+        phone: '+14155553001',
+        status: CrmContactStatus.FOLLOW_UP,
+        notes: [
+          {
+            note: 'Called about group sessions. Interested but needs more information.',
+            createdBy: adminId,
+            createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
+          },
+        ],
+        followUpDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        source: 'Phone Call',
+      },
+      {
+        name: 'Michael Chen',
+        email: 'michael.chen@example.com',
+        phone: '+14155553002',
+        status: CrmContactStatus.LEAD,
+        notes: [
+          {
+            note: 'Submitted free session request form online.',
+            createdBy: adminId,
+            createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+          },
+        ],
+        source: 'Website Form',
+      },
+      {
+        parentId: parents[2]._id,
+        status: CrmContactStatus.CONTACTED,
+        notes: [
+          {
+            note: 'Reached out regarding session scheduling preferences.',
+            createdBy: adminId,
+            createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+          },
+        ],
+        source: 'Email',
+      },
+    ]);
+    console.log(`   ✓ Created ${crmContacts.length} CRM contacts`);
+
+    // 16. Seed Reports
+    console.log('\n📊 Creating reports...');
+    const reports = await reportModel.insertMany([
+      {
+        type: ReportType.ATTENDANCE,
+        title: 'Monthly Attendance Report - January 2024',
+        description: 'Attendance statistics for all sessions in January',
+        startDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
+        status: ReportStatus.GENERATED,
+        data: {
+          totalSessions: 45,
+          totalAttendees: 120,
+          averageAttendance: 2.67,
+          attendanceRate: 85.5,
+        },
+        generatedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
+      },
+      {
+        type: ReportType.FINANCIAL,
+        title: 'Financial Summary - Q1 2024',
+        description: 'Quarterly financial overview',
+        startDate: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
+        status: ReportStatus.GENERATED,
+        data: {
+          totalRevenue: 12500,
+          totalExpenses: 8500,
+          netProfit: 4000,
+          invoicesPaid: 45,
+          invoicesPending: 12,
+        },
+        generatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+      },
+      {
+        type: ReportType.PERFORMANCE,
+        title: 'Kid Performance Report - Emma Williams',
+        description: 'Performance tracking for individual kid',
+        filters: { kidId: kids[0]._id.toString() },
+        status: ReportStatus.PENDING,
+      },
+      {
+        type: ReportType.SESSION_SUMMARY,
+        title: 'Weekly Session Summary',
+        description: 'Summary of all sessions for the current week',
+        startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime()),
+        status: ReportStatus.GENERATED,
+        data: {
+          totalSessions: 12,
+          groupSessions: 8,
+          individualSessions: 4,
+          totalKids: 18,
+        },
+        generatedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
+      },
+    ]);
+    console.log(`   ✓ Created ${reports.length} reports`);
+
     console.log('\n✅ Database seeding completed successfully!\n');
     console.log('📝 Summary:');
     console.log(`   - ${locations.length} locations`);
@@ -491,6 +815,11 @@ async function seedDatabase() {
     console.log(`   - ${rescheduleRequests.length} reschedule requests`);
     console.log(`   - ${extraSessionRequests.length} extra session requests`);
     console.log(`   - ${auditLogs.length} audit logs`);
+    console.log(`   - ${codes.length} codes`);
+    console.log(`   - ${resources.length} resources`);
+    console.log(`   - ${quizzes.length} quizzes`);
+    console.log(`   - ${crmContacts.length} CRM contacts`);
+    console.log(`   - ${reports.length} reports`);
     console.log('\n💡 Default password for all users: ' + DEFAULT_PASSWORD);
     console.log('   (Please change passwords after first login)\n');
 

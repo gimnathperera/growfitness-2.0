@@ -1,21 +1,15 @@
-import { Module, Controller, Get, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '@grow-fitness/shared-types';
-
-@Controller('crm')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
-export class CrmController {
-  @Get()
-  findAll() {
-    return { message: 'CRM module - Coming soon' };
-  }
-}
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { CrmController } from './crm.controller';
+import { CrmService } from './crm.service';
+import { CrmContact, CrmContactSchema } from '../../infra/database/schemas/crm-contact.schema';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
+  imports: [MongooseModule.forFeature([{ name: CrmContact.name, schema: CrmContactSchema }]), AuditModule],
   controllers: [CrmController],
+  providers: [CrmService],
+  exports: [CrmService],
 })
 export class CrmModule {}
 

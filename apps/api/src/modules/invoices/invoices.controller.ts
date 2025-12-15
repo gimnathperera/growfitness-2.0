@@ -1,5 +1,12 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import { InvoicesService } from './invoices.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -67,15 +74,93 @@ export class InvoicesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new invoice' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['PARENT_INVOICE', 'COACH_PAYOUT'],
+          description: 'Invoice type',
+          example: 'PARENT_INVOICE',
+        },
+        parentId: {
+          type: 'string',
+          description: 'Parent ID (required for PARENT_INVOICE, MongoDB ObjectId)',
+          example: '507f1f77bcf86cd799439011',
+        },
+        coachId: {
+          type: 'string',
+          description: 'Coach ID (required for COACH_PAYOUT, MongoDB ObjectId)',
+          example: '507f1f77bcf86cd799439011',
+        },
+        items: {
+          type: 'array',
+          description: 'Invoice line items',
+          items: {
+            type: 'object',
+            properties: {
+              description: {
+                type: 'string',
+                description: 'Item description',
+                example: 'Monthly training sessions',
+              },
+              amount: {
+                type: 'number',
+                description: 'Item amount (must be >= 0)',
+                example: 500.0,
+                minimum: 0,
+              },
+            },
+            required: ['description', 'amount'],
+          },
+          example: [
+            { description: 'Monthly training sessions', amount: 500.0 },
+            { description: 'Equipment fee', amount: 50.0 },
+          ],
+        },
+        dueDate: {
+          type: 'string',
+          format: 'date',
+          description: 'Due date (ISO format)',
+          example: '2024-12-31',
+        },
+      },
+      required: ['type', 'items', 'dueDate'],
+    },
+  })
   @ApiResponse({ status: 201, description: 'Invoice created successfully' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 404, description: 'Parent or Coach not found' })
   create(@Body() createInvoiceDto: CreateInvoiceDto, @CurrentUser('sub') actorId: string) {
     return this.invoicesService.create(createInvoiceDto, actorId);
   }
 
   @Patch(':id/payment-status')
   @ApiOperation({ summary: 'Update invoice payment status' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['PENDING', 'PAID', 'OVERDUE'],
+          description: 'Payment status',
+          example: 'PAID',
+        },
+        paidAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'Payment date/time (ISO format, optional, required when status is PAID)',
+          example: '2024-12-15T10:30:00Z',
+        },
+      },
+      required: ['status'],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Payment status updated successfully' })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
   updatePaymentStatus(
     @Param('id') id: string,
     @Body() updateDto: UpdateInvoicePaymentStatusDto,

@@ -49,7 +49,7 @@ export class AuditController {
     description: 'Filter logs until this date (ISO format)',
   })
   @ApiResponse({ status: 200, description: 'List of audit logs' })
-  findAll(
+  async findAll(
     @Query() pagination: PaginationDto,
     @Query('actorId') actorId?: string,
     @Query('entityType') entityType?: string,

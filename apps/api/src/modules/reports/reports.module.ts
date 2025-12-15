@@ -1,21 +1,15 @@
-import { Module, Controller, Get, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '@grow-fitness/shared-types';
-
-@Controller('reports')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
-export class ReportsController {
-  @Get()
-  findAll() {
-    return { message: 'Reports module - Coming soon' };
-  }
-}
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ReportsController } from './reports.controller';
+import { ReportsService } from './reports.service';
+import { Report, ReportSchema } from '../../infra/database/schemas/report.schema';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
+  imports: [MongooseModule.forFeature([{ name: Report.name, schema: ReportSchema }]), AuditModule],
   controllers: [ReportsController],
+  providers: [ReportsService],
+  exports: [ReportsService],
 })
 export class ReportsModule {}
 

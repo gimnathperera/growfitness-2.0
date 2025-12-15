@@ -66,6 +66,9 @@ export class UsersController {
   }
 
   @Get('parents/:id')
+  @ApiOperation({ summary: 'Get parent by ID' })
+  @ApiResponse({ status: 200, description: 'Parent details' })
+  @ApiResponse({ status: 404, description: 'Parent not found' })
   findParentById(@Param('id') id: string) {
     return this.usersService.findParentById(id);
   }
@@ -106,6 +109,25 @@ export class UsersController {
   }
 
   @Patch('parents/:id')
+  @ApiOperation({ summary: 'Update parent' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Parent full name' },
+        email: { type: 'string', format: 'email', description: 'Parent email address' },
+        phone: { type: 'string', description: 'Parent phone number' },
+        location: { type: 'string', description: 'Parent location' },
+        status: {
+          type: 'string',
+          enum: ['ACTIVE', 'INACTIVE', 'DELETED'],
+          description: 'Parent status',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Parent updated successfully' })
+  @ApiResponse({ status: 404, description: 'Parent not found' })
   updateParent(
     @Param('id') id: string,
     @Body() updateParentDto: UpdateParentDto,
@@ -115,6 +137,9 @@ export class UsersController {
   }
 
   @Delete('parents/:id')
+  @ApiOperation({ summary: 'Delete parent' })
+  @ApiResponse({ status: 200, description: 'Parent deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Parent not found' })
   deleteParent(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
     return this.usersService.deleteParent(id, actorId);
   }
@@ -146,16 +171,59 @@ export class UsersController {
   }
 
   @Get('coaches/:id')
+  @ApiOperation({ summary: 'Get coach by ID' })
+  @ApiResponse({ status: 200, description: 'Coach details' })
+  @ApiResponse({ status: 404, description: 'Coach not found' })
   findCoachById(@Param('id') id: string) {
     return this.usersService.findCoachById(id);
   }
 
   @Post('coaches')
+  @ApiOperation({ summary: 'Create a new coach' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Coach full name', example: 'John Doe' },
+        email: {
+          type: 'string',
+          format: 'email',
+          description: 'Coach email address',
+          example: 'john.doe@example.com',
+        },
+        phone: { type: 'string', description: 'Coach phone number', example: '+1234567890' },
+        password: {
+          type: 'string',
+          minLength: 6,
+          description: 'Password (minimum 6 characters)',
+          example: 'password123',
+        },
+      },
+      required: ['name', 'email', 'phone', 'password'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Coach created successfully' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
   createCoach(@Body() createCoachDto: CreateCoachDto, @CurrentUser('sub') actorId: string) {
     return this.usersService.createCoach(createCoachDto, actorId);
   }
 
   @Patch('coaches/:id')
+  @ApiOperation({ summary: 'Update coach' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Coach full name' },
+        email: { type: 'string', format: 'email', description: 'Coach email address' },
+        phone: { type: 'string', description: 'Coach phone number' },
+        status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], description: 'Coach status' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Coach updated successfully' })
+  @ApiResponse({ status: 404, description: 'Coach not found' })
   updateCoach(
     @Param('id') id: string,
     @Body() updateCoachDto: UpdateCoachDto,
@@ -165,6 +233,9 @@ export class UsersController {
   }
 
   @Delete('coaches/:id')
+  @ApiOperation({ summary: 'Deactivate coach' })
+  @ApiResponse({ status: 200, description: 'Coach deactivated successfully' })
+  @ApiResponse({ status: 404, description: 'Coach not found' })
   deactivateCoach(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
     return this.usersService.deactivateCoach(id, actorId);
   }
