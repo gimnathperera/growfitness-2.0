@@ -99,8 +99,7 @@ export const CreateSessionSchema = z.object({
   dateTime: z.string().or(z.date()),
   duration: z.number().min(1, 'Duration must be at least 1 minute'),
   capacity: z.number().min(1, 'Capacity must be at least 1').optional(),
-  kids: z.array(z.string()).optional(),
-  kidId: z.string().optional(),
+  kids: z.array(z.string()).min(1, 'At least one kid ID is required'),
   isFreeSession: z.boolean().default(false),
 });
 
@@ -112,8 +111,7 @@ export const UpdateSessionSchema = z.object({
   dateTime: z.string().or(z.date()).optional(),
   duration: z.number().min(1).optional(),
   capacity: z.number().min(1).optional(),
-  kids: z.array(z.string()).optional(),
-  kidId: z.string().optional(),
+  kids: z.array(z.string()).min(1).optional(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),
 });
 
@@ -243,4 +241,3 @@ export const PaginationSchema = z.object({
 });
 
 export type PaginationDto = z.infer<typeof PaginationSchema>;
-

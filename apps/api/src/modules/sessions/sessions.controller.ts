@@ -129,16 +129,15 @@ export class SessionsController {
         kids: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of kid IDs (for group sessions)',
+          description: 'Array of kid IDs (exactly one for individual sessions)',
         },
-        kidId: { type: 'string', description: 'Kid ID (for individual sessions)' },
         isFreeSession: {
           type: 'boolean',
           description: 'Whether this is a free session',
           default: false,
         },
       },
-      required: ['type', 'coachId', 'locationId', 'dateTime', 'duration'],
+      required: ['type', 'coachId', 'locationId', 'dateTime', 'duration', 'kids'],
     },
   })
   @ApiResponse({ status: 201, description: 'Session created successfully' })
@@ -162,7 +161,6 @@ export class SessionsController {
         duration: { type: 'number', description: 'Duration in minutes', minimum: 1 },
         capacity: { type: 'number', description: 'Maximum capacity', minimum: 1 },
         kids: { type: 'array', items: { type: 'string' }, description: 'Array of kid IDs' },
-        kidId: { type: 'string', description: 'Kid ID' },
         status: {
           type: 'string',
           enum: ['SCHEDULED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'],

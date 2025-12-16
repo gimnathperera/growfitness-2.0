@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Session, SessionDocument } from '../../infra/database/schemas/session.schema';
 import { SessionType, SessionStatus } from '@grow-fitness/shared-types';
 import { CreateSessionDto, UpdateSessionDto } from '@grow-fitness/shared-schemas';
@@ -15,6 +15,21 @@ export class SessionsService {
     private auditService: AuditService
   ) {}
 
+  private toObjectId(id: string, fieldName: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException({
+        errorCode: ErrorCode.INVALID_ID,
+        message: `Invalid ${fieldName} format. Expected a valid MongoDB ObjectId.`,
+      });
+    }
+    return new Types.ObjectId(id);
+  }
+
+  private toObjectIdArray(ids: string[] | undefined, fieldName: string) {
+    if (!ids) return ids;
+    return ids.map(id => this.toObjectId(id, fieldName));
+  }
+
   async findAll(
     pagination: PaginationDto,
     filters?: {
@@ -28,11 +43,11 @@ export class SessionsService {
     const query: Record<string, unknown> = {};
 
     if (filters?.coachId) {
-      query.coachId = filters.coachId;
+      query.coachId = this.toObjectId(filters.coachId, 'coachId');
     }
 
     if (filters?.locationId) {
-      query.locationId = filters.locationId;
+      query.locationId = this.toObjectId(filters.locationId, 'locationId');
     }
 
     if (filters?.status) {
@@ -57,7 +72,6 @@ export class SessionsService {
         .populate('coachId', 'email coachProfile')
         .populate('locationId')
         .populate('kids')
-        .populate('kidId')
         .sort({ dateTime: 1 })
         .skip(skip)
         .limit(pagination.limit)
@@ -74,7 +88,6 @@ export class SessionsService {
       .populate('coachId', 'email coachProfile')
       .populate('locationId')
       .populate('kids')
-      .populate('kidId')
       .exec();
 
     if (!session) {
@@ -88,37 +101,51 @@ export class SessionsService {
   }
 
   async create(createSessionDto: CreateSessionDto, actorId: string) {
-    if (createSessionDto.type === SessionType.GROUP && !createSessionDto.kids?.length) {
+    if (!createSessionDto.kids?.length) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
-        message: 'Group sessions require at least one kid',
+        message: 'At least one kid ID is required',
       });
     }
 
-    if (createSessionDto.type === SessionType.INDIVIDUAL && !createSessionDto.kidId) {
+    if (createSessionDto.type === SessionType.INDIVIDUAL && createSessionDto.kids.length !== 1) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
-        message: 'Individual sessions require a kid ID',
+        message: 'Individual sessions require exactly one kid ID',
       });
     }
 
-    if (
-      createSessionDto.type === SessionType.GROUP &&
-      createSessionDto.kids!.length > createSessionDto.capacity!
-    ) {
+    const capacity =
+      createSessionDto.capacity ?? (createSessionDto.type === SessionType.GROUP ? 10 : 1);
+
+    if (createSessionDto.type === SessionType.GROUP && createSessionDto.kids!.length > capacity) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_SESSION_CAPACITY,
         message: 'Number of kids exceeds session capacity',
       });
     }
 
+    const coachObjectId = this.toObjectId(createSessionDto.coachId, 'coachId');
+    const locationObjectId = this.toObjectId(createSessionDto.locationId, 'locationId');
+    const kidObjectIds = this.toObjectIdArray(createSessionDto.kids, 'kids');
+
     const session = new this.sessionModel({
       ...createSessionDto,
+      coachId: coachObjectId,
+      locationId: locationObjectId,
+      kids: kidObjectIds,
       dateTime: new Date(createSessionDto.dateTime),
-      capacity: createSessionDto.capacity || (createSessionDto.type === SessionType.GROUP ? 10 : 1),
+      capacity,
     });
 
     await session.save();
+
+    const createdSession = await this.sessionModel
+      .findById(session._id)
+      .populate('coachId', 'email coachProfile')
+      .populate('locationId')
+      .populate('kids')
+      .exec();
 
     await this.auditService.log({
       actorId,
@@ -128,7 +155,7 @@ export class SessionsService {
       metadata: createSessionDto,
     });
 
-    return session;
+    return createdSession ?? session;
   }
 
   async update(id: string, updateSessionDto: UpdateSessionDto, actorId: string) {
@@ -141,18 +168,55 @@ export class SessionsService {
       });
     }
 
-    Object.assign(session, {
-      ...(updateSessionDto.coachId && { coachId: updateSessionDto.coachId }),
-      ...(updateSessionDto.locationId && { locationId: updateSessionDto.locationId }),
+    if (
+      updateSessionDto.kids &&
+      updateSessionDto.kids.length > 0 &&
+      session.type === SessionType.INDIVIDUAL &&
+      updateSessionDto.kids.length !== 1
+    ) {
+      throw new BadRequestException({
+        errorCode: ErrorCode.INVALID_INPUT,
+        message: 'Individual sessions require exactly one kid ID',
+      });
+    }
+
+    if (
+      updateSessionDto.kids &&
+      session.type === SessionType.GROUP &&
+      updateSessionDto.kids.length > (updateSessionDto.capacity ?? session.capacity)
+    ) {
+      throw new BadRequestException({
+        errorCode: ErrorCode.INVALID_SESSION_CAPACITY,
+        message: 'Number of kids exceeds session capacity',
+      });
+    }
+
+    const updatedFields: Partial<Session> = {
+      ...(updateSessionDto.coachId && {
+        coachId: this.toObjectId(updateSessionDto.coachId, 'coachId'),
+      }),
+      ...(updateSessionDto.locationId && {
+        locationId: this.toObjectId(updateSessionDto.locationId, 'locationId'),
+      }),
       ...(updateSessionDto.dateTime && { dateTime: new Date(updateSessionDto.dateTime) }),
       ...(updateSessionDto.duration && { duration: updateSessionDto.duration }),
       ...(updateSessionDto.capacity && { capacity: updateSessionDto.capacity }),
-      ...(updateSessionDto.kids && { kids: updateSessionDto.kids }),
-      ...(updateSessionDto.kidId && { kidId: updateSessionDto.kidId }),
+      ...(updateSessionDto.kids && { kids: this.toObjectIdArray(updateSessionDto.kids, 'kids') }),
       ...(updateSessionDto.status && { status: updateSessionDto.status }),
+    };
+
+    Object.assign(session, {
+      ...updatedFields,
     });
 
     await session.save();
+
+    const updatedSession = await this.sessionModel
+      .findById(id)
+      .populate('coachId', 'email coachProfile')
+      .populate('locationId')
+      .populate('kids')
+      .exec();
 
     await this.auditService.log({
       actorId,
@@ -162,7 +226,7 @@ export class SessionsService {
       metadata: updateSessionDto,
     });
 
-    return session;
+    return updatedSession ?? session;
   }
 
   async findByDateRange(startDate: Date, endDate: Date) {
@@ -176,7 +240,6 @@ export class SessionsService {
       .populate('coachId', 'email coachProfile')
       .populate('locationId')
       .populate('kids')
-      .populate('kidId')
       .sort({ dateTime: 1 })
       .exec();
   }

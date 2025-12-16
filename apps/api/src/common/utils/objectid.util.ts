@@ -24,3 +24,4 @@ export function validateObjectId(id: string, entityName?: string): void {
     throw new Error(`Invalid ${entity}ID format`);
   }
 }
+
