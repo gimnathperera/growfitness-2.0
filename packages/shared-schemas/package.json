@@ -2,6 +2,7 @@
   "name": "@grow-fitness/shared-schemas",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -17,4 +18,3 @@
     "typescript": "^5.3.3"
   }
 }
-

@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  SessionType,
-  InvoiceType,
-  BannerTargetAudience,
-} from '@grow-fitness/shared-types';
+import { SessionType, InvoiceType, BannerTargetAudience } from '@grow-fitness/shared-types';
 
 // Auth Schemas
 export const LoginSchema = z.object({
@@ -92,16 +88,30 @@ export const UpdateKidSchema = z.object({
 export type UpdateKidDto = z.infer<typeof UpdateKidSchema>;
 
 // Session Schemas
-export const CreateSessionSchema = z.object({
-  type: z.nativeEnum(SessionType),
-  coachId: z.string().min(1, 'Coach ID is required'),
-  locationId: z.string().min(1, 'Location ID is required'),
-  dateTime: z.string().or(z.date()),
-  duration: z.number().min(1, 'Duration must be at least 1 minute'),
-  capacity: z.number().min(1, 'Capacity must be at least 1').optional(),
-  kids: z.array(z.string()).min(1, 'At least one kid ID is required'),
-  isFreeSession: z.boolean().default(false),
-});
+export const CreateSessionSchema = z
+  .object({
+    type: z.nativeEnum(SessionType),
+    coachId: z.string().min(1, 'Coach ID is required'),
+    locationId: z.string().min(1, 'Location ID is required'),
+    dateTime: z.string().or(z.date()),
+    duration: z.number().min(1, 'Duration must be at least 1 minute'),
+    capacity: z.number().min(1, 'Capacity must be at least 1').optional(),
+    kids: z.array(z.string()).optional(),
+    kidId: z.string().optional(),
+    isFreeSession: z.boolean().default(false),
+  })
+  .refine(
+    data => {
+      if (data.type === SessionType.GROUP) {
+        return data.kids && data.kids.length > 0;
+      } else {
+        return !!data.kidId;
+      }
+    },
+    {
+      message: 'Group sessions require kids array, individual sessions require kidId',
+    }
+  );
 
 export type CreateSessionDto = z.infer<typeof CreateSessionSchema>;
 
@@ -111,7 +121,8 @@ export const UpdateSessionSchema = z.object({
   dateTime: z.string().or(z.date()).optional(),
   duration: z.number().min(1).optional(),
   capacity: z.number().min(1).optional(),
-  kids: z.array(z.string()).min(1).optional(),
+  kids: z.array(z.string()).optional(),
+  kidId: z.string().optional(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),
 });
 
@@ -127,9 +138,7 @@ export const CreateFreeSessionRequestSchema = z.object({
   selectedSessionId: z.string().min(1, 'Session ID is required'),
 });
 
-export type CreateFreeSessionRequestDto = z.infer<
-  typeof CreateFreeSessionRequestSchema
->;
+export type CreateFreeSessionRequestDto = z.infer<typeof CreateFreeSessionRequestSchema>;
 
 // Reschedule Request Schema
 export const CreateRescheduleRequestSchema = z.object({
@@ -138,9 +147,7 @@ export const CreateRescheduleRequestSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-export type CreateRescheduleRequestDto = z.infer<
-  typeof CreateRescheduleRequestSchema
->;
+export type CreateRescheduleRequestDto = z.infer<typeof CreateRescheduleRequestSchema>;
 
 // Extra Session Request Schema
 export const CreateExtraSessionRequestSchema = z.object({
@@ -152,9 +159,7 @@ export const CreateExtraSessionRequestSchema = z.object({
   preferredDateTime: z.string().or(z.date()),
 });
 
-export type CreateExtraSessionRequestDto = z.infer<
-  typeof CreateExtraSessionRequestSchema
->;
+export type CreateExtraSessionRequestDto = z.infer<typeof CreateExtraSessionRequestSchema>;
 
 // Invoice Schemas
 export const CreateInvoiceSchema = z.object({
@@ -177,9 +182,7 @@ export const UpdateInvoicePaymentStatusSchema = z.object({
   paidAt: z.string().or(z.date()).optional(),
 });
 
-export type UpdateInvoicePaymentStatusDto = z.infer<
-  typeof UpdateInvoicePaymentStatusSchema
->;
+export type UpdateInvoicePaymentStatusDto = z.infer<typeof UpdateInvoicePaymentStatusSchema>;
 
 // Location Schemas
 export const CreateLocationSchema = z.object({

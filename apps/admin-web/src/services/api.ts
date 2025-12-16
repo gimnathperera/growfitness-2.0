@@ -19,6 +19,17 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const isJson = contentType?.includes('application/json');
 
   if (!response.ok) {
+    // Handle 401 Unauthorized - clear auth and redirect to login
+    if (response.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      // Only redirect if we're not already on the login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+
     const error: ApiError = isJson
       ? await response.json()
       : {
