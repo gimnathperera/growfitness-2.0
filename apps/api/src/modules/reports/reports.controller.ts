@@ -1,11 +1,19 @@
 import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { ReportsService, CreateReportDto, GenerateReportDto } from './reports.service';
+import { CreateReportDto as CreateReportDtoClass } from './dto/create-report.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
@@ -38,6 +46,7 @@ export class ReportsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new report' })
+  @ApiBody({ type: CreateReportDtoClass })
   @ApiResponse({ status: 201, description: 'Report created successfully' })
   create(@Body() createReportDto: CreateReportDto, @CurrentUser('sub') actorId: string) {
     return this.reportsService.create(createReportDto, actorId);
@@ -59,4 +68,3 @@ export class ReportsController {
     return this.reportsService.delete(id, actorId);
   }
 }
-

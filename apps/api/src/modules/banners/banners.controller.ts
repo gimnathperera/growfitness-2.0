@@ -17,9 +17,10 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
-import { CreateBannerDto, UpdateBannerDto, ReorderBannersDto } from '@grow-fitness/shared-schemas';
+import { CreateBannerDto, UpdateBannerDto, ReorderBannersDto, CreateBannerSchema, UpdateBannerSchema } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 
 @ApiTags('banners')
 @ApiBearerAuth('JWT-auth')
@@ -68,13 +69,17 @@ export class BannersController {
         imageUrl: { type: 'string', format: 'uri', description: 'Banner image URL', example: 'https://example.com/banner.jpg' },
         active: { type: 'boolean', description: 'Whether the banner is active', default: true },
         order: { type: 'number', description: 'Display order (lower numbers appear first)', example: 0, minimum: 0 },
-        targetAudience: { type: 'string', enum: ['PARENTS', 'KIDS', 'ALL'], description: 'Target audience for the banner' },
+        targetAudience: { type: 'string', enum: ['PARENT', 'COACH', 'ALL'], description: 'Target audience for the banner' },
       },
       required: ['imageUrl', 'order', 'targetAudience'],
     },
   })
   @ApiResponse({ status: 201, description: 'Banner created successfully' })
-  create(@Body() createBannerDto: CreateBannerDto, @CurrentUser('sub') actorId: string) {
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  create(
+    @Body(new ZodValidationPipe(CreateBannerSchema)) createBannerDto: CreateBannerDto,
+    @CurrentUser('sub') actorId: string
+  ) {
     return this.bannersService.create(createBannerDto, actorId);
   }
 
@@ -87,16 +92,16 @@ export class BannersController {
         imageUrl: { type: 'string', format: 'uri', description: 'Banner image URL' },
         active: { type: 'boolean', description: 'Whether the banner is active' },
         order: { type: 'number', description: 'Display order', minimum: 0 },
-        targetAudience: { type: 'string', enum: ['PARENTS', 'KIDS', 'ALL'], description: 'Target audience' },
+        targetAudience: { type: 'string', enum: ['PARENT', 'COACH', 'ALL'], description: 'Target audience' },
       },
     },
   })
   @ApiResponse({ status: 200, description: 'Banner updated successfully' })
   @ApiResponse({ status: 404, description: 'Banner not found' })
-  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format or validation error' })
   update(
     @Param('id', ObjectIdValidationPipe) id: string,
-    @Body() updateBannerDto: UpdateBannerDto,
+    @Body(new ZodValidationPipe(UpdateBannerSchema)) updateBannerDto: UpdateBannerDto,
     @CurrentUser('sub') actorId: string
   ) {
     return this.bannersService.update(id, updateBannerDto, actorId);

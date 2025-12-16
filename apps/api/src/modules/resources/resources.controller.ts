@@ -1,11 +1,29 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { ResourcesService, CreateResourceDto, UpdateResourceDto } from './resources.service';
+import { CreateResourceDto as CreateResourceDtoClass } from './dto/create-resource.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
@@ -38,6 +56,7 @@ export class ResourcesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new resource' })
+  @ApiBody({ type: CreateResourceDtoClass })
   @ApiResponse({ status: 201, description: 'Resource created successfully' })
   create(@Body() createResourceDto: CreateResourceDto, @CurrentUser('sub') actorId: string) {
     return this.resourcesService.create(createResourceDto, actorId);
@@ -48,7 +67,11 @@ export class ResourcesController {
   @ApiResponse({ status: 200, description: 'Resource updated successfully' })
   @ApiResponse({ status: 404, description: 'Resource not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
-  update(@Param('id', ObjectIdValidationPipe) id: string, @Body() updateResourceDto: UpdateResourceDto, @CurrentUser('sub') actorId: string) {
+  update(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @Body() updateResourceDto: UpdateResourceDto,
+    @CurrentUser('sub') actorId: string
+  ) {
     return this.resourcesService.update(id, updateResourceDto, actorId);
   }
 
@@ -61,4 +84,3 @@ export class ResourcesController {
     return this.resourcesService.delete(id, actorId);
   }
 }
-

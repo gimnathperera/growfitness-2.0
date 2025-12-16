@@ -1,11 +1,29 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@grow-fitness/shared-types';
 import { CodesService, CreateCodeDto, UpdateCodeDto } from './codes.service';
+import { CreateCodeDto as CreateCodeDtoClass } from './dto/create-code.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 
@@ -37,6 +55,7 @@ export class CodesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new code' })
+  @ApiBody({ type: CreateCodeDtoClass })
   @ApiResponse({ status: 201, description: 'Code created successfully' })
   create(@Body() createCodeDto: CreateCodeDto, @CurrentUser('sub') actorId: string) {
     return this.codesService.create(createCodeDto, actorId);
@@ -47,7 +66,11 @@ export class CodesController {
   @ApiResponse({ status: 200, description: 'Code updated successfully' })
   @ApiResponse({ status: 404, description: 'Code not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
-  update(@Param('id', ObjectIdValidationPipe) id: string, @Body() updateCodeDto: UpdateCodeDto, @CurrentUser('sub') actorId: string) {
+  update(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @Body() updateCodeDto: UpdateCodeDto,
+    @CurrentUser('sub') actorId: string
+  ) {
     return this.codesService.update(id, updateCodeDto, actorId);
   }
 
@@ -60,4 +83,3 @@ export class CodesController {
     return this.codesService.delete(id, actorId);
   }
 }
-

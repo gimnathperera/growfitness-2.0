@@ -66,14 +66,6 @@ export class AuthService {
       });
     }
 
-    // Only allow admin login for now
-    if (user.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException({
-        errorCode: ErrorCode.FORBIDDEN,
-        message: 'Admin access required',
-      });
-    }
-
     const payload: JwtPayload = {
       sub: user._id.toString(),
       email: user.email,

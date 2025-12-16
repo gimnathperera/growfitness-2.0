@@ -1,14 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Quiz, QuizDocument } from '../../infra/database/schemas/quiz.schema';
+import { Model, Error as MongooseError } from 'mongoose';
+import { Quiz, QuizDocument, QuestionType } from '../../infra/database/schemas/quiz.schema';
+import { BannerTargetAudience } from '@grow-fitness/shared-types';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 
 export interface QuizQuestionDto {
   question: string;
-  type: string;
+  type: QuestionType;
   options?: string[];
   correctAnswer: string;
   points?: number;
@@ -18,7 +19,7 @@ export interface CreateQuizDto {
   title: string;
   description?: string;
   questions: QuizQuestionDto[];
-  targetAudience: string;
+  targetAudience: BannerTargetAudience;
   passingScore?: number;
 }
 
@@ -66,21 +67,35 @@ export class QuizzesService {
   }
 
   async create(createQuizDto: CreateQuizDto, actorId: string) {
-    const quiz = new this.quizModel({
-      ...createQuizDto,
-      isActive: true,
-    });
-    await quiz.save();
+    try {
+      const quiz = new this.quizModel({
+        ...createQuizDto,
+        isActive: true,
+      });
+      await quiz.save();
 
-    await this.auditService.log({
-      actorId,
-      action: 'CREATE_QUIZ',
-      entityType: 'Quiz',
-      entityId: quiz._id.toString(),
-      metadata: createQuizDto as unknown as Record<string, unknown>,
-    });
+      await this.auditService.log({
+        actorId,
+        action: 'CREATE_QUIZ',
+        entityType: 'Quiz',
+        entityId: quiz._id.toString(),
+        metadata: createQuizDto as unknown as Record<string, unknown>,
+      });
 
-    return quiz;
+      return quiz;
+    } catch (error) {
+      if (error instanceof MongooseError.ValidationError) {
+        const errorMessages = Object.keys(error.errors).map(
+          key => `${key}: ${error.errors[key].message}`
+        );
+        throw new BadRequestException({
+          errorCode: ErrorCode.VALIDATION_ERROR,
+          message: 'Quiz validation failed',
+          errors: errorMessages,
+        });
+      }
+      throw error;
+    }
   }
 
   async update(id: string, updateQuizDto: UpdateQuizDto, actorId: string) {
@@ -129,4 +144,3 @@ export class QuizzesService {
     return { message: 'Quiz deleted successfully' };
   }
 }
-
