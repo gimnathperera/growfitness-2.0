@@ -53,6 +53,10 @@ cd apps/admin-web
 pnpm dev
 ```
 
+## Deployment
+
+See `deploy/README.md` for Docker Compose + Nginx instructions to run the API and admin web on an AWS host.
+
 ## Completed Features
 
 ### Backend
@@ -106,4 +110,3 @@ All endpoints are prefixed with `/api`:
 - Email provider is mocked in development (logs to console)
 - First admin user created via seed script
 - All routes require admin authentication
-

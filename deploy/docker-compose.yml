@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - ./api.env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  admin-web:
+    build:
+      context: ..
+      dockerfile: apps/admin-web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    restart: unless-stopped
