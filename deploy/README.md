@@ -14,6 +14,7 @@ Containerized setup for running the NestJS API and Vite admin frontend on an AWS
 - `deploy/docker-compose.yml` – orchestrates `api` and `admin-web` containers.
 - `deploy/nginx/default.conf` – Nginx config to serve the SPA and proxy `/api` to the backend.
 - `deploy/api.env.example` – environment template for the API.
+- `apps/admin-web/.env.example` – optional frontend env to point the SPA at a different API origin (`VITE_API_BASE_URL`).
 
 ## Setup steps on the server
 1) Clone or copy the repo to the server (e.g., via Git or `scp -r`).  
@@ -22,6 +23,11 @@ Containerized setup for running the NestJS API and Vite admin frontend on an AWS
    cd /path/to/app-2.0
    cp deploy/api.env.example deploy/api.env
    # edit deploy/api.env with Mongo URI, JWT secrets, CORS_ORIGIN (e.g., https://admin.your-domain.com)
+   ```
+   Optional: set a custom API base URL for the admin build (defaults to `/api`):
+   ```bash
+   cp apps/admin-web/.env.example apps/admin-web/.env
+   # edit VITE_API_BASE_URL if the API is on a different host (e.g., https://api.your-domain.com/api)
    ```
 3) Build and start containers:
    ```bash
