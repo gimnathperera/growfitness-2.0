@@ -1,6 +1,6 @@
 {
+  "version": 2,
   "buildCommand": "pnpm --filter @grow-fitness/shared-types build && pnpm --filter @grow-fitness/shared-schemas build && pnpm --filter @grow-fitness/admin-web build",
   "installCommand": "pnpm install --frozen-lockfile",
-  "outputDirectory": "apps/admin-web/dist",
-  "framework": "vite"
+  "outputDirectory": "apps/admin-web/dist"
 }
