@@ -20,11 +20,12 @@ async function bootstrap() {
     })
   );
 
-  // CORS
-  const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:5173');
+  // CORS - Allow all origins
   app.enableCors({
-    origin: corsOrigin,
+    origin: true, // Allow all origins
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   // Global prefix
