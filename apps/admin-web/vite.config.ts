@@ -13,15 +13,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['@grow-fitness/shared-types', '@grow-fitness/shared-schemas'],
-    esbuildOptions: {
-      target: 'es2020',
-    },
-  },
-  build: {
-    commonjsOptions: {
-      include: [/@grow-fitness\/shared-/, /node_modules/],
-      transformMixedEsModules: true,
-    },
   },
   server: {
     port: 5173,
