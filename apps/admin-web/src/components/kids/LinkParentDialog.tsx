@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,26 @@ export function LinkParentDialog({ open, onOpenChange, kid }: LinkParentDialogPr
   const [parentId, setParentId] = useState('');
   const { toast } = useToast();
 
+  // Set initial parentId when dialog opens or kid changes
+  useEffect(() => {
+    if (open) {
+      // Check if kid has a parentId (string) or parent object with id
+      // Handle both cases: direct parentId or populated parent object
+      const currentParentId =
+        kid.parentId || (kid as any).parent?.id || (kid as any).parent?.id || '';
+      setParentId(currentParentId);
+    } else {
+      // Reset when dialog closes
+      setParentId('');
+    }
+  }, [open, kid]);
+
   const { data: parentsData } = useApiQuery(['users', 'parents', 'all'], () =>
     usersService.getParents(1, 100)
   );
 
   const linkMutation = useApiMutation(
-    (parentId: string) => kidsService.linkToParent(kid._id, parentId),
+    (parentId: string) => kidsService.linkToParent(kid.id, parentId),
     {
       invalidateQueries: [['kids']],
       onSuccess: () => {
@@ -68,20 +82,20 @@ export function LinkParentDialog({ open, onOpenChange, kid }: LinkParentDialogPr
 
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="space-y-4">
-          <CustomFormField label="Parent" required>
-            <Select value={parentId} onValueChange={setParentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select parent" />
-              </SelectTrigger>
-              <SelectContent>
-                {(parentsData?.data || []).map(parent => (
-                  <SelectItem key={parent._id} value={parent._id}>
-                    {parent.parentProfile?.name || parent.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CustomFormField>
+            <CustomFormField label="Parent" required>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select parent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(parentsData?.data || []).map(parent => (
+                    <SelectItem key={parent.id} value={parent.id}>
+                      {parent.parentProfile?.name || parent.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CustomFormField>
 
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
