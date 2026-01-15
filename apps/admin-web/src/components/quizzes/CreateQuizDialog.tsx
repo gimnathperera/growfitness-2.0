@@ -198,7 +198,7 @@ export function CreateQuizDialog({ open, onOpenChange }: CreateQuizDialogProps) 
                 {questionFields.map((field, index) => (
                   <QuestionEditor
                     key={field.id}
-                    form={form}
+                    form={form as any}
                     questionIndex={index}
                     onRemove={() => {
                       if (questionFields.length > 1) {

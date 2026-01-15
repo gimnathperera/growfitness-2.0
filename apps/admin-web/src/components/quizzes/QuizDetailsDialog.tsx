@@ -1,15 +1,12 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Quiz, QuestionType, BannerTargetAudience } from '@grow-fitness/shared-types';
+import { Quiz, QuestionType } from '@grow-fitness/shared-types';
 import { formatDate, formatBannerTargetAudience } from '@/lib/formatters';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { quizzesService } from '@/services/quizzes.service';
@@ -18,8 +15,6 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-  Target,
-  Users,
   FileQuestion,
   Award,
 } from 'lucide-react';

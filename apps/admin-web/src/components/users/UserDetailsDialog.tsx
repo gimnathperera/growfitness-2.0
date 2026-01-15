@@ -2,9 +2,6 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,7 +114,7 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
   if (!user) {
     return null;
   }
-  const initials = userName
+  const initials = (userName || 'U')
     .split(' ')
     .map(n => n[0])
     .join('')
@@ -283,7 +280,7 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {kids.map((kid, index) => (
+                        {kids.map((kid) => (
                           <Card key={kid.id} className="overflow-hidden">
                             <CardHeader className="pb-3">
                               <div className="flex items-center justify-between">

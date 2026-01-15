@@ -3,7 +3,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { requestsService } from '@/services/requests.service';
 import { usersService } from '@/services/users.service';
-import { UserRegistrationRequest, User, Kid } from '@grow-fitness/shared-types';
+import { UserRegistrationRequest, User, Kid, RequestStatus } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Button } from '@/components/ui/button';
@@ -16,9 +16,6 @@ import { ErrorState } from '@/components/common/ErrorState';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -130,7 +127,7 @@ export function UserRequestsTable() {
 
   // Get parent from request or fetched data
   const parent = parentData || (selectedRequest?.parentId && typeof selectedRequest.parentId === 'object' ? selectedRequest.parentId as User : null);
-  const kids = parent && 'kids' in parent ? parent.kids || [] : [];
+  const kids: Kid[] = (parent && 'kids' in parent && Array.isArray(parent.kids)) ? parent.kids : [];
 
   const handleViewDetails = (request: UserRegistrationRequest) => {
     setSelectedRequest(request);
@@ -247,7 +244,7 @@ export function UserRequestsTable() {
                     <h2 className="text-2xl font-semibold">{parent.parentProfile?.name || 'N/A'}</h2>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-sm text-muted-foreground">{parent.email}</p>
-                      <StatusBadge status={selectedRequest?.status || 'PENDING'} />
+                      <StatusBadge status={selectedRequest?.status || RequestStatus.PENDING} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />

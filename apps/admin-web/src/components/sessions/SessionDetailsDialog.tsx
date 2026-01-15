@@ -2,9 +2,6 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -125,11 +122,11 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
   // Both session types can have kids in the kids array
   // Check if kids are already populated objects or just IDs
   const kidsFromSession = Array.isArray(displaySession?.kids) ? displaySession.kids : [];
-  const areKidsPopulated = kidsFromSession.length > 0 && typeof kidsFromSession[0] === 'object' && kidsFromSession[0].name;
+  const areKidsPopulated = kidsFromSession.length > 0 && typeof kidsFromSession[0] === 'object' && 'name' in kidsFromSession[0] && typeof (kidsFromSession[0] as any).name === 'string';
   
-  const kidsIds = areKidsPopulated
+  const kidsIds: string[] = areKidsPopulated
     ? [] // Kids are already populated, no need to fetch
-    : kidsFromSession.map((kid: any) => (typeof kid === 'string' ? kid : kid.id)).filter(Boolean);
+    : kidsFromSession.map((kid: any) => (typeof kid === 'string' ? kid : kid.id)).filter((id): id is string => Boolean(id));
   
   // Also check for kidId for individual sessions (fallback)
   const individualKidId = !isGroupSession && displaySession?.kidId && kidsIds.length === 0 && !areKidsPopulated
@@ -141,20 +138,23 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
 
   // Fetch kids for both group and individual sessions from kids array (only if not already populated)
   const { data: kidsData } = useApiQuery(
-    ['kids', 'session', sessionId],
+    ['kids', 'session', sessionId || 'no-id'],
     async () => {
+      if (!sessionId) {
+        throw new Error('Session ID is required');
+      }
       const kidsPromises = kidsIds.map(id => kidsService.getKidById(id));
       const results = await Promise.all(kidsPromises);
       return results;
     },
     {
-      enabled: shouldFetchKids,
+      enabled: shouldFetchKids && !!sessionId,
     }
   );
 
   // Fetch kid for individual sessions using kidId (fallback if kids array is empty)
   const { data: individualKidData } = useApiQuery(
-    ['kids', 'session', sessionId, 'individual'],
+    ['kids', 'session', sessionId || 'no-id', 'individual'],
     () => {
       if (!individualKidId) {
         throw new Error('Kid ID is required');
@@ -166,8 +166,8 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
     }
   );
 
-  const coachName = coachData?.coachProfile?.name || coachData?.email || getName(displaySession?.coachId, 'N/A');
-  const locationName = locationData?.name || getName(displaySession?.locationId, 'N/A');
+  const coachName = coachData?.coachProfile?.name || coachData?.email || getName(displaySession?.coachId, 'N/A') || 'N/A';
+  const locationName = locationData?.name || getName(displaySession?.locationId, 'N/A') || 'N/A';
   
   // Combine kids data - use populated kids from session if available, otherwise use fetched data
   const kids = areKidsPopulated 
@@ -187,7 +187,7 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
     onOpenChange(newOpen);
   };
 
-  if (!session) {
+  if (!displaySession) {
     return null;
   }
 

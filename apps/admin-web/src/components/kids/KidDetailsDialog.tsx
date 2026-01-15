@@ -1,12 +1,9 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -20,11 +17,7 @@ import {
   Phone,
   MapPin,
   Calendar,
-  Baby,
-  Target,
-  Activity,
   Award,
-  AlertCircle,
   Users,
 } from 'lucide-react';
 

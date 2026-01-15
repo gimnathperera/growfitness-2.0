@@ -293,7 +293,6 @@ export function ReportsPage() {
         cancelText="Cancel"
         onConfirm={confirmDelete}
         variant="destructive"
-        isLoading={deleteMutation.isPending}
       />
     </div>
   );

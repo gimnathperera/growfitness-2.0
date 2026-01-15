@@ -206,11 +206,14 @@ export function CreateCodeDialog({ open, onOpenChange }: CreateCodeDialogProps) 
           >
             <DateTimePicker
               date={
-                form.watch('expiryDate')
-                  ? typeof form.watch('expiryDate') === 'string'
-                    ? new Date(form.watch('expiryDate'))
-                    : form.watch('expiryDate')
-                  : undefined
+                (() => {
+                  const expiryDate = form.watch('expiryDate');
+                  if (!expiryDate) return undefined;
+                  if (typeof expiryDate === 'string') {
+                    return new Date(expiryDate);
+                  }
+                  return expiryDate;
+                })()
               }
               onSelect={date => {
                 if (date) {

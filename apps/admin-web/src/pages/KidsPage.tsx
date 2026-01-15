@@ -223,11 +223,13 @@ export function KidsPage() {
             onOpenChange={closeModal}
             kid={selectedKid || undefined}
           />
-          <LinkParentDialog
-            open={linkDialogOpen}
-            onOpenChange={handleCloseLinkDialog}
-            kid={selectedKid || undefined}
-          />
+          {selectedKid && (
+            <LinkParentDialog
+              open={linkDialogOpen}
+              onOpenChange={handleCloseLinkDialog}
+              kid={selectedKid}
+            />
+          )}
         </>
       )}
 

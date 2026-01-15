@@ -13,7 +13,7 @@ import {
 import { FormField } from '@/components/common/FormField';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, X } from 'lucide-react';
-import { QuestionType, QuizQuestion } from '@grow-fitness/shared-types';
+import { QuestionType } from '@grow-fitness/shared-types';
 import { CreateQuizDto, UpdateQuizDto } from '@grow-fitness/shared-schemas';
 
 interface QuestionEditorProps {
@@ -40,7 +40,7 @@ export function QuestionEditor({ form, questionIndex, onRemove, canRemove = true
     remove: removeOption,
   } = useFieldArray({
     control: form.control,
-    name: `questions.${questionIndex}.options`,
+    name: `questions.${questionIndex}.options` as any,
   });
 
   // When question type changes, handle options and correctAnswer
@@ -98,7 +98,7 @@ export function QuestionEditor({ form, questionIndex, onRemove, canRemove = true
   }, [options, questionType, form, questionIndex]);
 
   const addOption = () => {
-    appendOption(`Option ${options.length + 1}`);
+    appendOption({ value: `Option ${options.length + 1}` });
   };
 
   return (
@@ -299,7 +299,7 @@ export function QuestionEditor({ form, questionIndex, onRemove, canRemove = true
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge variant="secondary">{questionType.toString().replace(/_/g, ' ')}</Badge>
+        <Badge variant="secondary">{questionType?.toString().replace(/_/g, ' ') || 'Unknown'}</Badge>
         {form.watch(`questions.${questionIndex}.points`) && (
           <Badge variant="outline">{form.watch(`questions.${questionIndex}.points`)} points</Badge>
         )}

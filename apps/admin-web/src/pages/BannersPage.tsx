@@ -221,11 +221,13 @@ export function BannersPage() {
             onOpenChange={closeModal}
             banner={selectedBanner || undefined}
           />
-          <BannerPreviewDialog
-            open={previewDialogOpen}
-            onOpenChange={handleClosePreviewDialog}
-            banner={selectedBanner || undefined}
-          />
+          {selectedBanner && (
+            <BannerPreviewDialog
+              open={previewDialogOpen}
+              onOpenChange={handleClosePreviewDialog}
+              banner={selectedBanner}
+            />
+          )}
         </>
       )}
 

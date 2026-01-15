@@ -1,9 +1,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Location } from '@grow-fitness/shared-types';
 import { formatDate } from '@/lib/formatters';
@@ -55,12 +52,12 @@ export function LocationDetailsDialog({
     return null;
   }
 
-  const initials = location.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  // const initials = location.name
+  //   .split(' ')
+  //   .map(n => n[0])
+  //   .join('')
+  //   .toUpperCase()
+  //   .slice(0, 2);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

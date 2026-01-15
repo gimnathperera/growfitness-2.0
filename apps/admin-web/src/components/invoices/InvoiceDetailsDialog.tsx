@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +23,7 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice: invoiceProp 
   const { entityId, closeModal } = useModalParams('invoiceId');
   
   // Fetch invoice from URL if prop not provided
-  const { data: invoiceFromUrl, isLoading } = useApiQuery<Invoice>(
+  const { data: invoiceFromUrl } = useApiQuery<Invoice>(
     ['invoices', entityId || 'no-id'],
     () => {
       if (!entityId) {

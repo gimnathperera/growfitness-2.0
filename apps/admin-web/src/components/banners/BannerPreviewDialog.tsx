@@ -11,10 +11,14 @@ import { formatBannerTargetAudience } from '@/lib/formatters';
 interface BannerPreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  banner: Banner;
+  banner?: Banner;
 }
 
 export function BannerPreviewDialog({ open, onOpenChange, banner }: BannerPreviewDialogProps) {
+  if (!banner) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">

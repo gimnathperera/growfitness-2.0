@@ -3,17 +3,6 @@ import { useCallback, useMemo } from 'react';
 
 export type ModalType = 'details' | 'edit' | 'create';
 
-interface UseModalParamsOptions {
-  /**
-   * The parameter name for the entity ID (e.g., 'userId', 'kidId', 'sessionId')
-   */
-  idParam: string;
-  /**
-   * Optional: The parameter name for the modal type (defaults to 'modal')
-   */
-  modalParam?: string;
-}
-
 interface UseModalParamsReturn {
   /**
    * Current modal type from URL, or null if no modal is open

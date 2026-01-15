@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -36,7 +35,7 @@ function renderReportData(data: Record<string, unknown> | undefined): JSX.Elemen
     return <p className="text-sm text-muted-foreground">No data available</p>;
   }
 
-  const renderValue = (value: unknown, key: string): JSX.Element | string => {
+  const renderValue = (value: unknown, _key?: string): JSX.Element | string => {
     if (value === null || value === undefined) {
       return 'N/A';
     }
