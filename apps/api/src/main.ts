@@ -56,6 +56,7 @@ async function bootstrap() {
     .addTag('invoices', 'Invoice management endpoints')
     .addTag('locations', 'Location management endpoints')
     .addTag('banners', 'Banner management endpoints')
+    .addTag('quizzes', 'Quiz management endpoints')
     .addTag('dashboard', 'Dashboard endpoints')
     .addTag('audit', 'Audit log endpoints')
     .build();

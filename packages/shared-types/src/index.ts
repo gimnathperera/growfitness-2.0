@@ -49,6 +49,12 @@ export enum BannerTargetAudience {
   ALL = 'ALL',
 }
 
+export enum QuestionType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  TRUE_FALSE = 'TRUE_FALSE',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+}
+
 // Types
 export interface User {
   id: string;
@@ -200,6 +206,26 @@ export interface AuditLog {
   entityId: string;
   metadata?: Record<string, unknown>;
   timestamp: Date;
+}
+
+export interface QuizQuestion {
+  question: string;
+  type: QuestionType;
+  options?: string[];
+  correctAnswer: string;
+  points?: number;
+}
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  questions: QuizQuestion[];
+  targetAudience: BannerTargetAudience;
+  isActive: boolean;
+  passingScore?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Pagination

@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { SessionType, SessionStatus, InvoiceType, BannerTargetAudience } from '@grow-fitness/shared-types';
+import {
+  SessionType,
+  SessionStatus,
+  InvoiceType,
+  BannerTargetAudience,
+  QuestionType,
+} from '@grow-fitness/shared-types';
 
 // Auth Schemas
 export const LoginSchema = z.object({
@@ -245,3 +251,65 @@ export const PaginationSchema = z.object({
 });
 
 export type PaginationDto = z.infer<typeof PaginationSchema>;
+
+// Quiz Schemas
+export const QuizQuestionSchema = z
+  .object({
+    question: z.string().min(1, 'Question is required'),
+    type: z.nativeEnum(QuestionType),
+    options: z.array(z.string().min(1, 'Option cannot be empty')).optional(),
+    correctAnswer: z.string().min(1, 'Correct answer is required'),
+    points: z.number().min(0).optional(),
+  })
+  .refine(
+    data => {
+      if (data.type === QuestionType.MULTIPLE_CHOICE) {
+        return (
+          data.options !== undefined &&
+          data.options.length >= 2 &&
+          data.options.includes(data.correctAnswer)
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        'Multiple choice questions must have at least 2 options and the correct answer must be one of them',
+      path: ['options'],
+    }
+  )
+  .refine(
+    data => {
+      if (data.type === QuestionType.TRUE_FALSE) {
+        return data.correctAnswer === 'True' || data.correctAnswer === 'False';
+      }
+      return true;
+    },
+    {
+      message: 'True/False questions must have correct answer as "True" or "False"',
+      path: ['correctAnswer'],
+    }
+  );
+
+export type QuizQuestionDto = z.infer<typeof QuizQuestionSchema>;
+
+export const CreateQuizSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  questions: z.array(QuizQuestionSchema).min(1, 'At least one question is required'),
+  targetAudience: z.nativeEnum(BannerTargetAudience),
+  passingScore: z.number().min(0).max(100).optional(),
+});
+
+export type CreateQuizDto = z.infer<typeof CreateQuizSchema>;
+
+export const UpdateQuizSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  questions: z.array(QuizQuestionSchema).min(1).optional(),
+  targetAudience: z.nativeEnum(BannerTargetAudience).optional(),
+  isActive: z.boolean().optional(),
+  passingScore: z.number().min(0).max(100).optional(),
+});
+
+export type UpdateQuizDto = z.infer<typeof UpdateQuizSchema>;
