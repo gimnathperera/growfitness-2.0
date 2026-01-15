@@ -44,10 +44,19 @@ export function RescheduleRequestsTable() {
     },
   });
 
+  // Helper to get session ID from populated object or return ID
+  const getSessionId = (sessionId: any): string => {
+    if (!sessionId) return 'N/A';
+    if (typeof sessionId === 'string') return sessionId;
+    if (typeof sessionId === 'object' && sessionId.id) return sessionId.id;
+    return 'N/A';
+  };
+
   const columns: ColumnDef<RescheduleRequest>[] = [
     {
       accessorKey: 'sessionId',
       header: 'Session ID',
+      cell: ({ row }) => getSessionId(row.original.sessionId),
     },
     {
       accessorKey: 'newDateTime',

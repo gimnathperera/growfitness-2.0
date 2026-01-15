@@ -121,12 +121,25 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
     }
   );
 
-  // Fetch kids data if it's a group session
-  const kidsIds = Array.isArray(displaySession?.kids)
-    ? displaySession.kids.map((kid: any) => (typeof kid === 'string' ? kid : kid.id)).filter(Boolean)
-    : [];
-  const shouldFetchKids = open && isGroupSession && kidsIds.length > 0;
+  // Fetch kids data for both group and individual sessions
+  // Both session types can have kids in the kids array
+  // Check if kids are already populated objects or just IDs
+  const kidsFromSession = Array.isArray(displaySession?.kids) ? displaySession.kids : [];
+  const areKidsPopulated = kidsFromSession.length > 0 && typeof kidsFromSession[0] === 'object' && kidsFromSession[0].name;
+  
+  const kidsIds = areKidsPopulated
+    ? [] // Kids are already populated, no need to fetch
+    : kidsFromSession.map((kid: any) => (typeof kid === 'string' ? kid : kid.id)).filter(Boolean);
+  
+  // Also check for kidId for individual sessions (fallback)
+  const individualKidId = !isGroupSession && displaySession?.kidId && kidsIds.length === 0 && !areKidsPopulated
+    ? (typeof displaySession.kidId === 'string' ? displaySession.kidId : (displaySession.kidId as any)?.id)
+    : null;
+  
+  const shouldFetchKids = open && kidsIds.length > 0 && !areKidsPopulated;
+  const shouldFetchIndividualKid = open && !isGroupSession && !!individualKidId && kidsIds.length === 0 && !areKidsPopulated;
 
+  // Fetch kids for both group and individual sessions from kids array (only if not already populated)
   const { data: kidsData } = useApiQuery(
     ['kids', 'session', sessionId],
     async () => {
@@ -139,12 +152,30 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
     }
   );
 
+  // Fetch kid for individual sessions using kidId (fallback if kids array is empty)
+  const { data: individualKidData } = useApiQuery(
+    ['kids', 'session', sessionId, 'individual'],
+    () => {
+      if (!individualKidId) {
+        throw new Error('Kid ID is required');
+      }
+      return kidsService.getKidById(individualKidId);
+    },
+    {
+      enabled: shouldFetchIndividualKid,
+    }
+  );
+
   const coachName = coachData?.coachProfile?.name || coachData?.email || getName(displaySession?.coachId, 'N/A');
   const locationName = locationData?.name || getName(displaySession?.locationId, 'N/A');
-  const kids = kidsData || [];
+  
+  // Combine kids data - use populated kids from session if available, otherwise use fetched data
+  const kids = areKidsPopulated 
+    ? kidsFromSession 
+    : (kidsData || (individualKidData ? [individualKidData] : []));
 
   // Calculate highlights
-  const totalKids = isGroupSession ? kids.length : displaySession?.kidId ? 1 : 0;
+  const totalKids = kids.length;
   const capacity = displaySession?.capacity || 0;
   const enrolled = totalKids;
 
@@ -274,11 +305,9 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
                 <Tabs defaultValue="overview" className="w-full">
                   <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    {isGroupSession && (
-                      <TabsTrigger value="kids">
-                        Kids {totalKids > 0 && `(${totalKids})`}
-                      </TabsTrigger>
-                    )}
+                    <TabsTrigger value="kids">
+                      Kids {totalKids > 0 && `(${totalKids})`}
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="overview" className="mt-6 space-y-6">
@@ -327,101 +356,99 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
                     </div>
                   </TabsContent>
 
-                  {isGroupSession && (
-                    <TabsContent value="kids" className="mt-6">
-                      {totalKids === 0 ? (
-                        <div className="text-center py-12">
-                          <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-sm text-muted-foreground">No kids enrolled in this session</p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {kids.map((kid: any) => (
-                            <Card key={kid.id} className="overflow-hidden">
-                              <CardHeader className="pb-3">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-lg flex items-center gap-2">
-                                    <Baby className="h-4 w-4" />
-                                    {kid.name}
-                                  </CardTitle>
-                                  <Badge variant="outline">{kid.gender}</Badge>
+                  <TabsContent value="kids" className="mt-6">
+                    {totalKids === 0 ? (
+                      <div className="text-center py-12">
+                        <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-sm text-muted-foreground">No kids enrolled in this session</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {kids.map((kid: any) => (
+                          <Card key={kid.id} className="overflow-hidden">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                  <Baby className="h-4 w-4" />
+                                  {kid.name}
+                                </CardTitle>
+                                <Badge variant="outline">{kid.gender}</Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Birth Date</p>
+                                  <p className="font-medium">{new Date(kid.birthDate).toLocaleDateString()}</p>
                                 </div>
-                              </CardHeader>
-                              <CardContent className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground text-xs">Session Type</p>
+                                  <p className="font-medium">{formatSessionType(kid.sessionType)}</p>
+                                </div>
+                              </div>
+
+                              {kid.goal && (
+                                <div className="flex items-start gap-2 pt-2 border-t">
+                                  <Target className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                   <div>
-                                    <p className="text-muted-foreground text-xs">Birth Date</p>
-                                    <p className="font-medium">{new Date(kid.birthDate).toLocaleDateString()}</p>
+                                    <p className="text-xs text-muted-foreground mb-1">Goal</p>
+                                    <p className="text-sm">{kid.goal}</p>
                                   </div>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 pt-2 border-t">
+                                <div className="flex items-center gap-2">
+                                  <Activity
+                                    className={`h-4 w-4 ${
+                                      kid.currentlyInSports
+                                        ? 'text-green-600'
+                                        : 'text-muted-foreground'
+                                    }`}
+                                  />
+                                  <span className="text-xs text-muted-foreground">
+                                    {kid.currentlyInSports ? 'In Sports' : 'Not in Sports'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {kid.medicalConditions && kid.medicalConditions.length > 0 && (
+                                <div className="flex items-start gap-2 pt-2 border-t">
+                                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                                   <div>
-                                    <p className="text-muted-foreground text-xs">Session Type</p>
-                                    <p className="font-medium">{formatSessionType(kid.sessionType)}</p>
+                                    <p className="text-xs text-muted-foreground mb-1">
+                                      Medical Conditions
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {kid.medicalConditions.map((condition: string, idx: number) => (
+                                        <Badge key={idx} variant="secondary" className="text-xs">
+                                          {condition}
+                                        </Badge>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
+                              )}
 
-                                {kid.goal && (
-                                  <div className="flex items-start gap-2 pt-2 border-t">
-                                    <Target className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Goal</p>
-                                      <p className="text-sm">{kid.goal}</p>
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="flex items-center gap-4 pt-2 border-t">
-                                  <div className="flex items-center gap-2">
-                                    <Activity
-                                      className={`h-4 w-4 ${
-                                        kid.currentlyInSports
-                                          ? 'text-green-600'
-                                          : 'text-muted-foreground'
-                                      }`}
-                                    />
-                                    <span className="text-xs text-muted-foreground">
-                                      {kid.currentlyInSports ? 'In Sports' : 'Not in Sports'}
-                                    </span>
+                              {kid.achievements && kid.achievements.length > 0 && (
+                                <div className="flex items-start gap-2 pt-2 border-t">
+                                  <Award className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-1">
+                                      Achievements
+                                    </p>
+                                    <p className="text-xs">
+                                      {kid.achievements.length} achievement(s)
+                                    </p>
                                   </div>
                                 </div>
-
-                                {kid.medicalConditions && kid.medicalConditions.length > 0 && (
-                                  <div className="flex items-start gap-2 pt-2 border-t">
-                                    <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">
-                                        Medical Conditions
-                                      </p>
-                                      <div className="flex flex-wrap gap-1">
-                                        {kid.medicalConditions.map((condition: string, idx: number) => (
-                                          <Badge key={idx} variant="secondary" className="text-xs">
-                                            {condition}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {kid.achievements && kid.achievements.length > 0 && (
-                                  <div className="flex items-start gap-2 pt-2 border-t">
-                                    <Award className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">
-                                        Achievements
-                                      </p>
-                                      <p className="text-xs">
-                                        {kid.achievements.length} achievement(s)
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      )}
-                    </TabsContent>
-                  )}
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
                 </Tabs>
               )}
             </div>

@@ -44,14 +44,34 @@ export function ExtraSessionRequestsTable() {
     },
   });
 
+  // Helper to get name from populated object or return ID
+  const getParentName = (parentId: any): string => {
+    if (!parentId) return 'N/A';
+    if (typeof parentId === 'string') return parentId;
+    if (typeof parentId === 'object') {
+      if (parentId.parentProfile?.name) return parentId.parentProfile.name;
+      if (parentId.email) return parentId.email;
+    }
+    return 'N/A';
+  };
+
+  const getKidName = (kidId: any): string => {
+    if (!kidId) return 'N/A';
+    if (typeof kidId === 'string') return kidId;
+    if (typeof kidId === 'object' && kidId.name) return kidId.name;
+    return 'N/A';
+  };
+
   const columns: ColumnDef<ExtraSessionRequest>[] = [
     {
       accessorKey: 'parentId',
-      header: 'Parent ID',
+      header: 'Parent Name',
+      cell: ({ row }) => getParentName(row.original.parentId),
     },
     {
       accessorKey: 'kidId',
-      header: 'Kid ID',
+      header: 'Kid Name',
+      cell: ({ row }) => getKidName(row.original.kidId),
     },
     {
       accessorKey: 'preferredDateTime',
