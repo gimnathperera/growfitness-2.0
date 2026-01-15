@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useMemo } from 'react';
 
 interface WeeklySessionsChartProps {
   data: WeeklySession[];
@@ -17,6 +18,16 @@ interface WeeklySessionsChartProps {
 }
 
 export function WeeklySessionsChart({ data, isLoading }: WeeklySessionsChartProps) {
+  // Get chart color from CSS variable
+  const chartColor = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const root = getComputedStyle(document.documentElement);
+      const chart1Hsl = root.getPropertyValue('--chart-1').trim();
+      return `hsl(${chart1Hsl})`;
+    }
+    return 'hsl(150, 25%, 19%)'; // Fallback to #243F36
+  }, []);
+
   if (isLoading) {
     return (
       <Card>
@@ -44,7 +55,7 @@ export function WeeklySessionsChart({ data, isLoading }: WeeklySessionsChartProp
             <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#8884d8" strokeWidth={2} />
+            <Line type="monotone" dataKey="count" stroke={chartColor} strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

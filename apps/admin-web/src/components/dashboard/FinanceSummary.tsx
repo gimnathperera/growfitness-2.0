@@ -34,25 +34,25 @@ export function FinanceSummary({ data, isLoading }: FinanceSummaryProps) {
       title: 'Total Revenue',
       value: formatCurrency(data.totalRevenue),
       icon: DollarSign,
-      className: 'text-green-600',
+      className: 'text-success',
     },
     {
       title: 'Pending Invoices',
       value: data.pendingInvoices,
       icon: AlertCircle,
-      className: 'text-yellow-600',
+      className: 'text-warning',
     },
     {
       title: 'Paid Invoices',
       value: data.paidInvoices,
       icon: CheckCircle,
-      className: 'text-green-600',
+      className: 'text-success',
     },
     {
       title: 'Overdue Invoices',
       value: data.overdueInvoices,
       icon: TrendingUp,
-      className: 'text-red-600',
+      className: 'text-destructive',
     },
   ];
 
