@@ -5,10 +5,11 @@ import {
   SessionStatus,
   RequestStatus,
   InvoiceStatus,
+  ReportStatus,
 } from '@grow-fitness/shared-types';
 
 interface StatusBadgeProps {
-  status: UserStatus | SessionStatus | RequestStatus | InvoiceStatus;
+  status: UserStatus | SessionStatus | RequestStatus | InvoiceStatus | ReportStatus;
   className?: string;
 }
 
@@ -31,6 +32,9 @@ const statusVariantMap: Record<string, 'default' | 'secondary' | 'destructive' |
   // Invoice Status
   PAID: 'default',
   OVERDUE: 'destructive',
+  // Report Status
+  GENERATED: 'default',
+  FAILED: 'destructive',
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

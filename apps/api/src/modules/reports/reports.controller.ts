@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards, Res, Header } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,6 +7,7 @@ import {
   ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -66,5 +67,20 @@ export class ReportsController {
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
   delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
     return this.reportsService.delete(id, actorId);
+  }
+
+  @Get(':id/export/csv')
+  @ApiOperation({ summary: 'Export report as CSV' })
+  @ApiResponse({ status: 200, description: 'CSV file' })
+  @ApiResponse({ status: 404, description: 'Report not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format or report not generated' })
+  @Header('Content-Type', 'text/csv')
+  @Header('Content-Disposition', 'attachment; filename="report.csv"')
+  async exportCSV(@Param('id', ObjectIdValidationPipe) id: string, @Res() res: Response) {
+    const csv = await this.reportsService.exportCSV(id);
+    const report = await this.reportsService.findById(id);
+    const filename = `${report.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.csv`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
   }
 }

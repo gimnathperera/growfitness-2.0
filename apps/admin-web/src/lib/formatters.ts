@@ -7,6 +7,8 @@ import {
   InvoiceType,
   SessionType,
   BannerTargetAudience,
+  ReportType,
+  ReportStatus,
 } from '@grow-fitness/shared-types';
 
 export function formatDate(date: Date | string | null | undefined): string {
@@ -104,4 +106,20 @@ export function formatBannerTargetAudience(audience: BannerTargetAudience): stri
     ALL: 'All',
   };
   return audienceMap[audience] || audience;
+}
+
+export function formatReportType(type: ReportType): string {
+  return type
+    .split('_')
+    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+export function formatReportStatus(status: ReportStatus): string {
+  const statusMap: Record<ReportStatus, string> = {
+    PENDING: 'Pending',
+    GENERATED: 'Generated',
+    FAILED: 'Failed',
+  };
+  return statusMap[status] || status;
 }

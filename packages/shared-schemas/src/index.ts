@@ -5,6 +5,7 @@ import {
   InvoiceType,
   BannerTargetAudience,
   QuestionType,
+  ReportType,
 } from '@grow-fitness/shared-types';
 
 // Auth Schemas
@@ -313,3 +314,24 @@ export const UpdateQuizSchema = z.object({
 });
 
 export type UpdateQuizDto = z.infer<typeof UpdateQuizSchema>;
+
+// Report Schemas
+export const CreateReportSchema = z.object({
+  type: z.nativeEnum(ReportType),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  startDate: z.string().or(z.date()).optional(),
+  endDate: z.string().or(z.date()).optional(),
+  filters: z.record(z.unknown()).optional(),
+});
+
+export type CreateReportDto = z.infer<typeof CreateReportSchema>;
+
+export const GenerateReportSchema = z.object({
+  type: z.nativeEnum(ReportType),
+  startDate: z.string().or(z.date()).optional(),
+  endDate: z.string().or(z.date()).optional(),
+  filters: z.record(z.unknown()).optional(),
+});
+
+export type GenerateReportDto = z.infer<typeof GenerateReportSchema>;

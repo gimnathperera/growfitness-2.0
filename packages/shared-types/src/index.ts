@@ -55,6 +55,20 @@ export enum QuestionType {
   SHORT_ANSWER = 'SHORT_ANSWER',
 }
 
+export enum ReportType {
+  ATTENDANCE = 'ATTENDANCE',
+  PERFORMANCE = 'PERFORMANCE',
+  FINANCIAL = 'FINANCIAL',
+  SESSION_SUMMARY = 'SESSION_SUMMARY',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum ReportStatus {
+  PENDING = 'PENDING',
+  GENERATED = 'GENERATED',
+  FAILED = 'FAILED',
+}
+
 // Types
 export interface User {
   id: string;
@@ -224,6 +238,22 @@ export interface Quiz {
   targetAudience: BannerTargetAudience;
   isActive: boolean;
   passingScore?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Report {
+  id: string;
+  type: ReportType;
+  title: string;
+  description?: string;
+  status: ReportStatus;
+  startDate?: Date;
+  endDate?: Date;
+  filters?: Record<string, unknown>;
+  data?: Record<string, unknown>;
+  fileUrl?: string;
+  generatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
