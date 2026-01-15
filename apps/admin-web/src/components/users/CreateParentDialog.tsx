@@ -154,18 +154,23 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {step === 1 ? 'Create Parent - Step 1' : 'Create Parent - Step 2'}
-          </DialogTitle>
-          <DialogDescription>
-            {step === 1 ? 'Enter parent information' : 'Enter kids information'}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl p-0 flex flex-col max-h-[90vh]">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Sticky Header */}
+          <div className="pb-3 border-b bg-muted/30 flex-shrink-0">
+            <DialogHeader className="space-y-1 px-6 pt-6">
+              <DialogTitle className="text-xl">
+                {step === 1 ? 'Create Parent - Step 1' : 'Create Parent - Step 2'}
+              </DialogTitle>
+              <DialogDescription className="text-sm">
+                {step === 1 ? 'Enter parent information' : 'Enter kids information'}
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="create-parent-form" className="space-y-4">
             {step === 1 ? (
               <>
                 <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
@@ -329,6 +334,11 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
               </>
             )}
 
+            </form>
+          </div>
+
+          {/* Sticky Footer */}
+          <div className="px-6 py-3 border-t bg-muted/30 flex-shrink-0">
             <div className="flex justify-between">
               {step === 2 && (
                 <Button type="button" variant="outline" onClick={() => setStep(1)}>
@@ -344,13 +354,13 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={createMutation.isPending}>
+                  <Button type="submit" form="create-parent-form" disabled={createMutation.isPending}>
                     {createMutation.isPending ? 'Creating...' : 'Create Parent'}
                   </Button>
                 )}
               </div>
             </div>
-          </form>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

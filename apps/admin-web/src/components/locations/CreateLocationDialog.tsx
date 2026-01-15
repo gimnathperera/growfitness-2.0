@@ -76,31 +76,40 @@ export function CreateLocationDialog({ open, onOpenChange }: CreateLocationDialo
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Location</DialogTitle>
-          <DialogDescription>Add a new training location</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="p-0 flex flex-col max-h-[90vh]">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Sticky Header */}
+          <div className="pb-3 border-b bg-muted/30 flex-shrink-0">
+            <DialogHeader className="space-y-1 px-6 pt-6">
+              <DialogTitle className="text-xl">Create Location</DialogTitle>
+              <DialogDescription className="text-sm">Add a new training location</DialogDescription>
+            </DialogHeader>
+          </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
-            <Input {...form.register('name')} />
-          </CustomFormField>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="create-location-form" className="space-y-4">
+              <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
+                <Input {...form.register('name')} />
+              </CustomFormField>
 
-          <CustomFormField label="Address" required error={form.formState.errors.address?.message}>
-            <Input {...form.register('address')} />
-          </CustomFormField>
+              <CustomFormField label="Address" required error={form.formState.errors.address?.message}>
+                <Input {...form.register('address')} />
+              </CustomFormField>
+            </form>
+          </div>
 
+          {/* Sticky Footer */}
+          <div className="px-6 py-3 border-t bg-muted/30 flex-shrink-0">
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
+              <Button type="submit" form="create-location-form" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'Creating...' : 'Create Location'}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

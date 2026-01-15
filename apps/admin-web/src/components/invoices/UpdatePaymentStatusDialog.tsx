@@ -97,49 +97,58 @@ export function UpdatePaymentStatusDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Update Payment Status</DialogTitle>
-          <DialogDescription>Update invoice payment status</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="p-0 flex flex-col max-h-[90vh]">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Sticky Header */}
+          <div className="pb-3 border-b bg-muted/30 flex-shrink-0">
+            <DialogHeader className="space-y-1 px-6 pt-6">
+              <DialogTitle className="text-xl">Update Payment Status</DialogTitle>
+              <DialogDescription className="text-sm">Update invoice payment status</DialogDescription>
+            </DialogHeader>
+          </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <CustomFormField label="Status" required error={form.formState.errors.status?.message}>
-            <Select
-              value={form.watch('status')}
-              onValueChange={value => form.setValue('status', value as InvoiceStatus)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={InvoiceStatus.PENDING}>Pending</SelectItem>
-                <SelectItem value={InvoiceStatus.PAID}>Paid</SelectItem>
-                <SelectItem value={InvoiceStatus.OVERDUE}>Overdue</SelectItem>
-              </SelectContent>
-            </Select>
-          </CustomFormField>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="update-payment-status-form" className="space-y-4">
+              <CustomFormField label="Status" required error={form.formState.errors.status?.message}>
+                <Select
+                  value={form.watch('status')}
+                  onValueChange={value => form.setValue('status', value as InvoiceStatus)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={InvoiceStatus.PENDING}>Pending</SelectItem>
+                    <SelectItem value={InvoiceStatus.PAID}>Paid</SelectItem>
+                    <SelectItem value={InvoiceStatus.OVERDUE}>Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CustomFormField>
 
-          {form.watch('status') === InvoiceStatus.PAID && (
-            <CustomFormField label="Paid At" error={form.formState.errors.paidAt?.message}>
-              <input
-                type="datetime-local"
-                {...form.register('paidAt')}
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </CustomFormField>
-          )}
+              {form.watch('status') === InvoiceStatus.PAID && (
+                <CustomFormField label="Paid At" error={form.formState.errors.paidAt?.message}>
+                  <input
+                    type="datetime-local"
+                    {...form.register('paidAt')}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </CustomFormField>
+              )}
+            </form>
+          </div>
 
+          {/* Sticky Footer */}
+          <div className="px-6 py-3 border-t bg-muted/30 flex-shrink-0">
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending}>
+              <Button type="submit" form="update-payment-status-form" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? 'Updating...' : 'Update'}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -78,43 +78,52 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Coach</DialogTitle>
-          <DialogDescription>Add a new coach to the system</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="p-0 flex flex-col max-h-[90vh]">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Sticky Header */}
+          <div className="pb-3 border-b bg-muted/30 flex-shrink-0">
+            <DialogHeader className="space-y-1 px-6 pt-6">
+              <DialogTitle className="text-xl">Create Coach</DialogTitle>
+              <DialogDescription className="text-sm">Add a new coach to the system</DialogDescription>
+            </DialogHeader>
+          </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
-            <Input {...form.register('name')} />
-          </CustomFormField>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
+            <form onSubmit={form.handleSubmit(onSubmit)} id="create-coach-form" className="space-y-4">
+              <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
+                <Input {...form.register('name')} />
+              </CustomFormField>
 
-          <CustomFormField label="Email" required error={form.formState.errors.email?.message}>
-            <Input type="email" {...form.register('email')} />
-          </CustomFormField>
+              <CustomFormField label="Email" required error={form.formState.errors.email?.message}>
+                <Input type="email" {...form.register('email')} />
+              </CustomFormField>
 
-          <CustomFormField label="Phone" required error={form.formState.errors.phone?.message}>
-            <Input {...form.register('phone')} />
-          </CustomFormField>
+              <CustomFormField label="Phone" required error={form.formState.errors.phone?.message}>
+                <Input {...form.register('phone')} />
+              </CustomFormField>
 
-          <CustomFormField
-            label="Password"
-            required
-            error={form.formState.errors.password?.message}
-          >
-            <Input type="password" {...form.register('password')} />
-          </CustomFormField>
+              <CustomFormField
+                label="Password"
+                required
+                error={form.formState.errors.password?.message}
+              >
+                <Input type="password" {...form.register('password')} />
+              </CustomFormField>
+            </form>
+          </div>
 
+          {/* Sticky Footer */}
+          <div className="px-6 py-3 border-t bg-muted/30 flex-shrink-0">
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
+              <Button type="submit" form="create-coach-form" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'Creating...' : 'Create Coach'}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
