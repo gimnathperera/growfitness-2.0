@@ -69,7 +69,7 @@ export function EditKidDialog({ open, onOpenChange, kid }: EditKidDialogProps) {
   }, [open, kid, form]);
 
   const updateMutation = useApiMutation(
-    (data: UpdateKidDto) => kidsService.updateKid(kid._id, data),
+    (data: UpdateKidDto) => kidsService.updateKid(kid.id, data),
     {
       invalidateQueries: [['kids']],
       onSuccess: () => {
@@ -103,73 +103,75 @@ export function EditKidDialog({ open, onOpenChange, kid }: EditKidDialogProps) {
 
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
-            <Input {...form.register('name')} />
-          </CustomFormField>
+            <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
+              <Input {...form.register('name')} />
+            </CustomFormField>
 
-          <CustomFormField label="Gender" required error={form.formState.errors.gender?.message}>
-            <Select
-              value={form.watch('gender')}
-              onValueChange={value => form.setValue('gender', value)}
+            <CustomFormField label="Gender" required error={form.formState.errors.gender?.message}>
+              <Select
+                value={form.watch('gender')}
+                onValueChange={value => form.setValue('gender', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </CustomFormField>
+
+            <CustomFormField
+              label="Birth Date"
+              required
+              error={form.formState.errors.birthDate?.message}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </CustomFormField>
+              <DatePicker
+                date={
+                  form.watch('birthDate') ? new Date(form.watch('birthDate') as string) : undefined
+                }
+                onSelect={date =>
+                  form.setValue('birthDate', date ? format(date, 'yyyy-MM-dd') : '')
+                }
+              />
+            </CustomFormField>
 
-          <CustomFormField
-            label="Birth Date"
-            required
-            error={form.formState.errors.birthDate?.message}
-          >
-            <DatePicker
-              date={
-                form.watch('birthDate') ? new Date(form.watch('birthDate') as string) : undefined
-              }
-              onSelect={date => form.setValue('birthDate', date ? format(date, 'yyyy-MM-dd') : '')}
-            />
-          </CustomFormField>
+            <CustomFormField label="Goal" error={form.formState.errors.goal?.message}>
+              <Input {...form.register('goal')} />
+            </CustomFormField>
 
-          <CustomFormField label="Goal" error={form.formState.errors.goal?.message}>
-            <Input {...form.register('goal')} />
-          </CustomFormField>
-
-          <CustomFormField
-            label="Session Type"
-            required
-            error={form.formState.errors.sessionType?.message}
-          >
-            <Select
-              value={form.watch('sessionType')}
-              onValueChange={value => form.setValue('sessionType', value as SessionType)}
+            <CustomFormField
+              label="Session Type"
+              required
+              error={form.formState.errors.sessionType?.message}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
-                <SelectItem value={SessionType.GROUP}>Group</SelectItem>
-              </SelectContent>
-            </Select>
-          </CustomFormField>
+              <Select
+                value={form.watch('sessionType')}
+                onValueChange={value => form.setValue('sessionType', value as SessionType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
+                  <SelectItem value={SessionType.GROUP}>Group</SelectItem>
+                </SelectContent>
+              </Select>
+            </CustomFormField>
 
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="currentlyInSports"
-              {...form.register('currentlyInSports')}
-              className="rounded"
-            />
-            <label htmlFor="currentlyInSports" className="text-sm">
-              Currently in sports
-            </label>
-          </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="currentlyInSports"
+                {...form.register('currentlyInSports')}
+                className="rounded"
+              />
+              <label htmlFor="currentlyInSports" className="text-sm">
+                Currently in sports
+              </label>
+            </div>
 
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

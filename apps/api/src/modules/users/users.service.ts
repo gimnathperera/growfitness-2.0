@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { UserRole, UserStatus } from '@grow-fitness/shared-types';
@@ -60,7 +60,8 @@ export class UsersService {
       });
     }
 
-    const kids = await this.kidModel.find({ parentId: id }).exec();
+    // Convert string id to ObjectId for querying kids
+    const kids = await this.kidModel.find({ parentId: new Types.ObjectId(id) }).exec();
 
     return {
       ...parent.toObject(),

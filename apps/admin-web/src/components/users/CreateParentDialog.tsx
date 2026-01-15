@@ -111,9 +111,18 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
     }
   );
 
+  const handleNext = async () => {
+    // Validate only Step 1 fields before advancing
+    const isValid = await form.trigger(['name', 'email', 'phone', 'password']);
+    if (isValid) {
+      setStep(2);
+    }
+  };
+
   const onSubmit = (data: CreateParentDto) => {
     if (step === 1) {
-      setStep(2);
+      // This shouldn't be called for step 1, but handle it just in case
+      handleNext();
     } else {
       const formattedData = {
         ...data,
@@ -308,9 +317,15 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {step === 1 ? 'Next' : createMutation.isPending ? 'Creating...' : 'Create Parent'}
-              </Button>
+              {step === 1 ? (
+                <Button type="button" onClick={handleNext}>
+                  Next
+                </Button>
+              ) : (
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? 'Creating...' : 'Create Parent'}
+                </Button>
+              )}
             </div>
           </div>
           </form>
