@@ -1,38 +1,129 @@
+/* src/index.css */
+
+/* ------------------- */
+/* Tailwind Directives  */
+/* ------------------- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------- */
+/* Custom Font Declarations */
+/* ------------------- */
+@font-face {
+  font-family: 'Insanibc';
+  src: url('./assets/fonts/Insanibc.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Now-Regular';
+  src: url('./assets/fonts/Now-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------- */
+/* CSS Variables / Theme */
+/* ------------------- */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Now-Regular', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color: #1f2937;
+  background-color: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --radius: 0.625rem;
+
+  /* Brand / GrowFitness Palette */
+  --background: #ffffff;
+  --foreground: #243e36;
+  --card: #ffffff;
+  --card-foreground: #1f2937;
+  --popover: #ffffff;
+  --popover-foreground: #1f2937;
+  --primary: #23b685;
+  --primary-foreground: #ffffff;
+  --secondary: #f0fdf4;
+  --secondary-foreground: #23b685;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #fffd77;
+  --accent-foreground: #243e36;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #f9fafb;
+  --ring: #23b685;
+
+  /* Grow Colors */
+  --grow-50: #f0fdf4;
+  --grow-100: #dcfce7;
+  --grow-200: #bbf7d0;
+  --grow-300: #86efac;
+  --grow-400: #4ade80;
+  --grow-500: #22c55e;
+  --grow-600: #16a34a;
+  --grow-700: #15803d;
+  --grow-800: #166534;
+  --grow-900: #14532d;
+  --grow-950: #052e16;
+
+  /* Chart colors */
+  --chart-1: #23b685;
+  --chart-2: #10b981;
+  --chart-3: #84cc16;
+  --chart-4: #fffd77;
+  --chart-5: #059669;
+
+  /* Sidebar colors */
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #1f2937;
+  --sidebar-primary: #16a34a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0fdf4;
+  --sidebar-accent-foreground: #15803d;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #16a34a;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
+/* ------------------- */
+/* Global Element Styles */
+/* ------------------- */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  width: 100%;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Insanibc', system-ui, Arial, sans-serif;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #15803d;
 }
 
 button {
@@ -41,28 +132,39 @@ button {
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  font-family: 'Now-Regular', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #f9faf9;
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  border-color: var(--primary);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+button:focus,
+button:focus-visible {
+  outline: none;
+}
+
+/* ------------------- */
+/* Tailwind Base Layer Overrides */
+/* ------------------- */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  a:hover {
-    color: #747bff;
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Now-Regular', system-ui, sans-serif;
   }
-  button {
-    background-color: #f9f9f9;
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Insanibc', system-ui, sans-serif;
+  }
+
+  a {
+    color: var(--primary);
   }
 }
