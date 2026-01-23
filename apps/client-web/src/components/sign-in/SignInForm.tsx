@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -11,45 +11,51 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/auth/useAuth';
-import type { LoginDto } from '@/services/authApi';
-import { getDefaultRouteForRole } from '@/auth/navigation';
+import { LoadingSpinner } from '../common/LoadingSpinner';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { LoginSchema } from '@grow-fitness/shared-schemas';
+import { useForm } from 'react-hook-form';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
+  const { login, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<LoginDto>({
-    email: '',
-    password: '',
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<{ email: string; password: string }>({
+    resolver: zodResolver(LoginSchema),
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev: LoginDto) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
+  const onSubmit = async (data: { email: string; password: string }) => {
     try {
-      const response = await login(formData);
-      const from = (location.state as { from?: string })?.from;
-      const destination = from ?? getDefaultRouteForRole(response.user.role);
-      navigate(destination, { replace: true });
-    } catch (err) {
-      const message =
-        typeof err === 'object' &&
-        err &&
-        'data' in err &&
-        typeof (err as { data?: { message?: string } }).data?.message ===
-          'string'
-          ? (err as { data?: { message?: string } }).data?.message
-          : 'Unable to sign in. Please check your credentials and try again.';
-      setError(message ?? null);
+      setError(null);
+      await login(data.email, data.password);
+      navigate('/dashboard', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-accent py-12 px-4 sm:px-6 lg:px-8">
@@ -75,14 +81,13 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={e => handleInputChange('email', e.target.value)}
+                  {...register('email')}
                   required
                 />
               </div>
@@ -92,8 +97,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  value={formData.password}
-                  onChange={e => handleInputChange('password', e.target.value)}
+                  {...register('password')}
                   required
                 />
               </div>
@@ -110,9 +114,9 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full !bg-primary !text-white hover:!bg-primary/90"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
-                {isLoading ? 'Signing In...' : 'Sign In'}
+                {isSubmitting ? 'Signing In...' : 'Sign In'}
               </Button>
 
               <div>

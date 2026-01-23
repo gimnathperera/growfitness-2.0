@@ -4,6 +4,7 @@ import { Layout } from "./components/layout/Layout";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import SignInForm from "./components/sign-in/SignInForm";
+import DashboardPage from "./components/dashboard/DashboardPage";
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Route>
       </Routes>
     </AuthProvider>
