@@ -125,7 +125,7 @@ function CTASection() {
         </p>
 
         <AnimatedButton
-          href="/collect-info"
+          href="/free-session"
           variant="gradient"
           size="lg"
           rightIcon={ArrowRight}

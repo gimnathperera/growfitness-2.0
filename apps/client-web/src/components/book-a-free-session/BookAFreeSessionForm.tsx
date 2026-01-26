@@ -1,50 +1,48 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
-import { useCreateCollectInfoMutation } from '@/services/collectInfoApi';
 import CollectInfoFlow from './CollectInfoFlow';
-import { useHandleError } from '@/lib/errors'; 
+import { useHandleError } from '@/lib/errors';
 import { toast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
+import { requestsService } from '@/services/requests.service';
 
-const CollectInfoPage: React.FC = () => {
+const BookAFreeSessionForm: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [createCollectInfo, { isLoading }] = useCreateCollectInfoMutation();
+  const handleError = useHandleError();  // Moved to the top level
 
   const handleCollectInfoSubmit = async (data: CreateFreeSessionRequestDto) => {
     try {
       setSubmitError(null);
+      setIsLoading(true);
 
-      // 30-second timeout
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Request timeout')), 30000);
       });
 
-      await Promise.race([createCollectInfo(data).unwrap(), timeoutPromise]);
+      await Promise.race([
+        requestsService.selectFreeSessionRequest(data.selectedSessionId),
+        timeoutPromise,
+      ]);
 
-      // Show success toast
       toast({
         title: 'Success',
-        description: "🎉 Request submitted successfully! We'll contact you soon to schedule your free session.",
-        variant: 'default',
+        description:
+          "🎉 Request submitted successfully! We'll contact you soon to schedule your free session.",
       });
 
-      // Optional: navigate or trigger confetti
+      navigate('/');
     } catch (error) {
-      // Use centralized error handler
-      const appError = useHandleError(error);
-
-      // Show inline error if needed
+      const appError = handleError(error);  // Using the function returned by the hook
       setSubmitError(appError.message);
-    } 
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    navigate('/');
-  };
-
-  const handleSubmitSuccess = () => {
     navigate('/');
   };
 
@@ -58,7 +56,7 @@ const CollectInfoPage: React.FC = () => {
       <CollectInfoFlow
         onSubmit={handleCollectInfoSubmit}
         onCancel={handleCancel}
-        onSubmitSuccess={handleSubmitSuccess}
+        onSubmitSuccess={() => navigate('/')}
         isLoading={isLoading}
         error={submitError}
         onRetry={handleRetry}
@@ -67,4 +65,4 @@ const CollectInfoPage: React.FC = () => {
   );
 };
 
-export default CollectInfoPage;
+export default BookAFreeSessionForm;

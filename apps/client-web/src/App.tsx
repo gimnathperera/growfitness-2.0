@@ -3,8 +3,9 @@ import { HomePage } from "./pages/HomePage";
 import { Layout } from "./components/layout/Layout";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
-import SignInForm from "./components/sign-in/SignInForm";
 import DashboardPage from "./components/dashboard/DashboardPage";
+import SignInPage from "./pages/SignInPage";
+import BookAFreeSession from "./pages/BookAFreeSession";
 
 function App() {
   return (
@@ -13,7 +14,8 @@ function App() {
         {/* ---------- PUBLIC ROUTES ---------- */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<SignInForm />} />
+          <Route path="/login" element={<SignInPage />} />
+          <Route path="/free-session" element={<BookAFreeSession />} />
         </Route>
 
         {/* ---------- PROTECTED ROUTES ---------- */}

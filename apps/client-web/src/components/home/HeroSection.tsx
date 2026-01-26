@@ -30,7 +30,7 @@ export default function HeroSection() {
       <div className="max-w-7xl mx-auto text-center relative z-10">
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
           <AnimatedButton
-            href="/collect-info"
+            href="/free-session"
             variant="default"
             size="lg"
             leftIcon={Users}

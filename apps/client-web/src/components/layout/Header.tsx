@@ -1,4 +1,4 @@
-import React, {
+import{
   useCallback,
   useEffect,
   useMemo,
@@ -98,7 +98,7 @@ export function Header() {
                       <Link
                         to="/login"
                         className={cn(
-                          'px-2 py-2 text-xs md:px-6 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] font-extrabold shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-white text-primary hover:bg-gray-100',
+                          'px-2 py-2 text-xs md:px-6 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-white text-primary hover:bg-gray-100',
                           isActive('/login') && 'bg-gray-100'
                         )}
                       >
@@ -107,10 +107,10 @@ export function Header() {
                     </NavigationMenuLink>
                     <NavigationMenuLink asChild>
                       <Link
-                        to="/collect-info"
+                        to="/free-session"
                          className={cn(
-                          'w-full md:w-auto px-3 py-2 text-xs md:px-8 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] font-extrabold shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-primary hover:bg-[#1e9c70] !text-white',
-                          isActive('/collect-info') && 'text-accent-foreground'
+                          'w-full md:w-auto px-3 py-2 text-xs md:px-8 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-primary hover:bg-[#1e9c70] !text-white',
+                          isActive('/free-session') && 'text-accent-foreground'
                     )}
                       >
                         Book Free Session
@@ -192,7 +192,7 @@ export function Header() {
                     Sign In
                   </Link>
                   <Link
-                    to="/collect-info"
+                    to="/free-session"
                     className="block px-3 py-2 rounded-md bg-primary text-white"
                   >
                     Book Free Session

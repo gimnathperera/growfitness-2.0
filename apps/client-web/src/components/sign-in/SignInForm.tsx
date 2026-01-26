@@ -40,8 +40,8 @@ export default function LoginPage() {
       setError(null);
       await login(data.email, data.password);
       navigate('/dashboard', { replace: true });
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
     }
   };
 
