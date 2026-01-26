@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FinanceSummary as FinanceSummaryType } from '@/services/dashboard.service';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { formatCurrency } from '@/lib/formatters';
-import { DollarSign, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Banknote, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface FinanceSummaryProps {
   data?: FinanceSummaryType;
@@ -33,7 +33,7 @@ export function FinanceSummary({ data, isLoading }: FinanceSummaryProps) {
     {
       title: 'Total Revenue',
       value: formatCurrency(data.totalRevenue),
-      icon: DollarSign,
+      icon: Banknote,
       className: 'text-success',
     },
     {
