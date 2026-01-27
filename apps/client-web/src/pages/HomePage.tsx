@@ -11,6 +11,10 @@ import { AnimatedButton } from '@/components/ui/animated-button';
 import HeroSection from '@/components/home/HeroSection';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
+import HeroBanner from '@/components/home/HeroBanner';
+import { useEffect, useState } from 'react';
+import type { Banner } from '@grow-fitness/shared-types';
+import { bannersService } from '@/services/banners.service';
 
 function BenefitsSection() {
   const benefits = [
@@ -141,21 +145,47 @@ function CTASection() {
 }
 
 function HomePage() {
-  return (
-    <div className="bg-gradient-to-br from-primary via-accent to-primary overflow-hidden">
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-16 h-16 bg-accent/20 rounded-full animate-bounce"></div>
-        <div className="absolute top-40 right-20 w-12 h-12 bg-white/20 rounded-full animate-pulse"></div>
-        <div className="absolute bottom-40 left-20 w-20 h-20 bg-primary/20 rounded-full animate-bounce delay-300"></div>
-        <div className="absolute bottom-20 right-10 w-14 h-14 bg-white/20 rounded-full animate-pulse delay-500"></div>
-      </div>
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-      <HeroSection />
-      <FeaturesSection />
-      <BenefitsSection />
-      <TestimonialsSection />
-      <CTASection />
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await bannersService.getBanners(1, 10);
+        setBanners(response.data);
+      } catch (error) {
+        console.error('Failed to load banners', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, []);
+
+  return (
+    <div>
+      <HeroBanner 
+        key={banners.length} 
+        banners={banners} 
+        loading={isLoading} 
+      />
+
+      <div className="bg-gradient-to-br from-primary via-accent to-primary overflow-hidden relative">
+        {/* Floating Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-16 h-16 bg-accent/20 rounded-full animate-bounce"></div>
+          <div className="absolute top-40 right-20 w-12 h-12 bg-white/20 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-40 left-20 w-20 h-20 bg-primary/20 rounded-full animate-bounce delay-300"></div>
+          <div className="absolute bottom-20 right-10 w-14 h-14 bg-white/20 rounded-full animate-pulse delay-500"></div>
+        </div>
+
+        <HeroSection />
+        <FeaturesSection />
+        <BenefitsSection />
+        <TestimonialsSection />
+        <CTASection />
+      </div>
     </div>
   );
 }
