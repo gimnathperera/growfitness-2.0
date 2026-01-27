@@ -55,7 +55,7 @@ export const authService = {
       }
 
       return response;
-    } catch (error) {
+    } catch {
       authService.clearAuth();
       return null;
     }
