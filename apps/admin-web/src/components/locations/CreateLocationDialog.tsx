@@ -16,6 +16,7 @@ import { useApiMutation } from '@/hooks/useApiMutation';
 import { locationsService } from '@/services/locations.service';
 import { useToast } from '@/hooks/useToast';
 import { useModalParams } from '@/hooks/useModalParams';
+import { MapPicker } from '@/components/common/MapPicker';
 
 interface CreateLocationDialogProps {
   open: boolean;
@@ -37,6 +38,7 @@ export function CreateLocationDialog({ open, onOpenChange }: CreateLocationDialo
   const defaultValues = {
     name: '',
     address: '',
+    geo: undefined,
   };
 
   const form = useForm<CreateLocationDto>({
@@ -96,6 +98,21 @@ export function CreateLocationDialog({ open, onOpenChange }: CreateLocationDialo
               <CustomFormField label="Address" required error={form.formState.errors.address?.message}>
                 <Input {...form.register('address')} />
               </CustomFormField>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Location Map
+                </label>
+                <div className="h-[300px] w-full rounded-md border overflow-hidden">
+                  <MapPicker
+                    value={form.watch('geo')}
+                    onChange={value => form.setValue('geo', value)}
+                  />
+                </div>
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Click on the map to select the location coordinates.
+                </p>
+              </div>
             </form>
           </div>
 

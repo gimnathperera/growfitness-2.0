@@ -24,13 +24,14 @@ export function AuditLogDetailsDialog({ open, onOpenChange, log }: AuditLogDetai
           <DialogDescription>View audit log information</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 py-4">
+          
+
+          <Separator />
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Action</h3>
             <p className="text-sm font-medium">{log.action}</p>
           </div>
-
-          <Separator />
 
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Entity Type</h3>

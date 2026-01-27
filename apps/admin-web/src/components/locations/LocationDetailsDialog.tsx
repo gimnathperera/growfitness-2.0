@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { locationsService } from '@/services/locations.service';
 import { useModalParams } from '@/hooks/useModalParams';
+import { MapPicker } from '@/components/common/MapPicker';
 import { MapPin, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 
 interface LocationDetailsDialogProps {
@@ -144,6 +145,20 @@ export function LocationDetailsDialog({
                       <h4 className="text-sm font-medium text-muted-foreground mb-1">Name</h4>
                       <p className="text-sm">{location.name}</p>
                     </div>
+                    {location.geo && (
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                          Location Map
+                        </h4>
+                        <div className="h-[200px] w-full rounded-md border overflow-hidden mt-1">
+                          <MapPicker
+                            value={location.geo}
+                            onChange={() => {}}
+                            readOnly={true}
+                          />
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-1">Address</h4>
                       <p className="text-sm">{location.address}</p>

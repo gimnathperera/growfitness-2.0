@@ -19,6 +19,7 @@ import { locationsService } from '@/services/locations.service';
 import { useToast } from '@/hooks/useToast';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useModalParams } from '@/hooks/useModalParams';
+import { MapPicker } from '@/components/common/MapPicker';
 
 interface EditLocationDialogProps {
   open: boolean;
@@ -64,15 +65,17 @@ export function EditLocationDialog({ open, onOpenChange, location: locationProp 
       name: location.name,
       address: location.address,
       isActive: location.isActive,
+      geo: location.geo || undefined,
     },
   });
 
   useEffect(() => {
-    if (open) {
+    if (open && location) {
       form.reset({
         name: location.name,
         address: location.address,
         isActive: location.isActive,
+        geo: location.geo || undefined,
       });
     }
   }, [open, location, form]);
@@ -117,6 +120,21 @@ export function EditLocationDialog({ open, onOpenChange, location: locationProp 
               <CustomFormField label="Address" required error={form.formState.errors.address?.message}>
                 <Input {...form.register('address')} />
               </CustomFormField>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Location Map
+                </label>
+                <div className="h-[300px] w-full rounded-md border overflow-hidden">
+                  <MapPicker
+                    value={form.watch('geo')}
+                    onChange={value => form.setValue('geo', value)}
+                  />
+                </div>
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Click on the map to update the location coordinates.
+                </p>
+              </div>
 
               <div className="flex items-center space-x-2">
                 <Switch
