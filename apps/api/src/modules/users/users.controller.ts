@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
 import {
   ApiTags,
   ApiOperation,
@@ -23,7 +24,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserRole } from '@grow-fitness/shared-types';
+import { UserRole, UserStatus } from '@grow-fitness/shared-types';
 import {
   CreateParentDto,
   UpdateParentDto,
@@ -32,6 +33,8 @@ import {
 } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
+
+import { GetParentsQueryDto } from './dto/get-parents-query.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -44,27 +47,9 @@ export class UsersController {
   // Parents
   @Get('parents')
   @ApiOperation({ summary: 'Get all parents' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page (default: 10, max: 100)',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Search by email, phone, or name',
-  })
   @ApiResponse({ status: 200, description: 'List of parents' })
-  findParents(@Query() pagination: PaginationDto, @Query('search') search?: string) {
-    return this.usersService.findParents(pagination, search);
+  findParents(@Query() query: GetParentsQueryDto) {
+    return this.usersService.findParents(query, query.search, query.location, query.status);
   }
 
   @Get('parents/:id')

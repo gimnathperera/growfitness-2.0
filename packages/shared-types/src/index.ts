@@ -79,6 +79,7 @@ export interface User {
   status: UserStatus;
   parentProfile?: ParentProfile;
   coachProfile?: CoachProfile;
+  sessionTypes?: SessionType[];
   createdAt: Date;
   updatedAt: Date;
 }

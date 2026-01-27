@@ -18,10 +18,21 @@ import { UserDetailsDialog } from './UserDetailsDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useModalParams } from '@/hooks/useModalParams';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { UserStatus } from '@grow-fitness/shared-types';
 
 export function ParentsTable() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [search, setSearch] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('userId');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
@@ -52,8 +63,23 @@ export function ParentsTable() {
   const createDialogOpen = modal === 'create' && isOpen;
 
   const { data, isLoading, error } = useApiQuery(
-    ['users', 'parents', page.toString(), pageSize.toString(), search],
-    () => usersService.getParents(page, pageSize, search || undefined)
+    [
+      'users',
+      'parents',
+      page.toString(),
+      pageSize.toString(),
+      search,
+      locationFilter,
+      statusFilter,
+    ],
+    () =>
+      usersService.getParents(
+        page,
+        pageSize,
+        search || undefined,
+        locationFilter || undefined,
+        statusFilter === 'ALL' ? undefined : statusFilter
+      )
   );
 
   const deleteMutation = useApiMutation((id: string) => usersService.deleteParent(id), {
@@ -97,6 +123,26 @@ export function ParentsTable() {
       accessorKey: 'parentProfile.location',
       header: 'Location',
       cell: ({ row }) => row.original.parentProfile?.location || 'N/A',
+    },
+    {
+      id: 'sessionTypes',
+      header: 'Session Type',
+      cell: ({ row }) => {
+        const types = row.original.sessionTypes || [];
+        return (
+          <div className="flex gap-1 flex-wrap">
+            {types.length > 0 ? (
+              types.map(type => (
+                <Badge key={type} variant="secondary" className="text-xs">
+                  {type}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-muted-foreground text-sm">-</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'status',
@@ -146,8 +192,32 @@ export function ParentsTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <SearchInput placeholder="Search parents..." onSearch={setSearch} className="max-w-sm" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 flex-1">
+          <SearchInput
+            placeholder="Search parents..."
+            onSearch={setSearch}
+            className="w-[250px]"
+          />
+          <SearchInput
+            placeholder="Filter location..."
+            onSearch={setLocationFilter}
+            className="w-[200px]"
+          />
+          <Select
+            value={statusFilter}
+            onValueChange={value => setStatusFilter(value as UserStatus | 'ALL')}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value={UserStatus.ACTIVE}>Active</SelectItem>
+              <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />

@@ -1,5 +1,5 @@
 import { api } from './api';
-import { User, PaginatedResponse } from '@grow-fitness/shared-types';
+import { User, PaginatedResponse, UserStatus } from '@grow-fitness/shared-types';
 import {
   CreateParentDto,
   UpdateParentDto,
@@ -9,12 +9,20 @@ import {
 
 export const usersService = {
   // Parents
-  getParents: (page: number = 1, limit: number = 10, search?: string) => {
+  getParents: (
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    location?: string,
+    status?: UserStatus
+  ) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
     if (search) params.append('search', search);
+    if (location) params.append('location', location);
+    if (status) params.append('status', status);
     return api.get<PaginatedResponse<User>>(`/users/parents?${params.toString()}`);
   },
   getParentById: (id: string, includeUnapproved?: boolean) =>

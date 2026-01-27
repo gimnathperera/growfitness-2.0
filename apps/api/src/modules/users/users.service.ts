@@ -36,8 +36,20 @@ export class UsersService {
   ) {}
 
   // Parents
-  async findParents(pagination: PaginationDto, search?: string) {
-    const query: Record<string, unknown> = { role: UserRole.PARENT, isApproved: true };
+  async findParents(
+    pagination: PaginationDto,
+    search?: string,
+    location?: string,
+    status?: UserStatus
+  ) {
+    const query: Record<string, unknown> = { role: UserRole.PARENT };
+
+    if (status) {
+      query.status = status;
+    } else {
+      // Default behavior: only show approved parents
+      query.isApproved = true;
+    }
 
     if (search) {
       query.$or = [
@@ -47,11 +59,72 @@ export class UsersService {
       ];
     }
 
+    if (location) {
+      query['parentProfile.location'] = { $regex: location, $options: 'i' };
+    }
+
     const skip = (pagination.page - 1) * pagination.limit;
-    const [data, total] = await Promise.all([
-      this.userModel.find(query).skip(skip).limit(pagination.limit).exec(),
-      this.userModel.countDocuments(query).exec(),
-    ]);
+
+    const pipeline: any[] = [
+      { $match: query },
+      // Lookup kids to get their IDs and default session types
+      {
+        $lookup: {
+          from: 'kids',
+          localField: '_id',
+          foreignField: 'parentId',
+          as: 'kidsData',
+        },
+      },
+      // Lookup sessions where these kids are enrolled
+      {
+        $lookup: {
+          from: 'sessions',
+          let: { kidIds: '$kidsData._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $gt: [{ $size: { $setIntersection: ['$kids', '$$kidIds'] } }, 0] },
+                    { $ne: ['$status', 'CANCELLED'] }, // Only count non-cancelled sessions
+                  ],
+                },
+              },
+            },
+            { $project: { type: 1 } },
+          ],
+          as: 'matchedSessions',
+        },
+      },
+      {
+        $addFields: {
+          sessionTypes: {
+            $setUnion: [
+              { $ifNull: ['$kidsData.sessionType', []] },
+              { $ifNull: ['$matchedSessions.type', []] },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          kidsData: 0,
+          matchedSessions: 0,
+          passwordHash: 0,
+        },
+      },
+      {
+        $facet: {
+          data: [{ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: pagination.limit }],
+          total: [{ $count: 'count' }],
+        },
+      },
+    ];
+
+    const [result] = await this.userModel.aggregate(pipeline).exec();
+    const data = result.data;
+    const total = result.total[0]?.count || 0;
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
