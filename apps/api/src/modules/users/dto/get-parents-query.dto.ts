@@ -7,7 +7,7 @@ export class GetParentsQueryDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Search by email, phone, or name' })
   @IsOptional()
   @IsString()
-  override search?: string;
+  override search?: string = undefined;
 
   @ApiPropertyOptional({ description: 'Filter by location' })
   @IsOptional()
