@@ -26,6 +26,11 @@ type Props = {
 };
 
 export default function ScheduleTab({ kid }: Props) {
+  /* ------------------------------------------------------------------
+   * Debug: incoming props
+   * ------------------------------------------------------------------ */
+  console.log('[ScheduleTab] kid prop:', kid);
+
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [openBooking, setOpenBooking] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -36,21 +41,31 @@ export default function ScheduleTab({ kid }: Props) {
   const [startDate, endDate] = useMemo(() => {
     const y = currentDate.getFullYear();
     const m = currentDate.getMonth();
-    return [
+
+    const range = [
       new Date(y, m, 1).toISOString(),
       new Date(y, m + 1, 0, 23, 59, 59, 999).toISOString(),
     ] as const;
+
+    console.log('[ScheduleTab] date range:', range);
+    return range;
   }, [currentDate]);
 
   /* ------------------------------------------------------------------
    * Get kid's coach ID
    * ------------------------------------------------------------------ */
   const coachId = kid.coach?.id || kid.coachId;
+  console.log('[ScheduleTab] coachId:', coachId);
 
   /* ------------------------------------------------------------------
    * Fetch sessions for the coach
    * ------------------------------------------------------------------ */
-  const { data: sessionsData } = useApiQuery(
+  const {
+    data: sessionsData,
+    isLoading,
+    isError,
+    error,
+  } = useApiQuery(
     ['sessions', coachId, startDate, endDate],
     () =>
       sessionsService.getSessions(1, 50, {
@@ -63,21 +78,30 @@ export default function ScheduleTab({ kid }: Props) {
     }
   );
 
+  console.log('[ScheduleTab] query state:', {
+    isLoading,
+    isError,
+    error,
+    sessionsData,
+  });
+
   const sessions: Session[] = sessionsData?.data || [];
+  console.log('[ScheduleTab] sessions:', sessions);
 
   /* ------------------------------------------------------------------
    * Map calendar events
    * ------------------------------------------------------------------ */
-  const events: CalendarEvent[] = useMemo(
-    () =>
-      sessions.map(s => ({
-        _id: s._id,
-        title: s.type || s.name || 'Session',
-        date: new Date(s.startsAt),
-        session: s,
-      })),
-    [sessions]
-  );
+  const events: CalendarEvent[] = useMemo(() => {
+    const mapped = sessions.map(s => ({
+      _id: s._id,
+      title: s.type || s.name || 'Session',
+      date: new Date(s.startsAt),
+      session: s,
+    }));
+
+    console.log('[ScheduleTab] calendar events:', mapped);
+    return mapped;
+  }, [sessions]);
 
   /* ------------------------------------------------------------------
    * Calendar grid
@@ -89,8 +113,9 @@ export default function ScheduleTab({ kid }: Props) {
 
   const calendarDays: (Date | null)[] = [];
   for (let i = 0; i < firstDay; i++) calendarDays.push(null);
-  for (let i = 1; i <= daysInMonth; i++)
+  for (let i = 1; i <= daysInMonth; i++) {
     calendarDays.push(new Date(year, month, i));
+  }
 
   const monthLabel = currentDate.toLocaleString('default', {
     month: 'long',
@@ -113,28 +138,43 @@ export default function ScheduleTab({ kid }: Props) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-              }
+              onClick={() => {
+                console.log('[ScheduleTab] prev month');
+                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+              }}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <Button variant="ghost" size="sm" onClick={() => setCurrentDate(new Date())}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                console.log('[ScheduleTab] go to today');
+                setCurrentDate(new Date());
+              }}
+            >
               Today
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-              }
+              onClick={() => {
+                console.log('[ScheduleTab] next month');
+                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+              }}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            <Button size="sm" onClick={() => setOpenBooking(true)}>
+            <Button
+              size="sm"
+              onClick={() => {
+                console.log('[ScheduleTab] open booking modal');
+                setOpenBooking(true);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Book Extra Session
             </Button>
@@ -144,7 +184,10 @@ export default function ScheduleTab({ kid }: Props) {
         <CardContent>
           <div className="grid grid-cols-7 gap-[1px] bg-muted rounded-lg overflow-hidden text-xs">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <div key={d} className="p-2 font-medium text-center bg-muted/50">
+              <div
+                key={d}
+                className="p-2 font-medium text-center bg-muted/50"
+              >
                 {d}
               </div>
             ))}
@@ -153,6 +196,14 @@ export default function ScheduleTab({ kid }: Props) {
               const dayEvents = events.filter(
                 e => day && e.date.toDateString() === day.toDateString()
               );
+
+              if (day && dayEvents.length > 0) {
+                console.log(
+                  '[ScheduleTab] day events:',
+                  day.toDateString(),
+                  dayEvents
+                );
+              }
 
               return (
                 <div key={idx} className="min-h-[100px] p-2 bg-white">
@@ -163,7 +214,13 @@ export default function ScheduleTab({ kid }: Props) {
                   {dayEvents.map(event => (
                     <div
                       key={event._id}
-                      onClick={() => setSelectedSession(event.session)}
+                      onClick={() => {
+                        console.log(
+                          '[ScheduleTab] selected session:',
+                          event.session
+                        );
+                        setSelectedSession(event.session);
+                      }}
                       className="mb-1 cursor-pointer rounded bg-primary/15 p-1 text-primary truncate"
                     >
                       {event.title}
@@ -179,13 +236,21 @@ export default function ScheduleTab({ kid }: Props) {
       <SessionDetailsModal
         open={!!selectedSession}
         session={selectedSession}
-        onClose={() => setSelectedSession(null)}
+        onClose={() => {
+          console.log('[ScheduleTab] close session modal');
+          setSelectedSession(null);
+        }}
       />
 
       <BookSessionModal
         open={openBooking}
-        onClose={() => setOpenBooking(false)}
-        onConfirm={data => console.log('Booked:', data)}
+        onClose={() => {
+          console.log('[ScheduleTab] close booking modal');
+          setOpenBooking(false);
+        }}
+        onConfirm={data =>
+          console.log('[ScheduleTab] booked session payload:', data)
+        }
       />
     </>
   );
