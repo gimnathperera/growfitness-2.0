@@ -4,18 +4,17 @@ import { TabsContent } from "@/components/ui/tabs";
 import { DesktopTabs } from "@/components/common/DashboardTabs";
 import { MobileTabNav } from "@/components/common/footerTabNavbar";
 import { DashboardHeader } from "@/components/common/DashboardHeader";
-
 import { OverviewTab } from "@/components/client-dashboard/OverviewTab";
 import { AchievementsTab } from "@/components/client-dashboard/achievements/AchievementsTab";
 import ScheduleTab from "@/components/client-dashboard/schedule/ScheduleTab";
-import { MessagesTab } from "@/components/client-dashboard/MessagesTab";
-import { ProgressTab } from "@/components/client-dashboard/ProgressTab";
-
 import { SessionType, UserRole, type Kid } from "@grow-fitness/shared-types";
 import { useKid } from "@/contexts/kid/useKid";
 import { useAuth } from "@/contexts/AuthContext";
 import { kidsService } from "@/services/kids.service";
 import { getTabsForUser } from "@/constants/dashboard";
+import { InvoicesTab } from "@/components/client-dashboard/InvoiceTab";
+import { KidProfileTab } from "@/components/client-dashboard/KidProfileTab";
+
 
 export default function ParentDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -94,9 +93,9 @@ export default function ParentDashboard() {
   const tabComponents: Record<string, JSX.Element> = {
     overview: <OverviewTab kid={kidData} />,
     achievements: <AchievementsTab />,
-    schedule: <ScheduleTab kidId={kidData._id || kidData.id} />,
-    progress: <ProgressTab />,
-    messages: <MessagesTab />,
+    schedule: <ScheduleTab kid={kidData} />,
+    invoice: <InvoicesTab kidId={kidData._id} />,
+    kidProfile: <KidProfileTab/>,
   };
 
   /* ------------------ RENDER ------------------ */

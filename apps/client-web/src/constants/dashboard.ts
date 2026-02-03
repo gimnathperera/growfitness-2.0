@@ -20,6 +20,7 @@ export const coachTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'students', label: 'Students', icon: User },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
+  { id: 'invoice', label: 'Invoice', icon: TrendingUp },
 ];
 
 // Parent Tabs (Individual Kid)
@@ -27,13 +28,16 @@ export const parentIndividualTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
-  { id: 'progress', label: 'Progress', icon: TrendingUp },
+  { id: 'invoice', label: 'Invoice', icon: TrendingUp },
+  { id: 'kidProfile', label: 'Kid Profile', icon: User },
 ];
 
 // Parent Tabs (Group Kid)
 export const parentGroupTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
+  { id: 'invoice', label: 'Invoice', icon: TrendingUp },
+  { id: 'kidProfile', label: 'Kid Profile', icon: User },
 ];
 
 /* =========================
