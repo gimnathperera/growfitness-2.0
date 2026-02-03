@@ -1,4 +1,3 @@
-
 import { getTabsForUser } from '@/constants/dashboard';
 import type { ComponentType, SVGProps } from 'react';
 
@@ -24,7 +23,14 @@ export function MobileTabNav({
   user,
   kidType,
 }: MobileTabNavProps) {
-  const tabs = getTabsForUser(user as 'COACH' | 'PARENT', kidType);
+  // Convert SessionType enum to string literals
+  const kidTypeStr = kidType === 'GROUP' 
+    ? 'GROUP' as const
+    : kidType === 'INDIVIDUAL' 
+    ? 'INDIVIDUAL' as const
+    : undefined;
+
+  const tabs = getTabsForUser(user as 'COACH' | 'PARENT', kidTypeStr);
 
   const dockItems = (tabs as TabItem[]).map((tab) => ({
     title: tab.label,

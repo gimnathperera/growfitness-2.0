@@ -9,9 +9,7 @@ import {
 } from 'lucide-react';
 
 import { sessionsService } from '@/services/sessions.service';
-import { kidsService } from '@/services/kids.service';
-
-import type { Session } from '@grow-fitness/shared-types';
+import type { Session, Kid } from '@grow-fitness/shared-types';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import BookSessionModal from './BookSessionModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -23,7 +21,11 @@ type CalendarEvent = {
   session: Session;
 };
 
-export default function ScheduleTab({ kidId }: { kidId: string }) {
+type Props = {
+  kid: Kid;
+};
+
+export default function ScheduleTab({ kid }: Props) {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [openBooking, setOpenBooking] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -41,18 +43,12 @@ export default function ScheduleTab({ kidId }: { kidId: string }) {
   }, [currentDate]);
 
   /* ------------------------------------------------------------------
-   * Fetch kid → coach
+   * Get kid's coach ID
    * ------------------------------------------------------------------ */
-  const { data: kidData } = useApiQuery(['kid', kidId], () =>
-    kidsService.getKidById(kidId)
-  );
-
-  const coachId =
-    (kidData?.data as any)?.coach?.id ||
-    (kidData?.data as any)?.coachId;
+  const coachId = kid.coach?.id || kid.coachId;
 
   /* ------------------------------------------------------------------
-   * Fetch sessions
+   * Fetch sessions for the coach
    * ------------------------------------------------------------------ */
   const { data: sessionsData } = useApiQuery(
     ['sessions', coachId, startDate, endDate],
@@ -67,14 +63,14 @@ export default function ScheduleTab({ kidId }: { kidId: string }) {
     }
   );
 
-  const sessions = sessionsData?.data || [];
+  const sessions: Session[] = sessionsData?.data || [];
 
   /* ------------------------------------------------------------------
    * Map calendar events
    * ------------------------------------------------------------------ */
   const events: CalendarEvent[] = useMemo(
     () =>
-      sessions.map((s: Session) => ({
+      sessions.map(s => ({
         _id: s._id,
         title: s.type || s.name || 'Session',
         date: new Date(s.startsAt),
@@ -114,9 +110,13 @@ export default function ScheduleTab({ kidId }: { kidId: string }) {
           </CardTitle>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() =>
-              setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-            }>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+              }
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
@@ -124,9 +124,13 @@ export default function ScheduleTab({ kidId }: { kidId: string }) {
               Today
             </Button>
 
-            <Button variant="ghost" size="sm" onClick={() =>
-              setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-            }>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+              }
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
 

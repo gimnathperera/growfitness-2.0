@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -9,25 +9,18 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { kidsService } from "@/services/kids.service";
-
-interface KidUI {
-  id: string;
-  name: string;
-}
+import { useKid } from "@/contexts/kid/useKid";
 
 export function DashboardHeader() {
   const { user, role, isLoading } = useAuth();
-
-  console.log("🟢 DashboardHeader render", {
-    isLoading,
-    role,
-    user,
-  });
-
-  const [kids, setKids] = useState<KidUI[]>([]);
-  const [selectedKidId, setSelectedKidId] = useState<string>("");
-  const [selectedKidName, setSelectedKidName] = useState<string>("");
-  const [isKidLoading, setIsKidLoading] = useState(false);
+  const {
+    kids,
+    setKids,
+    selectedKid,
+    setSelectedKid,
+    isLoading: isKidLoading,
+    setIsLoading: setIsKidLoading,
+  } = useKid();
 
   /* ---------- ROLE CONFIG ---------- */
   const roleConfig = {
@@ -43,77 +36,37 @@ export function DashboardHeader() {
 
   /* ---------- FETCH KIDS (PARENT ONLY) ---------- */
   useEffect(() => {
-    console.log("🔵 useEffect: fetchKids triggered", {
-      role,
-      userId: user?.id,
-    });
-
-    if (role !== "PARENT") {
-      console.log("⚠️ Not a parent, skipping kids fetch");
-      return;
-    }
+    if (role !== "PARENT" || !user?.id) return;
 
     const fetchKids = async () => {
       try {
-        console.log("🚀 Fetching kids...");
-        const res = await kidsService.getKids(1, 50, user?.id);
+        setIsKidLoading(true);
 
-        console.log("📦 Kids API response", res);
+        const res = await kidsService.getKids(1, 50, user.id);
 
-        const mappedKids =
-          res.data?.map((kid) => ({
-            id: kid._id,
-            name: kid.name,
-          })) ?? [];
-
-        console.log("🧒 Mapped kids", mappedKids);
+        const mappedKids = res.data.map((kid: { id: string; name: string }) => ({
+          id: kid.id,
+          name: kid.name,
+        }));
 
         setKids(mappedKids);
 
-        if (mappedKids.length > 0) {
-          console.log("✅ Auto-selecting first kid", mappedKids[0]);
-          setSelectedKidId(mappedKids[0].id);
-          setSelectedKidName(mappedKids[0].name);
-        }
+        // ✅ auto-select ONLY once
+        if (selectedKid || mappedKids.length === 0) return;
+
+        setSelectedKid(mappedKids[0]);
       } catch (error) {
         console.error("❌ Failed to fetch kids", error);
-      }
-    };
-
-    fetchKids();
-  }, [role, user?.id]);
-
-  /* ---------- FETCH SELECTED KID ---------- */
-  useEffect(() => {
-    console.log("🟣 useEffect: selectedKidId changed", selectedKidId);
-
-    if (!selectedKidId) {
-      console.log("⚠️ No selectedKidId, skipping fetchKid");
-      return;
-    }
-
-    const fetchKid = async () => {
-      try {
-        setIsKidLoading(true);
-        console.log("🚀 Fetching kid details for:", selectedKidId);
-
-        const kid = await kidsService.getKidById(selectedKidId);
-
-        console.log("👶 Kid details response", kid);
-
-        setSelectedKidName(kid.name);
-      } catch (error) {
-        console.error("❌ Failed to fetch kid", error);
       } finally {
         setIsKidLoading(false);
       }
     };
 
-    fetchKid();
-  }, [selectedKidId]);
+    fetchKids();
+  }, [role, user?.id, setKids, setSelectedKid, setIsKidLoading]);
 
+  /* ---------- LOADING STATE ---------- */
   if (isLoading || !user) {
-    console.log("⏳ Auth still loading or user missing");
     return (
       <div className="max-w-7xl mx-auto px-4 py-4">
         <p className="text-gray-500">Loading user...</p>
@@ -121,15 +74,14 @@ export function DashboardHeader() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    console.log("🧒 Selected kid changed:", selectedKid);
+  }, [selectedKid]);
+
   const config = role ? roleConfig[role] : null;
 
-  console.log("🟡 Rendering UI with state", {
-    kids,
-    selectedKidId,
-    selectedKidName,
-    isKidLoading,
-  });
-
+  /* ---------- UI ---------- */
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -142,11 +94,11 @@ export function DashboardHeader() {
             {config?.subtitle}
           </p>
 
-          {role === "PARENT" && selectedKidId && (
+          {role === "PARENT" && selectedKid && (
             <p className="text-[11px] sm:text-xs text-gray-400 mt-1">
               {isKidLoading
-                ? "Loading kid details..."
-                : `Selected: ${selectedKidName}`}
+                ? "Loading..."
+                : `Selected: ${selectedKid.name}`}
             </p>
           )}
         </div>
@@ -155,7 +107,7 @@ export function DashboardHeader() {
         {role === "PARENT" && (
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <span className="text-sm font-bold text-gray-700">
-              Kid's Name:
+              Kid&apos;s Name:
             </span>
 
             {kids.length === 1 ? (
@@ -164,15 +116,16 @@ export function DashboardHeader() {
               </span>
             ) : (
               <Select
-                value={selectedKidId}
-                onValueChange={(val) => {
-                  console.log("🔄 Kid selected from dropdown:", val);
-                  setSelectedKidId(val);
+                value={selectedKid?.id ?? ""}
+                onValueChange={(value) => {
+                  const kid = kids.find((k) => k.id === value);
+                  if (kid) setSelectedKid(kid);
                 }}
               >
                 <SelectTrigger className="w-[160px] text-sm">
                   <SelectValue placeholder="Select Kid" />
                 </SelectTrigger>
+
                 <SelectContent>
                   {kids.map((kid) => (
                     <SelectItem key={kid.id} value={kid.id}>

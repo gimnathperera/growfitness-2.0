@@ -151,16 +151,16 @@ export function Header() {
                               setIsMenuOpen(false);
                               navigate("/dashboard");
                             }}
-                            className="menu-item"
+                            className="menu-item items-center justify-center"
                           >
                             {dashboardLabel}
                           </button>
 
                           <button
                             onClick={handleLogout}
-                            className="menu-item text-red-600"
+                            className="menu-item text-red-600 flex items-center gap-2"
                           >
-                            <LogOut className="mr-2 h-4 w-4" />
+                            <LogOut className="h-4 w-4 ml-3" />
                             Logout
                           </button>
                         </div>

@@ -1,15 +1,14 @@
 import type React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getTabsForUser } from '@/constants/dashboard';
-import type { UserRole } from '@/services/auth';
-
+import type { SessionType } from '@grow-fitness/shared-types';
 
 interface DesktopTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  user: UserRole;
+  user: { role: string };
   children: React.ReactNode;
-  kidType?: 'GROUP' | 'INDIVIDUAL';
+  kidType?: SessionType;
 }
 
 export function DesktopTabs({
@@ -19,7 +18,14 @@ export function DesktopTabs({
   children,
   kidType,
 }: DesktopTabsProps) {
-  const tabs = getTabsForUser(user, kidType);
+  // Convert SessionType enum to string literals
+  const kidTypeStr = kidType === 'GROUP' 
+    ? 'GROUP' as const
+    : kidType === 'INDIVIDUAL' 
+    ? 'INDIVIDUAL' as const
+    : undefined;
+
+  const tabs = getTabsForUser(user.role as 'COACH' | 'PARENT', kidTypeStr);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
@@ -36,7 +42,7 @@ export function DesktopTabs({
             bg-white rounded-lg border border-gray-200
           "
         >
-          {tabs.map((tab: { id: string; label: string }) => (
+          {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
