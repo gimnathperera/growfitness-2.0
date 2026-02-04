@@ -2,7 +2,7 @@ import { formatCurrency, formatDate, formatInvoiceType } from "@/lib/formatters"
 import type { Invoice } from "@grow-fitness/shared-types";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye, Download, Pencil } from "lucide-react";
-import { Button } from "react-day-picker";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "../common/DataTable";
 import { StatusBadge } from "../common/StatusBadge";
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usersService } from '@/services/users.service';
-import { useAuth } from '@/contexts/AuthContext';
+
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,27 +17,22 @@ import { Badge } from '@/components/ui/badge';
 import {
   User,
   Mail,
-  Phone,
-  MapPin,
-  Award,
   Lock,
   Loader2,
   Save,
 } from 'lucide-react';
 
 import type {
-  CreateParentDto,
   UpdateParentDto,
-  CreateCoachDto,
   UpdateCoachDto,
 } from '@grow-fitness/shared-schemas';
+import { useAuth } from '@/contexts/useAuth';
 
 type FormState = {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
   address?: string;
-  specialization?: string;
 };
 
 export default function ProfilePage() {
@@ -45,11 +40,15 @@ export default function ProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profileExists, setProfileExists] = useState(false);
-  const [form, setForm] = useState<FormState>({});
+  const [form, setForm] = useState<FormState>({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    address: '',
+  });
 
   /**
-   * Fetch profile
+   * Fetch profile (UPDATE ONLY)
    */
   useEffect(() => {
     if (!user?.id || !user?.role) return;
@@ -58,7 +57,6 @@ export default function ProfilePage() {
       try {
         if (user.role === 'PARENT') {
           const data = await usersService.getParentById(user.id);
-
           const nameParts = data.parentProfile?.name?.split(' ') || [];
 
           setForm({
@@ -67,23 +65,20 @@ export default function ProfilePage() {
             phone: data.phone || '',
             address: data.parentProfile?.location || '',
           });
-        } else {
-          const data = await usersService.getCoachById(user.id);
-
-          const coachNameParts = data.coachProfile?.name?.split(' ') || [];
-          
-          setForm({
-            firstName: coachNameParts[0] || '',
-            lastName: coachNameParts.slice(1).join(' ') || '',
-            phone: data.phone || '',
-            specialization: data.specialization || '',
-          });
         }
 
-        setProfileExists(true);
-      } catch {
-        setProfileExists(false);
-        setForm({});
+        if (user.role === 'COACH') {
+          const data = await usersService.getCoachById(user.id);
+          const nameParts = data.coachProfile?.name?.split(' ') || [];
+
+          setForm({
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            phone: data.phone || '',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load profile', error);
       } finally {
         setLoading(false);
       }
@@ -100,7 +95,7 @@ export default function ProfilePage() {
   };
 
   /**
-   * Submit
+   * UPDATE ONLY
    */
   const onSubmit = async () => {
     if (!user?.id || !user?.role) return;
@@ -108,55 +103,24 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      if (profileExists) {
-        // UPDATE
-        if (user.role === 'PARENT') {
-          const dto: UpdateParentDto = {
-            phone: form.phone,
-            parentProfile: {
-              name: `${form.firstName || ''} ${form.lastName || ''}`.trim(),
-              location: form.address,
-            },
-          };
-
-          await usersService.updateParent(user.id, dto);
-        } else {
-          const dto: UpdateCoachDto = {
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phone: form.phone,
-            specialization: form.specialization,
-          };
-
-          await usersService.updateCoach(user.id, dto);
-        }
-      } else {
-        // CREATE
-        if (user.role === 'PARENT') {
-          const dto: CreateParentDto = {
-            userId: user.id,
-            phone: form.phone,
-            parentProfile: {
-              name: `${form.firstName || ''} ${form.lastName || ''}`.trim(),
-              location: form.address,
-            },
-          };
-
-          await usersService.createParent(dto);
-        } else {
-          const dto: CreateCoachDto = {
-            userId: user.id,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phone: form.phone,
-            specialization: form.specialization,
-          };
-
-          await usersService.createCoach(dto);
-        }
-
-        setProfileExists(true);
+      if (user.role === 'PARENT') {
+        const dto: UpdateParentDto = {
+          phone: form.phone,
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          location: form.address,
+        };
+        await usersService.updateParent(user.id, dto);
       }
+
+      if (user.role === 'COACH') {
+        const dto: UpdateCoachDto = {
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          phone: form.phone,
+        };
+        await usersService.updateCoach(user.id, dto);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
     } finally {
       setSaving(false);
     }
@@ -186,11 +150,9 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-1">
-          <h1 className="text-3xl font-bold">
-            {profileExists ? 'Your Profile' : 'Complete Your Profile'}
-          </h1>
+          <h1 className="text-3xl font-bold">Your Profile</h1>
           <p className="text-muted-foreground">
-            Manage your personal information
+            Update your personal information
           </p>
         </div>
 
@@ -231,47 +193,35 @@ export default function ProfilePage() {
             {/* Editable */}
             <div className="border-t pt-6 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label><User className="inline h-4 w-4 mr-1" /> First Name</Label>
+                <Label>First Name</Label>
                 <Input
-                  value={form.firstName || ''}
+                  value={form.firstName}
                   onChange={(e) => onChange('firstName', e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label><User className="inline h-4 w-4 mr-1" /> Last Name</Label>
+                <Label>Last Name</Label>
                 <Input
-                  value={form.lastName || ''}
+                  value={form.lastName}
                   onChange={(e) => onChange('lastName', e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label><Phone className="inline h-4 w-4 mr-1" /> Phone</Label>
+                <Label>Phone</Label>
                 <Input
-                  value={form.phone || ''}
+                  value={form.phone}
                   onChange={(e) => onChange('phone', e.target.value)}
                 />
               </div>
 
               {user.role === 'PARENT' && (
                 <div className="space-y-2">
-                  <Label><MapPin className="inline h-4 w-4 mr-1" /> Address</Label>
+                  <Label>Address</Label>
                   <Input
-                    value={form.address || ''}
+                    value={form.address}
                     onChange={(e) => onChange('address', e.target.value)}
-                  />
-                </div>
-              )}
-
-              {user.role === 'COACH' && (
-                <div className="space-y-2">
-                  <Label><Award className="inline h-4 w-4 mr-1" /> Specialization</Label>
-                  <Input
-                    value={form.specialization || ''}
-                    onChange={(e) =>
-                      onChange('specialization', e.target.value)
-                    }
                   />
                 </div>
               )}
@@ -290,7 +240,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <Save className="mr-2 h-5 w-5" />
-                  {profileExists ? 'Update Profile' : 'Create Profile'}
+                  Update Profile
                 </>
               )}
             </Button>

@@ -34,6 +34,10 @@ export function KidProvider({ children }: { children: ReactNode }) {
     setSelectedKid,
     isLoading,
     setIsLoading,
+    selectedKidId: null,
+    setSelectedKidId: function (): void {
+      throw new Error("Function not implemented.");
+    }
   };
 
   return (

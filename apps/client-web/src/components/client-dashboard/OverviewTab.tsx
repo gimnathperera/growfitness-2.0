@@ -119,7 +119,7 @@ export function OverviewTab({ kid }: OverviewTabProps) {
             </CardHeader>
             <CardContent className="space-y-4 overflow-y-auto max-h-[400px]">
               {sessions.map((session: Session) => (
-                <SessionItem key={session._id} session={session} />
+                <SessionItem key={session.id} session={session} />
               ))}
             </CardContent>
           </Card>

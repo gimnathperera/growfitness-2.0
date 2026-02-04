@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type { Kid, SessionType } from "@grow-fitness/shared-types";
+import { SessionType, type Kid } from "@grow-fitness/shared-types";
 import type { UpdateKidDto } from "@grow-fitness/shared-schemas";
 
 import { Button } from "@/components/ui/button";
@@ -41,10 +41,14 @@ export function KidProfileTab() {
     goal: "",
     currentlyInSports: false,
     medicalConditions: [],
-    sessionType: "INDIVIDUAL",
+    sessionType: SessionType.INDIVIDUAL,  
   });
 
-  const formatDateForInput = (isoDate?: string) => isoDate?.split("T")[0] || "";
+  const formatDateForInput = (dateValue?: string | Date) => {
+    if (!dateValue) return '';
+    const dateString = dateValue instanceof Date ? dateValue.toISOString() : dateValue;
+    return dateString.split("T")[0];
+  };
 
   useEffect(() => {
     if (!selectedKid?.id) return;
@@ -64,16 +68,20 @@ export function KidProfileTab() {
           medicalConditions: fullKidData.medicalConditions || [],
           sessionType: fullKidData.sessionType || "INDIVIDUAL",
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         setKid(selectedKid as Kid);
         setFormData((prev) => ({
           ...prev,
           name: selectedKid.name || "",
         }));
 
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'Failed to load kid profile details.';
+
         toast({
           title: "Error",
-          description: error?.response?.data?.message || "Failed to load kid profile details.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -82,7 +90,7 @@ export function KidProfileTab() {
     fetchKidDetails();
   }, [selectedKid?.id, toast]);
 
-  const handleInputChange = (field: keyof UpdateKidDto, value: any) =>
+  const handleInputChange = (field: keyof UpdateKidDto, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleMedicalConditionChange = (condition: string, checked: boolean) => {
@@ -122,7 +130,13 @@ export function KidProfileTab() {
         sessionType: formData.sessionType as SessionType,
       };
 
-      const res = await kidsService.updateKid(kid.id, payload);
+      interface ApiResponse<T> {
+        data: T;
+        // Add other response metadata if needed (e.g., status, message, etc.)
+      }
+
+      // Then in your handleSubmit function:
+      const res = await kidsService.updateKid(kid.id, payload) as unknown as ApiResponse<Kid>;
       setKid(res.data);
 
       toast({
@@ -211,7 +225,7 @@ export function KidProfileTab() {
               </Label>
               <Input
                 type="date"
-                value={formData.birthDate || ""}
+                value={formatDateForInput(formData.birthDate)}
                 onChange={(e) => handleInputChange("birthDate", e.target.value)}
                 disabled={saving}
               />

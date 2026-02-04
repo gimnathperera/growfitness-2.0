@@ -7,9 +7,10 @@ import {
   SelectValue,
 } from "../ui/select";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { kidsService } from "@/services/kids.service";
 import { useKid } from "@/contexts/kid/useKid";
+import { useAuth } from '@/contexts/useAuth';
+import type { Kid } from "@grow-fitness/shared-types";
 
 export function DashboardHeader() {
   const { user, role, isLoading } = useAuth();
@@ -44,10 +45,18 @@ export function DashboardHeader() {
 
         const res = await kidsService.getKids(1, 50, user.id);
 
-        const mappedKids = res.data.map((kid: { id: string; name: string }) => ({
-          id: kid.id,
-          name: kid.name,
-        }));
+      const mappedKids = res.data.map((kid: Kid) => ({
+        id: kid.id,
+        parentId: kid.parentId,
+        name: kid.name,
+        gender: kid.gender,
+        birthDate: new Date(kid.birthDate),
+        currentlyInSports: kid.currentlyInSports,
+        medicalConditions: kid.medicalConditions || [],
+        sessionType: kid.sessionType,
+        createdAt: kid.createdAt ? new Date(kid.createdAt) : new Date(),
+        updatedAt: kid.updatedAt ? new Date(kid.updatedAt) : new Date(),
+      }));
 
         setKids(mappedKids);
 

@@ -6,6 +6,7 @@ export type UserRole = 'PARENT' | 'COACH';
 
 /* ---------- USER ---------- */
 export interface AuthUser {
+  status: string;
   id: string;
   email: string;
   role: UserRole;

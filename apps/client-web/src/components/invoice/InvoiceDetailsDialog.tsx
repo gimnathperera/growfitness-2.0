@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Invoice } from '@grow-fitness/shared-types';
+import type { Invoice } from '@grow-fitness/shared-types';
 import { formatDate, formatCurrency, formatInvoiceType } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Separator } from '@/components/ui/separator';

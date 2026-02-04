@@ -2,12 +2,13 @@ import { Routes, Route } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { Layout } from "./components/layout/Layout";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import DashboardPage from "./components/dashboard/DashboardPage";
 import SignInPage from "./pages/SignInPage";
 import BookAFreeSession from "./pages/BookAFreeSession";
 import { KidProvider } from "./contexts/kid/KidProvider";
 import ProfilePage from "./pages/ProfilePage";
+import { AuthProvider } from "./contexts/AuthProvider";
+import { useAuth } from "./contexts/useAuth";
 
 // Create a wrapper component that conditionally applies KidProvider
 function DashboardWrapper() {

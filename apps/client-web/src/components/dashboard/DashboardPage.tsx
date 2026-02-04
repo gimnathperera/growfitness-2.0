@@ -1,5 +1,5 @@
 import ParentDashboard from '@/pages/ParentDashboard';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import CoachDashboard from '../coach-dashboard/CoachDashboard';
 
 export default function DashboardPage() {

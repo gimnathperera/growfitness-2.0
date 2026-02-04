@@ -8,7 +8,7 @@ import type {
 
 export const requestsService = {
   // Free Session Requests
-  createFreeSessionRequest: (data: { selectedSessionId: string }) =>
+  createFreeSessionRequest: (data: { selectedSessionId?: string }) =>
     api.post<FreeSessionRequest>('/requests/free-sessions', data),
   getFreeSessionRequests: (page: number = 1, limit: number = 10) =>
     api.get<PaginatedResponse<FreeSessionRequest>>(

@@ -24,16 +24,16 @@ export function InvoicesTab({ kidId }: KidInvoicesTabProps) {
 
   const { data, isLoading, error } = useApiQuery(
     ["kid-invoices", kidId, page.toString(), pageSize.toString()],
-    () => invoicesService.getInvoices(kidId, page, pageSize)
+    () => invoicesService.getInvoices(page, pageSize, { parentId: kidId })
   );
 
   const handleDownload = async (invoice: Invoice) => {
     try {
-      const blob = await invoicesService.downloadInvoice(invoice.id);
+      const blob = await invoicesService.exportCSV({ parentId: invoice.id });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${invoice.id}.pdf`;
+      a.download = `invoice-${invoice.id}.csv`;  // Note the .csv extension
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -108,8 +108,6 @@ export function InvoicesTab({ kidId }: KidInvoicesTabProps) {
       {data && (
         <Pagination
           data={data}
-          page={page}
-          pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
         />

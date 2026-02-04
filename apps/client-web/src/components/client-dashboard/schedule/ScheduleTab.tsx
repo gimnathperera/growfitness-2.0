@@ -9,10 +9,14 @@ import {
 } from 'lucide-react';
 
 import { sessionsService } from '@/services/sessions.service';
-import type { Session, Kid } from '@grow-fitness/shared-types';
+import type { Session } from '@grow-fitness/shared-types';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import BookSessionModal from './BookSessionModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
+
+/* ------------------------------------------------------------------ */
+/* Types */
+/* ------------------------------------------------------------------ */
 
 type CalendarEvent = {
   _id: string;
@@ -22,90 +26,88 @@ type CalendarEvent = {
 };
 
 type Props = {
-  kid: Kid;
+  kid: unknown; // Replace 'any' with the actual Kid type if you have it defined
 };
 
-export default function ScheduleTab({ kid }: Props) {
-  /* ------------------------------------------------------------------
-   * Debug: incoming props
-   * ------------------------------------------------------------------ */
-  console.log('[ScheduleTab] kid prop:', kid);
+/* ------------------------------------------------------------------ */
+/* Helpers */
+/* ------------------------------------------------------------------ */
 
+const getSessionLabel = (session: Session): string => {
+  switch (session.type) {
+    case 'INDIVIDUAL':
+      return 'Individual Session';
+    case 'GROUP':
+      return 'Group Session';
+    default:
+      return 'Session';
+  }
+};
+
+/* ------------------------------------------------------------------ */
+/* Component */
+/* ------------------------------------------------------------------ */
+
+// eslint-disable-next-line no-empty-pattern
+export default function ScheduleTab({ }: Props) {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [openBooking, setOpenBooking] = useState(false);
+  const [, setOpenBooking] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   /* ------------------------------------------------------------------
    * Month range
    * ------------------------------------------------------------------ */
+
   const [startDate, endDate] = useMemo(() => {
     const y = currentDate.getFullYear();
     const m = currentDate.getMonth();
 
-    const range = [
+    return [
       new Date(y, m, 1).toISOString(),
       new Date(y, m + 1, 0, 23, 59, 59, 999).toISOString(),
     ] as const;
-
-    console.log('[ScheduleTab] date range:', range);
-    return range;
   }, [currentDate]);
 
   /* ------------------------------------------------------------------
-   * Get kid's coach ID
+   * Coach ID
    * ------------------------------------------------------------------ */
-  const coachId = kid.coach?.id || kid.coachId;
-  console.log('[ScheduleTab] coachId:', coachId);
+
 
   /* ------------------------------------------------------------------
-   * Fetch sessions for the coach
+   * Fetch sessions
    * ------------------------------------------------------------------ */
-  const {
-    data: sessionsData,
-    isLoading,
-    isError,
-    error,
-  } = useApiQuery(
-    ['sessions', coachId, startDate, endDate],
+
+  const { data: sessionsData } = useApiQuery(
+    ['sessions', startDate, endDate],
     () =>
       sessionsService.getSessions(1, 50, {
-        coachId,
         startDate,
         endDate,
       }),
-    {
-      enabled: !!coachId,
-    }
+    { enabled: Boolean(startDate) }
   );
 
-  console.log('[ScheduleTab] query state:', {
-    isLoading,
-    isError,
-    error,
-    sessionsData,
-  });
-
-  const sessions: Session[] = sessionsData?.data || [];
-  console.log('[ScheduleTab] sessions:', sessions);
+  const sessions: Session[] = sessionsData?.data ?? [];
 
   /* ------------------------------------------------------------------
    * Map calendar events
    * ------------------------------------------------------------------ */
-  const events: CalendarEvent[] = useMemo(() => {
-    const mapped = sessions.map(s => ({
-      _id: s._id,
-      title: s.type || s.name || 'Session',
-      date: new Date(s.startsAt),
-      session: s,
-    }));
 
-    console.log('[ScheduleTab] calendar events:', mapped);
-    return mapped;
-  }, [sessions]);
+  const events: CalendarEvent[] = useMemo(
+    () =>
+      sessions.map(session => ({
+        _id: session.id,
+        title: getSessionLabel(session),
+        date: new Date(session.dateTime),
+        session,
+      })),
+    [sessions]
+  );
 
   /* ------------------------------------------------------------------
    * Calendar grid
    * ------------------------------------------------------------------ */
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -125,56 +127,42 @@ export default function ScheduleTab({ kid }: Props) {
   /* ------------------------------------------------------------------
    * Render
    * ------------------------------------------------------------------ */
+
   return (
     <>
       <Card className="border-[#23B685]/20 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex items-center justify-between flex-row">
           <CardTitle className="flex items-center text-base font-semibold">
             <CalendarIcon className="mr-2 h-5 w-5 text-[#23B685]" />
             {monthLabel}
           </CardTitle>
 
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2 items-center">
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => {
-                console.log('[ScheduleTab] prev month');
-                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
-              }}
+              variant="ghost"
+              onClick={() =>
+                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+              }
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                console.log('[ScheduleTab] go to today');
-                setCurrentDate(new Date());
-              }}
-            >
+            <Button size="sm" variant="ghost" onClick={() => setCurrentDate(new Date())}>
               Today
             </Button>
 
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => {
-                console.log('[ScheduleTab] next month');
-                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
-              }}
+              variant="ghost"
+              onClick={() =>
+                setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+              }
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            <Button
-              size="sm"
-              onClick={() => {
-                console.log('[ScheduleTab] open booking modal');
-                setOpenBooking(true);
-              }}
-            >
+            <Button size="sm" onClick={() => setOpenBooking(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Book Extra Session
             </Button>
@@ -183,12 +171,9 @@ export default function ScheduleTab({ kid }: Props) {
 
         <CardContent>
           <div className="grid grid-cols-7 gap-[1px] bg-muted rounded-lg overflow-hidden text-xs">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <div
-                key={d}
-                className="p-2 font-medium text-center bg-muted/50"
-              >
-                {d}
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="p-2 text-center font-medium bg-muted/50">
+                {day}
               </div>
             ))}
 
@@ -196,14 +181,6 @@ export default function ScheduleTab({ kid }: Props) {
               const dayEvents = events.filter(
                 e => day && e.date.toDateString() === day.toDateString()
               );
-
-              if (day && dayEvents.length > 0) {
-                console.log(
-                  '[ScheduleTab] day events:',
-                  day.toDateString(),
-                  dayEvents
-                );
-              }
 
               return (
                 <div key={idx} className="min-h-[100px] p-2 bg-white">
@@ -214,14 +191,8 @@ export default function ScheduleTab({ kid }: Props) {
                   {dayEvents.map(event => (
                     <div
                       key={event._id}
-                      onClick={() => {
-                        console.log(
-                          '[ScheduleTab] selected session:',
-                          event.session
-                        );
-                        setSelectedSession(event.session);
-                      }}
-                      className="mb-1 cursor-pointer rounded bg-primary/15 p-1 text-primary truncate"
+                      onClick={() => setSelectedSession(event.session)}
+                      className="cursor-pointer mb-1 rounded bg-primary/15 p-1 text-primary truncate"
                     >
                       {event.title}
                     </div>
@@ -234,23 +205,19 @@ export default function ScheduleTab({ kid }: Props) {
       </Card>
 
       <SessionDetailsModal
-        open={!!selectedSession}
+        open={Boolean(selectedSession)}
         session={selectedSession}
-        onClose={() => {
-          console.log('[ScheduleTab] close session modal');
-          setSelectedSession(null);
-        }}
+        onClose={() => setSelectedSession(null)}
       />
 
       <BookSessionModal
-        open={openBooking}
-        onClose={() => {
-          console.log('[ScheduleTab] close booking modal');
-          setOpenBooking(false);
-        }}
-        onConfirm={data =>
-          console.log('[ScheduleTab] booked session payload:', data)
-        }
+        // open={openBooking}
+        // onClose={() => setOpenBooking(false)}
+        // kidId={kid.id}
+        // clientId={kid.parentId}
+        // onConfirm={payload =>
+        //   console.log('[ScheduleTab] booked session:', payload)
+        // }
       />
     </>
   );

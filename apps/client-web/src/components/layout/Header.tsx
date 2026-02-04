@@ -15,9 +15,9 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { LogOut, Menu } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "../common/ConfirmDialog";
+import { useAuth } from "@/contexts/useAuth";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();

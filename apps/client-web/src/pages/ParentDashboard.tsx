@@ -9,11 +9,12 @@ import { AchievementsTab } from "@/components/client-dashboard/achievements/Achi
 import ScheduleTab from "@/components/client-dashboard/schedule/ScheduleTab";
 import { SessionType, UserRole, type Kid } from "@grow-fitness/shared-types";
 import { useKid } from "@/contexts/kid/useKid";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { kidsService } from "@/services/kids.service";
 import { getTabsForUser } from "@/constants/dashboard";
 import { InvoicesTab } from "@/components/client-dashboard/InvoiceTab";
 import { KidProfileTab } from "@/components/client-dashboard/KidProfileTab";
+import { useAuth } from "@/contexts/useAuth";
 
 
 export default function ParentDashboard() {
@@ -26,7 +27,7 @@ export default function ParentDashboard() {
 
   /* ------------------ FETCH KID ------------------ */
   useEffect(() => {
-    const kidId = selectedKid?.id || selectedKid?._id;
+    const kidId = selectedKid?.id || selectedKid?.id;
     if (!kidId) return;
 
     const fetchKidData = async () => {
@@ -94,7 +95,7 @@ export default function ParentDashboard() {
     overview: <OverviewTab kid={kidData} />,
     achievements: <AchievementsTab />,
     schedule: <ScheduleTab kid={kidData} />,
-    invoice: <InvoicesTab kidId={kidData._id} />,
+    invoice: <InvoicesTab kidId={kidData.id} />,
     kidProfile: <KidProfileTab/>,
   };
 
@@ -123,7 +124,7 @@ export default function ParentDashboard() {
       <MobileTabNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        user={user.role}
+        user={UserRole.PARENT}
         kidType={kidData.sessionType}
       />
     </div>
