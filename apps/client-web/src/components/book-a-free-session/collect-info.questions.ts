@@ -1,3 +1,4 @@
+
 import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
 import { SessionType } from '@grow-fitness/shared-types';
 
@@ -8,7 +9,7 @@ interface QuestionOption {
 
 interface Question {
   id: keyof CreateFreeSessionRequestDto;
-  type: 'text' | 'email' | 'phone' | 'select';
+  type: 'text' | 'email' | 'phone' | 'select' | 'datetime';
   title: string;
   placeholder?: string;
   required: boolean;
@@ -56,10 +57,17 @@ export const collectInfoQuestions: Question[] = [
     ],
   },
   {
-    id: 'selectedSessionId',
+    id: 'locationId',
     type: 'text',
-    title: 'Session ID (if you have a specific session in mind)',
-    placeholder: 'Enter session ID (optional)',
+    title: 'Preferred Location',
+    placeholder: 'Enter location',
     required: true,
+  },
+  {
+    id: 'preferredDateTime',
+    type: 'datetime',
+    title: 'Preferred Date and Time',
+    required: true,
+    subtitle: 'Select the date and time you prefer for your session',
   },
 ];

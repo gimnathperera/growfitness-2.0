@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
-import CollectInfoFlow from './CollectInfoFlow';
-import { useHandleError } from '@/lib/errors';
 import { toast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
+import CollectInfoFlow from './CollectInfoFlow';
+import { useHandleError } from '@/lib/errors';
 import { requestsService } from '@/services/requests.service';
+import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
 
 const BookAFreeSessionForm: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const handleError = useHandleError();  // Moved to the top level
+  const handleError = useHandleError(); // Hook for error handling
 
   const handleCollectInfoSubmit = async (data: CreateFreeSessionRequestDto) => {
     try {
@@ -22,20 +22,22 @@ const BookAFreeSessionForm: React.FC = () => {
         setTimeout(() => reject(new Error('Request timeout')), 30000);
       });
 
+      // Make API call to create free session request
       await Promise.race([
-        requestsService.selectFreeSessionRequest(data.selectedSessionId),
+        requestsService.createFreeSessionRequest(data),
         timeoutPromise,
       ]);
 
+      // Success toast
       toast({
-        title: 'Success',
+        title: 'Request Submitted!',
         description:
-          "🎉 Request submitted successfully! We'll contact you soon to schedule your free session.",
+          "🎉 Your free session request has been submitted. Our team will get back to you soon!",
       });
 
       navigate('/');
     } catch (error) {
-      const appError = handleError(error);  // Using the function returned by the hook
+      const appError = handleError(error);
       setSubmitError(appError.message);
     } finally {
       setIsLoading(false);

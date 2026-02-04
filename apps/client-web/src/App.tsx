@@ -7,6 +7,7 @@ import DashboardPage from "./components/dashboard/DashboardPage";
 import SignInPage from "./pages/SignInPage";
 import BookAFreeSession from "./pages/BookAFreeSession";
 import { KidProvider } from "./contexts/kid/KidProvider";
+import ProfilePage from "./pages/ProfilePage";
 
 // Create a wrapper component that conditionally applies KidProvider
 function DashboardWrapper() {
@@ -43,6 +44,7 @@ function App() {
           }
         >
           <Route path="/dashboard" element={<DashboardWrapper />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </AuthProvider>

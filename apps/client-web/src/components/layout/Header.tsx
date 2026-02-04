@@ -157,6 +157,16 @@ export function Header() {
                           </button>
 
                           <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              navigate("/profile");
+                            }}
+                            className="menu-item flex items-center pl-8"
+                          >
+                            Profile
+                          </button>
+
+                          <button
                             onClick={handleLogout}
                             className="menu-item text-red-600 flex items-center gap-2"
                           >
