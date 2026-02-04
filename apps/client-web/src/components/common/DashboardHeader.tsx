@@ -25,7 +25,7 @@ export function DashboardHeader() {
   /* ---------- ROLE CONFIG ---------- */
   const roleConfig = {
     PARENT: {
-      greeting: `Hi ${user?.email ?? "Parent"} 👋`,
+      greeting: `Hi, Welcome Back! 👋`,
       subtitle: "Track your child's fitness journey",
     },
     COACH: {

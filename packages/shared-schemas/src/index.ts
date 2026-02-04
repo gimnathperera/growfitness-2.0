@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { SessionType, SessionStatus, InvoiceType, BannerTargetAudience } from '@grow-fitness/shared-types';
+import {
+  SessionType,
+  SessionStatus,
+  InvoiceType,
+  BannerTargetAudience,
+} from '@grow-fitness/shared-types';
 
 // Auth Schemas
 export const LoginSchema = z.object({
@@ -135,7 +140,14 @@ export const CreateFreeSessionRequestSchema = z.object({
   email: z.string().email('Invalid email address'),
   kidName: z.string().min(1, 'Kid name is required'),
   sessionType: z.nativeEnum(SessionType),
-  selectedSessionId: z.string().min(1, 'Session ID is required'),
+  selectedSessionId: z.string().optional(), // optional now
+  locationId: z.string().min(1, 'Location ID is required'),
+  preferredDateTime: z
+    .string()
+    .min(1, 'Preferred date and time is required')
+    .refine(val => !isNaN(Date.parse(val)), {
+      message: 'Invalid date format',
+    }),
 });
 
 export type CreateFreeSessionRequestDto = z.infer<typeof CreateFreeSessionRequestSchema>;
