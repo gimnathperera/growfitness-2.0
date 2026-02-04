@@ -4,6 +4,8 @@ import {
   SessionStatus,
   InvoiceType,
   BannerTargetAudience,
+  QuestionType,
+  ReportType,
 } from '@grow-fitness/shared-types';
 
 // Auth Schemas
@@ -129,6 +131,7 @@ export const UpdateSessionSchema = z.object({
   kids: z.array(z.string()).optional(),
   kidId: z.string().optional(),
   status: z.nativeEnum(SessionStatus).optional(),
+  isFreeSession: z.boolean().optional(),
 });
 
 export type UpdateSessionDto = z.infer<typeof UpdateSessionSchema>;
@@ -140,14 +143,9 @@ export const CreateFreeSessionRequestSchema = z.object({
   email: z.string().email('Invalid email address'),
   kidName: z.string().min(1, 'Kid name is required'),
   sessionType: z.nativeEnum(SessionType),
-  selectedSessionId: z.string().optional(), // optional now
+  selectedSessionId: z.string().optional(),
+  preferredDateTime: z.string().or(z.date()),
   locationId: z.string().min(1, 'Location ID is required'),
-  preferredDateTime: z
-    .string()
-    .min(1, 'Preferred date and time is required')
-    .refine(val => !isNaN(Date.parse(val)), {
-      message: 'Invalid date format',
-    }),
 });
 
 export type CreateFreeSessionRequestDto = z.infer<typeof CreateFreeSessionRequestSchema>;
@@ -256,3 +254,86 @@ export const PaginationSchema = z.object({
 });
 
 export type PaginationDto = z.infer<typeof PaginationSchema>;
+
+// Quiz Schemas
+export const QuizQuestionSchema = z
+  .object({
+    question: z.string().min(1, 'Question is required'),
+    type: z.nativeEnum(QuestionType),
+    options: z.array(z.string().min(1, 'Option cannot be empty')).optional(),
+    correctAnswer: z.string().min(1, 'Correct answer is required'),
+    points: z.number().min(0).optional(),
+  })
+  .refine(
+    data => {
+      if (data.type === QuestionType.MULTIPLE_CHOICE) {
+        return (
+          data.options !== undefined &&
+          data.options.length >= 2 &&
+          data.options.includes(data.correctAnswer)
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        'Multiple choice questions must have at least 2 options and the correct answer must be one of them',
+      path: ['options'],
+    }
+  )
+  .refine(
+    data => {
+      if (data.type === QuestionType.TRUE_FALSE) {
+        return data.correctAnswer === 'True' || data.correctAnswer === 'False';
+      }
+      return true;
+    },
+    {
+      message: 'True/False questions must have correct answer as "True" or "False"',
+      path: ['correctAnswer'],
+    }
+  );
+
+export type QuizQuestionDto = z.infer<typeof QuizQuestionSchema>;
+
+export const CreateQuizSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  questions: z.array(QuizQuestionSchema).min(1, 'At least one question is required'),
+  targetAudience: z.nativeEnum(BannerTargetAudience),
+  passingScore: z.number().min(0).max(100).optional(),
+});
+
+export type CreateQuizDto = z.infer<typeof CreateQuizSchema>;
+
+export const UpdateQuizSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  questions: z.array(QuizQuestionSchema).min(1).optional(),
+  targetAudience: z.nativeEnum(BannerTargetAudience).optional(),
+  isActive: z.boolean().optional(),
+  passingScore: z.number().min(0).max(100).optional(),
+});
+
+export type UpdateQuizDto = z.infer<typeof UpdateQuizSchema>;
+
+// Report Schemas
+export const CreateReportSchema = z.object({
+  type: z.nativeEnum(ReportType),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  startDate: z.string().or(z.date()).optional(),
+  endDate: z.string().or(z.date()).optional(),
+  filters: z.record(z.unknown()).optional(),
+});
+
+export type CreateReportDto = z.infer<typeof CreateReportSchema>;
+
+export const GenerateReportSchema = z.object({
+  type: z.nativeEnum(ReportType),
+  startDate: z.string().or(z.date()).optional(),
+  endDate: z.string().or(z.date()).optional(),
+  filters: z.record(z.unknown()).optional(),
+});
+
+export type GenerateReportDto = z.infer<typeof GenerateReportSchema>;
