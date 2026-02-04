@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { sessionsService } from '@/services/sessions.service';
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, LayoutList, Calendar as CalendarIcon } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime, formatSessionType } from '@/lib/formatters';
@@ -27,18 +27,48 @@ import { EditSessionDialog } from '@/components/sessions/EditSessionDialog';
 import { SessionDetailsDialog } from '@/components/sessions/SessionDetailsDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useModalParams } from '@/hooks/useModalParams';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSearchParams } from 'react-router-dom';
+import { SessionsCalendar } from '@/components/sessions/SessionsCalendar';
 
 export function SessionsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [coachFilter, setCoachFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<SessionStatus | ''>('');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('sessionId');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('view') || 'list';
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ view: value });
+  };
+
+  // Sync selectedSession with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      if (!selectedSession || selectedSession.id !== entityId) {
+        sessionsService
+          .getSessionById(entityId)
+          .then(response => {
+            setSelectedSession(response);
+          })
+          .catch(() => {
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedSession(null);
+    }
+  }, [entityId, modal, selectedSession, closeModal]);
+
+  const detailsDialogOpen = modal === 'details' && isOpen;
+  const editDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
 
   const { data: coachesData } = useApiQuery(['users', 'coaches', 'all'], () =>
     usersService.getCoaches(1, 100)
@@ -55,7 +85,10 @@ export function SessionsPage() {
         coachId: coachFilter || undefined,
         locationId: locationFilter || undefined,
         status: statusFilter || undefined,
-      })
+      }),
+    {
+      enabled: currentTab === 'list'
+    }
   );
 
   const deleteMutation = useApiMutation((id: string) => sessionsService.deleteSession(id), {
@@ -77,15 +110,33 @@ export function SessionsPage() {
     });
 
     if (confirmed) {
-      deleteMutation.mutate(session._id);
+      deleteMutation.mutate(session.id);
     }
   };
 
-  const columns: ColumnDef<Session>[] = [
+  const getCoachName = (coachId: any): string => {
+    if (!coachId) return 'N/A';
+    if (typeof coachId === 'string') {
+      const coach = coachesData?.data?.find(c => c.id === coachId);
+      return coach?.coachProfile?.name || coach?.email || 'N/A';
+    }
+    if (typeof coachId === 'object') {
+      if (coachId.coachProfile?.name) return coachId.coachProfile.name;
+      if (coachId.email) return coachId.email;
+    }
+    return 'N/A';
+  };
+
+  const columns = useMemo<ColumnDef<Session>[]>(() => [
     {
       accessorKey: 'dateTime',
       header: 'Date & Time',
       cell: ({ row }) => formatDateTime(row.original.dateTime),
+    },
+    {
+      accessorKey: 'coachId',
+      header: 'Coach',
+      cell: ({ row }) => getCoachName(row.original.coachId),
     },
     {
       accessorKey: 'type',
@@ -119,7 +170,7 @@ export function SessionsPage() {
               size="icon"
               onClick={() => {
                 setSelectedSession(session);
-                setDetailsDialogOpen(true);
+                openModal(session.id, 'details');
               }}
             >
               <Eye className="h-4 w-4" />
@@ -129,7 +180,7 @@ export function SessionsPage() {
               size="icon"
               onClick={() => {
                 setSelectedSession(session);
-                setEditDialogOpen(true);
+                openModal(session.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -141,116 +192,146 @@ export function SessionsPage() {
         );
       },
     },
-  ];
+  ], [coachesData]);
+
+  const filters = (
+    <FilterBar>
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-muted-foreground">Coach:</label>
+        <Select
+          value={coachFilter || 'all'}
+          onValueChange={value => setCoachFilter(value === 'all' ? '' : value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All coaches" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All coaches</SelectItem>
+            {(coachesData?.data || []).map(coach => (
+              <SelectItem key={coach.id} value={coach.id}>
+                {coach.coachProfile?.name || coach.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-muted-foreground">Location:</label>
+        <Select
+          value={locationFilter || 'all'}
+          onValueChange={value => setLocationFilter(value === 'all' ? '' : value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All locations" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All locations</SelectItem>
+            {(locationsData?.data || []).map(location => (
+              <SelectItem key={location.id} value={location.id}>
+                {location.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-muted-foreground">Status:</label>
+        <Select
+          value={statusFilter || 'all'}
+          onValueChange={value =>
+            setStatusFilter(value === 'all' ? '' : (value as SessionStatus))
+          }
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value={SessionStatus.SCHEDULED}>Scheduled</SelectItem>
+            <SelectItem value={SessionStatus.CONFIRMED}>Confirmed</SelectItem>
+            <SelectItem value={SessionStatus.CANCELLED}>Cancelled</SelectItem>
+            <SelectItem value={SessionStatus.COMPLETED}>Completed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </FilterBar>
+  );
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Sessions</h1>
-        <p className="text-muted-foreground mt-1">Manage training sessions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Sessions</h1>
+          <p className="text-muted-foreground mt-1">Manage training sessions</p>
+        </div>
+        <Button onClick={() => openModal(null, 'create')}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Session
+        </Button>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-end">
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Session
-          </Button>
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="list" className="flex items-center gap-2">
+              <LayoutList className="h-4 w-4" />
+              List View
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Calendar View
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        <FilterBar>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">Coach:</label>
-            <Select
-              value={coachFilter || 'all'}
-              onValueChange={value => setCoachFilter(value === 'all' ? '' : value)}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All coaches" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All coaches</SelectItem>
-                {(coachesData?.data || []).map(coach => (
-                  <SelectItem key={coach._id} value={coach._id}>
-                    {coach.coachProfile?.name || coach.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {filters}
 
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">Location:</label>
-            <Select
-              value={locationFilter || 'all'}
-              onValueChange={value => setLocationFilter(value === 'all' ? '' : value)}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All locations</SelectItem>
-                {(locationsData?.data || []).map(location => (
-                  <SelectItem key={location._id} value={location._id}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <TabsContent value="list" className="space-y-4">
+          {error ? (
+            <ErrorState title="Failed to load sessions" onRetry={() => window.location.reload()} />
+          ) : (
+            <>
+              <DataTable
+                columns={columns}
+                data={data?.data || []}
+                isLoading={isLoading}
+                emptyMessage="No sessions found"
+              />
+              {data && (
+                <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />
+              )}
+            </>
+          )}
+        </TabsContent>
 
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">Status:</label>
-            <Select
-              value={statusFilter || 'all'}
-              onValueChange={value =>
-                setStatusFilter(value === 'all' ? '' : (value as SessionStatus))
-              }
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value={SessionStatus.SCHEDULED}>Scheduled</SelectItem>
-                <SelectItem value={SessionStatus.CONFIRMED}>Confirmed</SelectItem>
-                <SelectItem value={SessionStatus.CANCELLED}>Cancelled</SelectItem>
-                <SelectItem value={SessionStatus.COMPLETED}>Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </FilterBar>
+        <TabsContent value="calendar" className="space-y-4">
+          <SessionsCalendar
+            coachId={coachFilter}
+            locationId={locationFilter}
+            status={statusFilter}
+            onSessionClick={(session) => {
+              setSelectedSession(session);
+              openModal(session.id, 'details');
+            }}
+          />
+        </TabsContent>
+      </Tabs>
 
-        {error ? (
-          <ErrorState title="Failed to load sessions" onRetry={() => window.location.reload()} />
-        ) : (
-          <>
-            <DataTable
-              columns={columns}
-              data={data?.data || []}
-              isLoading={isLoading}
-              emptyMessage="No sessions found"
-            />
-            {data && (
-              <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />
-            )}
-          </>
-        )}
-      </div>
+      <CreateSessionDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      <CreateSessionDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
-
-      {selectedSession && (
+      {(selectedSession || entityId) && (
         <>
           <EditSessionDialog
             open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            session={selectedSession}
+            onOpenChange={closeModal}
+            session={selectedSession || undefined}
           />
           <SessionDetailsDialog
             open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            session={selectedSession}
+            onOpenChange={closeModal}
+            session={selectedSession || undefined}
           />
         </>
       )}

@@ -36,7 +36,7 @@ export function FreeSessionRequestsTable() {
   );
 
   const handleSelect = (request: FreeSessionRequest) => {
-    selectMutation.mutate({ id: request._id });
+    selectMutation.mutate({ id: request.id });
   };
 
   const columns: ColumnDef<FreeSessionRequest>[] = [
@@ -59,6 +59,23 @@ export function FreeSessionRequestsTable() {
     {
       accessorKey: 'sessionType',
       header: 'Session Type',
+    },
+    {
+      accessorKey: 'preferredDateTime',
+      header: 'Preferred Date',
+      cell: ({ row }) => {
+        const date = row.original.preferredDateTime;
+        return date ? formatDate(date) : '-';
+      },
+    },
+    {
+      accessorKey: 'locationId',
+      header: 'Location',
+      cell: ({ row }) => {
+        // Handle both populated object and ID string
+        const location = row.original.locationId as any;
+        return location?.name || location || '-';
+      },
     },
     {
       accessorKey: 'status',

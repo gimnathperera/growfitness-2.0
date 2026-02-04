@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { codesService, Code } from '@/services/codes.service';
@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Badge } from '@/components/ui/badge';
+import { useModalParams } from '@/hooks/useModalParams';
 
 function formatCodeStatus(status: string): string {
   const statusMap: Record<string, string> = {
@@ -46,11 +47,33 @@ function formatDiscount(code: Code): string {
 
 export function CodesPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('codeId');
   const [selectedCode, setSelectedCode] = useState<Code | null>(null);
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
+
+  // Sync selectedCode with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      // Fetch code if we have ID in URL but no selectedCode
+      if (!selectedCode || selectedCode.id !== entityId) {
+        codesService
+          .getCodeById(entityId)
+          .then(response => {
+            setSelectedCode(response);
+          })
+          .catch(() => {
+            // Code not found, close modal
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedCode(null);
+    }
+  }, [entityId, modal, selectedCode, closeModal]);
+
+  const editDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
 
   const { data, isLoading, error } = useApiQuery(
     ['codes', page.toString(), pageSize.toString()],
@@ -76,7 +99,7 @@ export function CodesPage() {
     });
 
     if (confirmed) {
-      deleteMutation.mutate(code._id);
+      deleteMutation.mutate(code.id);
     }
   };
 
@@ -133,7 +156,7 @@ export function CodesPage() {
               size="icon"
               onClick={() => {
                 setSelectedCode(code);
-                setEditDialogOpen(true);
+                openModal(code.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -156,7 +179,7 @@ export function CodesPage() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-end">
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Create Code
           </Button>
@@ -179,13 +202,13 @@ export function CodesPage() {
         )}
       </div>
 
-      <CreateCodeDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateCodeDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {selectedCode && (
+      {(selectedCode || entityId) && (
         <EditCodeDialog
           open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          code={selectedCode}
+          onOpenChange={closeModal}
+          code={selectedCode || undefined}
         />
       )}
 

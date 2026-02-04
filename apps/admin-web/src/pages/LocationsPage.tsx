@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { locationsService } from '@/services/locations.service';
@@ -15,15 +15,38 @@ import { EditLocationDialog } from '@/components/locations/EditLocationDialog';
 import { LocationDetailsDialog } from '@/components/locations/LocationDetailsDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useModalParams } from '@/hooks/useModalParams';
 
 export function LocationsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('locationId');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
+
+  // Sync selectedLocation with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      // Fetch location if we have ID in URL but no selectedLocation
+      if (!selectedLocation || selectedLocation.id !== entityId) {
+        locationsService
+          .getLocationById(entityId)
+          .then(response => {
+            setSelectedLocation(response);
+          })
+          .catch(() => {
+            // Location not found, close modal
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedLocation(null);
+    }
+  }, [entityId, modal, selectedLocation, closeModal]);
+
+  const detailsDialogOpen = modal === 'details' && isOpen;
+  const editDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
 
   const { data, isLoading, error } = useApiQuery(
     ['locations', page.toString(), pageSize.toString()],
@@ -49,7 +72,7 @@ export function LocationsPage() {
     });
 
     if (confirmed) {
-      deleteMutation.mutate(location._id);
+      deleteMutation.mutate(location.id);
     }
   };
 
@@ -84,7 +107,7 @@ export function LocationsPage() {
               size="icon"
               onClick={() => {
                 setSelectedLocation(location);
-                setDetailsDialogOpen(true);
+                openModal(location.id, 'details');
               }}
             >
               <Eye className="h-4 w-4" />
@@ -94,7 +117,7 @@ export function LocationsPage() {
               size="icon"
               onClick={() => {
                 setSelectedLocation(location);
-                setEditDialogOpen(true);
+                openModal(location.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -117,7 +140,7 @@ export function LocationsPage() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-end">
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Add Location
           </Button>
@@ -140,19 +163,19 @@ export function LocationsPage() {
         )}
       </div>
 
-      <CreateLocationDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateLocationDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {selectedLocation && (
+      {(selectedLocation || entityId) && (
         <>
           <EditLocationDialog
             open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            location={selectedLocation}
+            onOpenChange={closeModal}
+            location={selectedLocation || undefined}
           />
           <LocationDetailsDialog
             open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            location={selectedLocation}
+            onOpenChange={closeModal}
+            location={selectedLocation || undefined}
           />
         </>
       )}

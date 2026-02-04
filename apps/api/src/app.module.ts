@@ -19,9 +19,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AuditModule } from './modules/audit/audit.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CodesModule } from './modules/codes/codes.module';
-import { ResourcesModule } from './modules/resources/resources.module';
 import { QuizzesModule } from './modules/quizzes/quizzes.module';
-import { CrmModule } from './modules/crm/crm.module';
 import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
@@ -48,9 +46,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     AuditModule,
     DashboardModule,
     CodesModule,
-    ResourcesModule,
     QuizzesModule,
-    CrmModule,
     ReportsModule,
   ],
   controllers: [AppController],

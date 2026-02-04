@@ -41,7 +41,7 @@ export declare enum BannerTargetAudience {
     ALL = "ALL"
 }
 export interface User {
-    _id: string;
+    id: string;
     role: UserRole;
     email: string;
     phone: string;
@@ -60,7 +60,7 @@ export interface CoachProfile {
     name: string;
 }
 export interface Kid {
-    _id: string;
+    id: string;
     parentId: string;
     name: string;
     gender: string;
@@ -75,7 +75,7 @@ export interface Kid {
     updatedAt: Date;
 }
 export interface Session {
-    _id: string;
+    id: string;
     type: SessionType;
     coachId: string;
     locationId: string;
@@ -90,7 +90,7 @@ export interface Session {
     updatedAt: Date;
 }
 export interface FreeSessionRequest {
-    _id: string;
+    id: string;
     parentName: string;
     phone: string;
     email: string;
@@ -101,7 +101,7 @@ export interface FreeSessionRequest {
     createdAt: Date;
 }
 export interface RescheduleRequest {
-    _id: string;
+    id: string;
     sessionId: string;
     requestedBy: string;
     newDateTime: Date;
@@ -111,7 +111,7 @@ export interface RescheduleRequest {
     processedAt?: Date;
 }
 export interface ExtraSessionRequest {
-    _id: string;
+    id: string;
     parentId: string;
     kidId: string;
     coachId: string;
@@ -122,7 +122,7 @@ export interface ExtraSessionRequest {
     createdAt: Date;
 }
 export interface Invoice {
-    _id: string;
+    id: string;
     type: InvoiceType;
     parentId?: string;
     coachId?: string;
@@ -140,7 +140,7 @@ export interface InvoiceItem {
     amount: number;
 }
 export interface Location {
-    _id: string;
+    id: string;
     name: string;
     address: string;
     geo?: {
@@ -152,7 +152,7 @@ export interface Location {
     updatedAt: Date;
 }
 export interface Banner {
-    _id: string;
+    id: string;
     imageUrl: string;
     active: boolean;
     order: number;
@@ -161,7 +161,7 @@ export interface Banner {
     updatedAt: Date;
 }
 export interface AuditLog {
-    _id: string;
+    id: string;
     actorId: string;
     action: string;
     entityType: string;

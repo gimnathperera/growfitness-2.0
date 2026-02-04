@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery } from '@/hooks';
 import { invoicesService } from '@/services/invoices.service';
@@ -27,16 +27,39 @@ import { CreateInvoiceDialog } from '@/components/invoices/CreateInvoiceDialog';
 import { UpdatePaymentStatusDialog } from '@/components/invoices/UpdatePaymentStatusDialog';
 import { InvoiceDetailsDialog } from '@/components/invoices/InvoiceDetailsDialog';
 import { ErrorState } from '@/components/common/ErrorState';
+import { useModalParams } from '@/hooks/useModalParams';
 
 export function InvoicesPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [typeFilter, setTypeFilter] = useState<InvoiceType | ''>('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | ''>('');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('invoiceId');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const { toast } = useToast();
+
+  // Sync selectedInvoice with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      // Fetch invoice if we have ID in URL but no selectedInvoice
+      if (!selectedInvoice || selectedInvoice.id !== entityId) {
+        invoicesService
+          .getInvoiceById(entityId)
+          .then(response => {
+            setSelectedInvoice(response);
+          })
+          .catch(() => {
+            // Invoice not found, close modal
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedInvoice(null);
+    }
+  }, [entityId, modal, selectedInvoice, closeModal]);
+
+  const detailsDialogOpen = modal === 'details' && isOpen;
+  const updateDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
 
   const { data, isLoading, error } = useApiQuery(
     ['invoices', page.toString(), pageSize.toString(), typeFilter, statusFilter],
@@ -103,7 +126,7 @@ export function InvoicesPage() {
               size="icon"
               onClick={() => {
                 setSelectedInvoice(invoice);
-                setDetailsDialogOpen(true);
+                openModal(invoice.id, 'details');
               }}
             >
               <Eye className="h-4 w-4" />
@@ -113,7 +136,7 @@ export function InvoicesPage() {
               size="icon"
               onClick={() => {
                 setSelectedInvoice(invoice);
-                setUpdateDialogOpen(true);
+                openModal(invoice.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -137,7 +160,7 @@ export function InvoicesPage() {
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Create Invoice
           </Button>
@@ -201,19 +224,19 @@ export function InvoicesPage() {
         )}
       </div>
 
-      <CreateInvoiceDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateInvoiceDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {selectedInvoice && (
+      {(selectedInvoice || entityId) && (
         <>
           <UpdatePaymentStatusDialog
             open={updateDialogOpen}
-            onOpenChange={setUpdateDialogOpen}
-            invoice={selectedInvoice}
+            onOpenChange={closeModal}
+            invoice={selectedInvoice || undefined}
           />
           <InvoiceDetailsDialog
             open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            invoice={selectedInvoice}
+            onOpenChange={closeModal}
+            invoice={selectedInvoice || undefined}
           />
         </>
       )}

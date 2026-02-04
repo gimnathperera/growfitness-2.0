@@ -9,16 +9,48 @@ import { Invoice } from '@grow-fitness/shared-types';
 import { formatDate, formatCurrency, formatInvoiceType } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Separator } from '@/components/ui/separator';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { invoicesService } from '@/services/invoices.service';
+import { useModalParams } from '@/hooks/useModalParams';
 
 interface InvoiceDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  invoice: Invoice;
+  invoice?: Invoice;
 }
 
-export function InvoiceDetailsDialog({ open, onOpenChange, invoice }: InvoiceDetailsDialogProps) {
+export function InvoiceDetailsDialog({ open, onOpenChange, invoice: invoiceProp }: InvoiceDetailsDialogProps) {
+  const { entityId, closeModal } = useModalParams('invoiceId');
+  
+  // Fetch invoice from URL if prop not provided
+  const { data: invoiceFromUrl } = useApiQuery<Invoice>(
+    ['invoices', entityId || 'no-id'],
+    () => {
+      if (!entityId) {
+        throw new Error('Invoice ID is required');
+      }
+      return invoicesService.getInvoiceById(entityId);
+    },
+    {
+      enabled: open && !invoiceProp && !!entityId,
+    }
+  );
+
+  const invoice = invoiceProp || invoiceFromUrl;
+
+  // Handle close with URL params
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      closeModal();
+    }
+    onOpenChange(newOpen);
+  };
+
+  if (!invoice) {
+    return null;
+  }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Invoice Details</DialogTitle>

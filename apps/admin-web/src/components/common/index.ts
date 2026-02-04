@@ -8,6 +8,7 @@ export { EmptyState } from './EmptyState';
 export { ConfirmDialog } from './ConfirmDialog';
 export { FormField } from './FormField';
 export { DatePicker } from './DatePicker';
+export { DateTimePicker } from './DateTimePicker';
 export { StatusBadge } from './StatusBadge';
 
 

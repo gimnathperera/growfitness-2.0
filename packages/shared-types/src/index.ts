@@ -49,9 +49,29 @@ export enum BannerTargetAudience {
   ALL = 'ALL',
 }
 
+export enum QuestionType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  TRUE_FALSE = 'TRUE_FALSE',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+}
+
+export enum ReportType {
+  ATTENDANCE = 'ATTENDANCE',
+  PERFORMANCE = 'PERFORMANCE',
+  FINANCIAL = 'FINANCIAL',
+  SESSION_SUMMARY = 'SESSION_SUMMARY',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum ReportStatus {
+  PENDING = 'PENDING',
+  GENERATED = 'GENERATED',
+  FAILED = 'FAILED',
+}
+
 // Types
 export interface User {
-  _id: string;
+  id: string;
   role: UserRole;
   email: string;
   phone: string;
@@ -59,6 +79,7 @@ export interface User {
   status: UserStatus;
   parentProfile?: ParentProfile;
   coachProfile?: CoachProfile;
+  sessionTypes?: SessionType[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -74,7 +95,7 @@ export interface CoachProfile {
 }
 
 export interface Kid {
-  _id: string;
+  id: string;
   parentId: string;
   name: string;
   gender: string;
@@ -90,7 +111,7 @@ export interface Kid {
 }
 
 export interface Session {
-  _id: string;
+  id: string;
   type: SessionType;
   coachId: string;
   locationId: string;
@@ -106,19 +127,21 @@ export interface Session {
 }
 
 export interface FreeSessionRequest {
-  _id: string;
+  id: string;
   parentName: string;
   phone: string;
   email: string;
   kidName: string;
   sessionType: SessionType;
   selectedSessionId?: string;
+  preferredDateTime?: Date;
+  locationId?: string;
   status: RequestStatus;
   createdAt: Date;
 }
 
 export interface RescheduleRequest {
-  _id: string;
+  id: string;
   sessionId: string;
   requestedBy: string; // User ID
   newDateTime: Date;
@@ -129,7 +152,7 @@ export interface RescheduleRequest {
 }
 
 export interface ExtraSessionRequest {
-  _id: string;
+  id: string;
   parentId: string;
   kidId: string;
   coachId: string;
@@ -140,8 +163,17 @@ export interface ExtraSessionRequest {
   createdAt: Date;
 }
 
+export interface UserRegistrationRequest {
+  id: string;
+  parentId: string;
+  status: RequestStatus;
+  createdAt: Date;
+  processedAt?: Date;
+  processedBy?: string;
+}
+
 export interface Invoice {
-  _id: string;
+  id: string;
   type: InvoiceType;
   parentId?: string;
   coachId?: string;
@@ -161,7 +193,7 @@ export interface InvoiceItem {
 }
 
 export interface Location {
-  _id: string;
+  id: string;
   name: string;
   address: string;
   geo?: {
@@ -174,7 +206,7 @@ export interface Location {
 }
 
 export interface Banner {
-  _id: string;
+  id: string;
   imageUrl: string;
   active: boolean;
   order: number;
@@ -184,13 +216,49 @@ export interface Banner {
 }
 
 export interface AuditLog {
-  _id: string;
+  id: string;
   actorId: string;
   action: string;
   entityType: string;
   entityId: string;
   metadata?: Record<string, unknown>;
   timestamp: Date;
+}
+
+export interface QuizQuestion {
+  question: string;
+  type: QuestionType;
+  options?: string[];
+  correctAnswer: string;
+  points?: number;
+}
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  questions: QuizQuestion[];
+  targetAudience: BannerTargetAudience;
+  isActive: boolean;
+  passingScore?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Report {
+  id: string;
+  type: ReportType;
+  title: string;
+  description?: string;
+  status: ReportStatus;
+  startDate?: Date;
+  endDate?: Date;
+  filters?: Record<string, unknown>;
+  data?: Record<string, unknown>;
+  fileUrl?: string;
+  generatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Pagination

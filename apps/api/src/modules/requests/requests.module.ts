@@ -14,6 +14,12 @@ import {
   ExtraSessionRequest,
   ExtraSessionRequestSchema,
 } from '../../infra/database/schemas/extra-session-request.schema';
+import {
+  UserRegistrationRequest,
+  UserRegistrationRequestSchema,
+} from '../../infra/database/schemas/user-registration-request.schema';
+import { User, UserSchema } from '../../infra/database/schemas/user.schema';
+import { Kid, KidSchema } from '../../infra/database/schemas/kid.schema';
 import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -23,6 +29,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: FreeSessionRequest.name, schema: FreeSessionRequestSchema },
       { name: RescheduleRequest.name, schema: RescheduleRequestSchema },
       { name: ExtraSessionRequest.name, schema: ExtraSessionRequestSchema },
+      { name: UserRegistrationRequest.name, schema: UserRegistrationRequestSchema },
+      { name: User.name, schema: UserSchema },
+      { name: Kid.name, schema: KidSchema },
     ]),
     AuditModule,
     NotificationsModule,

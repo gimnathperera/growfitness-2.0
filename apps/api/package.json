@@ -21,7 +21,8 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "create-admin": "ts-node -r tsconfig-paths/register scripts/create-admin.ts",
-    "seed": "ts-node -r tsconfig-paths/register scripts/seed-database.ts"
+    "seed": "ts-node -r tsconfig-paths/register scripts/seed-database.ts",
+    "approve-all": "ts-node --transpile-only -r tsconfig-paths/register scripts/approve-all-users.ts"
   },
   "dependencies": {
     "@grow-fitness/shared-schemas": "workspace:*",

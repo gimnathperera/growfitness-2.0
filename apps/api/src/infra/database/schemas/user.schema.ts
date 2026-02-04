@@ -23,6 +23,9 @@ export class User {
   @Prop({ required: true, type: String, enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
 
+  @Prop({ required: false, type: Boolean, default: false })
+  isApproved: boolean;
+
   @Prop({
     type: {
       name: { type: String, required: false },
@@ -52,3 +55,4 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // Note: email index is automatically created by unique: true in @Prop decorator
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
+UserSchema.index({ isApproved: 1 });

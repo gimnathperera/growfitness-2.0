@@ -12,9 +12,7 @@ import { LocationsPage } from './pages/LocationsPage';
 import { BannersPage } from './pages/BannersPage';
 import { AuditPage } from './pages/AuditPage';
 import { CodesPage } from './pages/CodesPage';
-import { ResourcesPage } from './pages/ResourcesPage';
 import { QuizzesPage } from './pages/QuizzesPage';
-import { CrmPage } from './pages/CrmPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { Layout } from './components/layout/Layout';
 
@@ -42,9 +40,7 @@ function App() {
           <Route path="banners" element={<BannersPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="codes" element={<CodesPage />} />
-          <Route path="resources" element={<ResourcesPage />} />
           <Route path="quizzes" element={<QuizzesPage />} />
-          <Route path="crm" element={<CrmPage />} />
           <Route path="reports" element={<ReportsPage />} />
         </Route>
       </Routes>

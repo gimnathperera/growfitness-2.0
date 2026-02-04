@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { bannersService } from '@/services/banners.service';
@@ -16,15 +16,60 @@ import { EditBannerDialog } from '@/components/banners/EditBannerDialog';
 import { BannerPreviewDialog } from '@/components/banners/BannerPreviewDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useModalParams } from '@/hooks/useModalParams';
+import { useSearchParams } from 'react-router-dom';
 
 export function BannersPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('bannerId');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
+
+  // Handle preview dialog separately (it uses a different param)
+  const previewDialogOpen = searchParams.get('previewBanner') === entityId;
+
+  // Sync selectedBanner with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      // Fetch banner if we have ID in URL but no selectedBanner
+      if (!selectedBanner || selectedBanner.id !== entityId) {
+        bannersService
+          .getBannerById(entityId)
+          .then(response => {
+            setSelectedBanner(response);
+          })
+          .catch(() => {
+            // Banner not found, close modal
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedBanner(null);
+    }
+  }, [entityId, modal, selectedBanner, closeModal]);
+
+  const editDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
+
+  const handleOpenPreviewDialog = (banner: Banner) => {
+    setSelectedBanner(banner);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('bannerId', banner.id);
+      newParams.set('previewBanner', banner.id);
+      return newParams;
+    });
+  };
+
+  const handleClosePreviewDialog = () => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete('previewBanner');
+      return newParams;
+    });
+  };
 
   const { data, isLoading, error } = useApiQuery(
     ['banners', page.toString(), pageSize.toString()],
@@ -61,7 +106,7 @@ export function BannersPage() {
     });
 
     if (confirmed) {
-      deleteMutation.mutate(banner._id);
+      deleteMutation.mutate(banner.id);
     }
   };
 
@@ -91,7 +136,7 @@ export function BannersPage() {
           <Switch
             checked={banner.active}
             onCheckedChange={checked =>
-              toggleActiveMutation.mutate({ id: banner._id, active: checked })
+              toggleActiveMutation.mutate({ id: banner.id, active: checked })
             }
           />
         );
@@ -112,10 +157,7 @@ export function BannersPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                setSelectedBanner(banner);
-                setPreviewDialogOpen(true);
-              }}
+              onClick={() => handleOpenPreviewDialog(banner)}
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -124,7 +166,7 @@ export function BannersPage() {
               size="icon"
               onClick={() => {
                 setSelectedBanner(banner);
-                setEditDialogOpen(true);
+                openModal(banner.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -147,7 +189,7 @@ export function BannersPage() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-end">
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Add Banner
           </Button>
@@ -170,20 +212,22 @@ export function BannersPage() {
         )}
       </div>
 
-      <CreateBannerDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateBannerDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {selectedBanner && (
+      {(selectedBanner || entityId) && (
         <>
           <EditBannerDialog
             open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            banner={selectedBanner}
+            onOpenChange={closeModal}
+            banner={selectedBanner || undefined}
           />
-          <BannerPreviewDialog
-            open={previewDialogOpen}
-            onOpenChange={setPreviewDialogOpen}
-            banner={selectedBanner}
-          />
+          {selectedBanner && (
+            <BannerPreviewDialog
+              open={previewDialogOpen}
+              onOpenChange={handleClosePreviewDialog}
+              banner={selectedBanner}
+            />
+          )}
         </>
       )}
 

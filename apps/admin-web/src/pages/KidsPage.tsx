@@ -1,21 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { kidsService } from '@/services/kids.service';
-import { usersService } from '@/services/users.service';
-import { Kid, SessionType } from '@grow-fitness/shared-types';
+import { Kid } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { SearchInput } from '@/components/common/SearchInput';
-import { FilterBar } from '@/components/common/FilterBar';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Plus, Pencil, Eye, Link2, Unlink } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
@@ -28,33 +19,73 @@ import { LinkParentDialog } from '@/components/kids/LinkParentDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { ErrorState } from '@/components/common/ErrorState';
+import { useModalParams } from '@/hooks/useModalParams';
+import { useSearchParams } from 'react-router-dom';
 
 export function KidsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
-  const [, setSearch] = useState('');
-  const [parentIdFilter, setParentIdFilter] = useState<string>('');
-  const [sessionTypeFilter, setSessionTypeFilter] = useState<SessionType | ''>('');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('kidId');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedKid, setSelectedKid] = useState<Kid | null>(null);
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
 
-  const { data: parentsData } = useApiQuery(['users', 'parents', 'all'], () =>
-    usersService.getParents(1, 100)
-  );
+  // Handle link dialog separately (it uses a different param)
+  const linkDialogOpen = searchParams.get('linkKid') === entityId;
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync selectedKid with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      // Fetch kid if we have ID in URL but no selectedKid
+      if (!selectedKid || selectedKid.id !== entityId) {
+        kidsService
+          .getKidById(entityId)
+          .then(response => {
+            setSelectedKid(response);
+          })
+          .catch(() => {
+            // Kid not found, close modal
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedKid(null);
+    }
+  }, [entityId, modal, selectedKid, closeModal]);
+
+  const detailsDialogOpen = modal === 'details' && isOpen;
+  const editDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
+
+  const handleOpenLinkDialog = (kid: Kid) => {
+    setSelectedKid(kid);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('kidId', kid.id);
+      newParams.set('linkKid', kid.id);
+      return newParams;
+    });
+  };
+
+  const handleCloseLinkDialog = () => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete('linkKid');
+      return newParams;
+    });
+  };
 
   const { data, isLoading, error } = useApiQuery(
-    ['kids', page.toString(), pageSize.toString(), parentIdFilter, sessionTypeFilter],
-    () =>
-      kidsService.getKids(
-        page,
-        pageSize,
-        parentIdFilter || undefined,
-        sessionTypeFilter || undefined
-      )
+    ['kids', page.toString(), pageSize.toString(), search],
+    () => kidsService.getKids(page, pageSize, undefined, undefined, search || undefined)
   );
 
   const deleteMutation = useApiMutation((id: string) => kidsService.unlinkFromParent(id), {
@@ -76,7 +107,7 @@ export function KidsPage() {
     });
 
     if (confirmed) {
-      deleteMutation.mutate(kid._id);
+      deleteMutation.mutate(kid.id);
     }
   };
 
@@ -116,7 +147,7 @@ export function KidsPage() {
               size="icon"
               onClick={() => {
                 setSelectedKid(kid);
-                setDetailsDialogOpen(true);
+                openModal(kid.id, 'details');
               }}
             >
               <Eye className="h-4 w-4" />
@@ -126,7 +157,7 @@ export function KidsPage() {
               size="icon"
               onClick={() => {
                 setSelectedKid(kid);
-                setEditDialogOpen(true);
+                openModal(kid.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -134,10 +165,7 @@ export function KidsPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                setSelectedKid(kid);
-                setLinkDialogOpen(true);
-              }}
+              onClick={() => handleOpenLinkDialog(kid)}
             >
               <Link2 className="h-4 w-4" />
             </Button>
@@ -162,52 +190,11 @@ export function KidsPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <SearchInput placeholder="Search kids..." onSearch={setSearch} className="max-w-sm" />
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Add Kid
           </Button>
         </div>
-
-        <FilterBar>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">Parent:</label>
-            <Select
-              value={parentIdFilter || 'all'}
-              onValueChange={value => setParentIdFilter(value === 'all' ? '' : value)}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All parents" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All parents</SelectItem>
-                {(parentsData?.data || []).map(parent => (
-                  <SelectItem key={parent._id} value={parent._id}>
-                    {parent.parentProfile?.name || parent.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">Session Type:</label>
-            <Select
-              value={sessionTypeFilter || 'all'}
-              onValueChange={value =>
-                setSessionTypeFilter(value === 'all' ? '' : (value as SessionType))
-              }
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
-                <SelectItem value={SessionType.GROUP}>Group</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </FilterBar>
 
         {error ? (
           <ErrorState title="Failed to load kids" onRetry={() => window.location.reload()} />
@@ -226,21 +213,23 @@ export function KidsPage() {
         )}
       </div>
 
-      <CreateKidDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateKidDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {selectedKid && (
+      {(selectedKid || entityId) && (
         <>
-          <EditKidDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} kid={selectedKid} />
+          <EditKidDialog open={editDialogOpen} onOpenChange={closeModal} kid={selectedKid || undefined} />
           <KidDetailsDialog
             open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            kid={selectedKid}
+            onOpenChange={closeModal}
+            kid={selectedKid || undefined}
           />
-          <LinkParentDialog
-            open={linkDialogOpen}
-            onOpenChange={setLinkDialogOpen}
-            kid={selectedKid}
-          />
+          {selectedKid && (
+            <LinkParentDialog
+              open={linkDialogOpen}
+              onOpenChange={handleCloseLinkDialog}
+              kid={selectedKid}
+            />
+          )}
         </>
       )}
 

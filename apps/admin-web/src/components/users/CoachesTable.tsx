@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { usersService } from '@/services/users.service';
@@ -17,16 +17,39 @@ import { EditUserDialog } from './EditUserDialog';
 import { UserDetailsDialog } from './UserDetailsDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useModalParams } from '@/hooks/useModalParams';
 
 export function CoachesTable() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [search, setSearch] = useState('');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('userId');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
+
+  // Sync selectedUser with URL params
+  useEffect(() => {
+    if (entityId && modal) {
+      // Fetch user if we have ID in URL but no selectedUser
+      if (!selectedUser || selectedUser.id !== entityId) {
+        usersService
+          .getCoachById(entityId)
+          .then(response => {
+            setSelectedUser(response);
+          })
+          .catch(() => {
+            // User not found, close modal
+            closeModal();
+          });
+      }
+    } else if (!entityId && !modal) {
+      setSelectedUser(null);
+    }
+  }, [entityId, modal, selectedUser, closeModal]);
+
+  const detailsDialogOpen = modal === 'details' && isOpen;
+  const editDialogOpen = modal === 'edit' && isOpen;
+  const createDialogOpen = modal === 'create' && isOpen;
 
   const { data, isLoading, error } = useApiQuery(
     ['users', 'coaches', page.toString(), pageSize.toString(), search],
@@ -52,7 +75,7 @@ export function CoachesTable() {
     });
 
     if (confirmed) {
-      deleteMutation.mutate(user._id);
+      deleteMutation.mutate(user.id);
     }
   };
 
@@ -92,7 +115,7 @@ export function CoachesTable() {
               size="icon"
               onClick={() => {
                 setSelectedUser(user);
-                setDetailsDialogOpen(true);
+                openModal(user.id, 'details');
               }}
             >
               <Eye className="h-4 w-4" />
@@ -102,7 +125,7 @@ export function CoachesTable() {
               size="icon"
               onClick={() => {
                 setSelectedUser(user);
-                setEditDialogOpen(true);
+                openModal(user.id, 'edit');
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -121,7 +144,7 @@ export function CoachesTable() {
       <div className="flex items-center justify-between">
         <SearchInput placeholder="Search coaches..." onSearch={setSearch} className="max-w-sm" />
         <div className="flex items-center gap-2">
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Add Coach
           </Button>
@@ -142,20 +165,20 @@ export function CoachesTable() {
         </>
       )}
 
-      <CreateCoachDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateCoachDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {selectedUser && (
+      {(selectedUser || entityId) && (
         <>
           <EditUserDialog
             open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            user={selectedUser}
+            onOpenChange={closeModal}
+            user={selectedUser || undefined}
             userType="coach"
           />
           <UserDetailsDialog
             open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            user={selectedUser}
+            onOpenChange={closeModal}
+            user={selectedUser || undefined}
           />
         </>
       )}

@@ -16,8 +16,8 @@ export class KidsService {
     private auditService: AuditService
   ) {}
 
-  async findAll(pagination: PaginationDto, parentId?: string, sessionType?: string) {
-    const query: Record<string, unknown> = {};
+  async findAll(pagination: PaginationDto, parentId?: string, sessionType?: string, search?: string) {
+    const query: Record<string, unknown> = { isApproved: true };
 
     if (parentId) {
       query.parentId = new Types.ObjectId(parentId);
@@ -25,6 +25,15 @@ export class KidsService {
 
     if (sessionType) {
       query.sessionType = sessionType;
+    }
+
+    // Add search functionality - search by name or goal
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { goal: searchRegex },
+      ];
     }
 
     const skip = (pagination.page - 1) * pagination.limit;
@@ -53,7 +62,7 @@ export class KidsService {
 
   async findById(id: string) {
     const kid = await this.kidModel
-      .findById(id)
+      .findOne({ _id: id, isApproved: true })
       .populate('parentId', 'email parentProfile coachProfile')
       .lean()
       .exec();
@@ -83,11 +92,17 @@ export class KidsService {
       });
     }
 
+    // Kids created by admin are automatically approved
+    // If parent is approved, kid should also be approved
+    // If parent is not approved, kid should also not be approved
+    const isApproved = (parent as any).isApproved !== false;
+
     const kid = new this.kidModel({
       ...createKidDto,
       parentId: parent._id,
       birthDate: new Date(createKidDto.birthDate),
       medicalConditions: createKidDto.medicalConditions || [],
+      isApproved,
     });
 
     await kid.save();

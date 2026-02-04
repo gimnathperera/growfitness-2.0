@@ -27,6 +27,7 @@ import { UserRole } from '@grow-fitness/shared-types';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 import { RequestStatus } from '@grow-fitness/shared-types';
+import { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
 
 @ApiTags('requests')
 @ApiBearerAuth('JWT-auth')
@@ -35,6 +36,29 @@ import { RequestStatus } from '@grow-fitness/shared-types';
 @Roles(UserRole.ADMIN)
 export class RequestsController {
   constructor(private readonly requestsService: RequestsService) {}
+
+  @Post('free-sessions')
+  @Public()
+  @ApiOperation({ summary: 'Create a free session request' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        parentName: { type: 'string', example: 'John Doe' },
+        phone: { type: 'string', example: '1234567890' },
+        email: { type: 'string', example: 'john@example.com' },
+        kidName: { type: 'string', example: 'Jane Doe' },
+        sessionType: { type: 'string', enum: ['INDIVIDUAL', 'GROUP'] },
+        selectedSessionId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        locationId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        preferredDateTime: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Free session request created successfully' })
+  createFreeSessionRequest(@Body() createDto: CreateFreeSessionRequestDto) {
+    return this.requestsService.createFreeSessionRequest(createDto);
+  }
 
   @Get('free-sessions')
   @Public()
@@ -282,5 +306,46 @@ export class RequestsController {
     @CurrentUser('sub') actorId: string
   ) {
     return this.requestsService.deleteExtraSessionRequest(id, actorId);
+  }
+
+  @Get('user-registrations')
+  @ApiOperation({ summary: 'Get all user registration requests' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiResponse({ status: 200, description: 'List of user registration requests' })
+  findUserRegistrationRequests(@Query() pagination: PaginationDto) {
+    return this.requestsService.findUserRegistrationRequests(pagination);
+  }
+
+  @Post('user-registrations/:id/approve')
+  @ApiOperation({ summary: 'Approve a user registration request' })
+  @ApiResponse({ status: 200, description: 'User registration request approved successfully' })
+  @ApiResponse({ status: 404, description: 'Request not found' })
+  approveUserRegistrationRequest(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @CurrentUser('sub') actorId: string
+  ) {
+    return this.requestsService.approveUserRegistrationRequest(id, actorId);
+  }
+
+  @Post('user-registrations/:id/reject')
+  @ApiOperation({ summary: 'Reject a user registration request' })
+  @ApiResponse({ status: 200, description: 'User registration request rejected successfully' })
+  @ApiResponse({ status: 404, description: 'Request not found' })
+  rejectUserRegistrationRequest(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @CurrentUser('sub') actorId: string
+  ) {
+    return this.requestsService.rejectUserRegistrationRequest(id, actorId);
   }
 }

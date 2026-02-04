@@ -56,10 +56,16 @@ export class KidsController {
     enum: ['INDIVIDUAL', 'GROUP'],
     description: 'Filter by session type',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by name or goal',
+  })
   @ApiResponse({ status: 200, description: 'List of kids' })
   findAll(@Query() query: FindKidsQueryDto) {
-    const { parentId, sessionType, ...pagination } = query;
-    return this.kidsService.findAll(pagination, parentId, sessionType);
+    const { parentId, sessionType, search, ...pagination } = query;
+    return this.kidsService.findAll(pagination, parentId, sessionType, search);
   }
 
   @Post()

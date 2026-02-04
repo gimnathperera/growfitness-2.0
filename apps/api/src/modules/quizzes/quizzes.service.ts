@@ -38,6 +38,39 @@ export class QuizzesService {
     private auditService: AuditService
   ) {}
 
+  private validateQuestions(questions: QuizQuestionDto[]): void {
+    if (!questions || questions.length === 0) {
+      throw new BadRequestException({
+        errorCode: ErrorCode.VALIDATION_ERROR,
+        message: 'Quiz must have at least one question',
+      });
+    }
+
+    questions.forEach((q, index) => {
+      if (q.type === QuestionType.MULTIPLE_CHOICE) {
+        if (!q.options || q.options.length < 2) {
+          throw new BadRequestException({
+            errorCode: ErrorCode.VALIDATION_ERROR,
+            message: `Question ${index + 1}: Multiple choice questions must have at least 2 options`,
+          });
+        }
+        if (!q.options.includes(q.correctAnswer)) {
+          throw new BadRequestException({
+            errorCode: ErrorCode.VALIDATION_ERROR,
+            message: `Question ${index + 1}: Correct answer must be one of the provided options`,
+          });
+        }
+      } else if (q.type === QuestionType.TRUE_FALSE) {
+        if (q.correctAnswer !== 'True' && q.correctAnswer !== 'False') {
+          throw new BadRequestException({
+            errorCode: ErrorCode.VALIDATION_ERROR,
+            message: `Question ${index + 1}: True/False questions must have correct answer as "True" or "False"`,
+          });
+        }
+      }
+    });
+  }
+
   async findAll(pagination: PaginationDto, targetAudience?: string) {
     const skip = (pagination.page - 1) * pagination.limit;
     const query: any = {};
@@ -68,6 +101,9 @@ export class QuizzesService {
 
   async create(createQuizDto: CreateQuizDto, actorId: string) {
     try {
+      // Validate questions
+      this.validateQuestions(createQuizDto.questions);
+
       const quiz = new this.quizModel({
         ...createQuizDto,
         isActive: true,
@@ -106,6 +142,11 @@ export class QuizzesService {
         errorCode: ErrorCode.QUIZ_NOT_FOUND,
         message: 'Quiz not found',
       });
+    }
+
+    // Validate questions if they are being updated
+    if (updateQuizDto.questions) {
+      this.validateQuestions(updateQuizDto.questions);
     }
 
     Object.assign(quiz, updateQuizDto);

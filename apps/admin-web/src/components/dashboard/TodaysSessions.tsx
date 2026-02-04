@@ -66,7 +66,7 @@ export function TodaysSessions() {
           <div className="space-y-2">
             {sessions.slice(0, 5).map((session: Session) => (
               <div
-                key={session._id}
+                key={session.id}
                 className="flex items-center justify-between p-3 border rounded-lg"
               >
                 <div>

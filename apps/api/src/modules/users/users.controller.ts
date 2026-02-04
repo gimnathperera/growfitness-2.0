@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
 import {
   ApiTags,
   ApiOperation,
@@ -23,7 +24,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserRole } from '@grow-fitness/shared-types';
+import { UserRole, UserStatus } from '@grow-fitness/shared-types';
 import {
   CreateParentDto,
   UpdateParentDto,
@@ -32,6 +33,8 @@ import {
 } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
+
+import { GetParentsQueryDto } from './dto/get-parents-query.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -44,36 +47,27 @@ export class UsersController {
   // Parents
   @Get('parents')
   @ApiOperation({ summary: 'Get all parents' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page (default: 10, max: 100)',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Search by email, phone, or name',
-  })
   @ApiResponse({ status: 200, description: 'List of parents' })
-  findParents(@Query() pagination: PaginationDto, @Query('search') search?: string) {
-    return this.usersService.findParents(pagination, search);
+  findParents(@Query() query: GetParentsQueryDto) {
+    return this.usersService.findParents(query, query.search, query.location, query.status);
   }
 
   @Get('parents/:id')
   @ApiOperation({ summary: 'Get parent by ID' })
+  @ApiQuery({
+    name: 'includeUnapproved',
+    required: false,
+    type: Boolean,
+    description: 'Include unapproved parents (admin only)',
+  })
   @ApiResponse({ status: 200, description: 'Parent details' })
   @ApiResponse({ status: 404, description: 'Parent not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
-  findParentById(@Param('id', ObjectIdValidationPipe) id: string) {
-    return this.usersService.findParentById(id);
+  findParentById(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @Query('includeUnapproved') includeUnapproved?: string
+  ) {
+    return this.usersService.findParentById(id, includeUnapproved === 'true');
   }
 
   @Post('parents')
@@ -108,9 +102,14 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 201, description: 'Parent created successfully' })
-  createParent(@Body() createParentDto: CreateParentDto) {
-    // For public endpoints, we don't have an authenticated user, so we pass null as actorId
-    return this.usersService.createParent(createParentDto, null);
+  createParent(
+    @Body() createParentDto: CreateParentDto,
+    @CurrentUser() user?: any
+  ) {
+    // If user is authenticated (admin creating from portal), use their ID
+    // If no user (public registration), pass null to require approval
+    const actorId = user?.sub || user?.id || null;
+    return this.usersService.createParent(createParentDto, actorId);
   }
 
   @Patch('parents/:id')

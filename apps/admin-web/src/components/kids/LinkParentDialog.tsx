@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,26 @@ export function LinkParentDialog({ open, onOpenChange, kid }: LinkParentDialogPr
   const [parentId, setParentId] = useState('');
   const { toast } = useToast();
 
+  // Set initial parentId when dialog opens or kid changes
+  useEffect(() => {
+    if (open) {
+      // Check if kid has a parentId (string) or parent object with id
+      // Handle both cases: direct parentId or populated parent object
+      const currentParentId =
+        kid.parentId || (kid as any).parent?.id || (kid as any).parent?.id || '';
+      setParentId(currentParentId);
+    } else {
+      // Reset when dialog closes
+      setParentId('');
+    }
+  }, [open, kid]);
+
   const { data: parentsData } = useApiQuery(['users', 'parents', 'all'], () =>
     usersService.getParents(1, 100)
   );
 
   const linkMutation = useApiMutation(
-    (parentId: string) => kidsService.linkToParent(kid._id, parentId),
+    (parentId: string) => kidsService.linkToParent(kid.id, parentId),
     {
       invalidateQueries: [['kids']],
       onSuccess: () => {
@@ -60,29 +74,38 @@ export function LinkParentDialog({ open, onOpenChange, kid }: LinkParentDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Link Kid to Parent</DialogTitle>
-          <DialogDescription>Link {kid.name} to a parent</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="p-0 flex flex-col max-h-[90vh]">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Sticky Header */}
+          <div className="pb-3 border-b bg-muted/30 flex-shrink-0">
+            <DialogHeader className="space-y-1 px-6 pt-6">
+              <DialogTitle className="text-xl">Link Kid to Parent</DialogTitle>
+              <DialogDescription className="text-sm">Link {kid.name} to a parent</DialogDescription>
+            </DialogHeader>
+          </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <div className="space-y-4">
-          <CustomFormField label="Parent" required>
-            <Select value={parentId} onValueChange={setParentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select parent" />
-              </SelectTrigger>
-              <SelectContent>
-                {(parentsData?.data || []).map(parent => (
-                  <SelectItem key={parent._id} value={parent._id}>
-                    {parent.parentProfile?.name || parent.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CustomFormField>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
+            <div className="space-y-4">
+              <CustomFormField label="Parent" required>
+                <Select value={parentId} onValueChange={setParentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(parentsData?.data || []).map(parent => (
+                      <SelectItem key={parent.id} value={parent.id}>
+                        {parent.parentProfile?.name || parent.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CustomFormField>
+            </div>
+          </div>
 
+          {/* Sticky Footer */}
+          <div className="px-6 py-3 border-t bg-muted/30 flex-shrink-0">
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel

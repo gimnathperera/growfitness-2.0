@@ -24,6 +24,12 @@ export class FreeSessionRequest {
   @Prop({ type: Types.ObjectId, ref: 'Session', required: false })
   selectedSessionId?: Types.ObjectId;
 
+  @Prop({ type: Date, required: false })
+  preferredDateTime?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'Location', required: false })
+  locationId?: Types.ObjectId;
+
   @Prop({ required: true, type: String, enum: RequestStatus, default: RequestStatus.PENDING })
   status: RequestStatus;
 }

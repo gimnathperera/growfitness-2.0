@@ -44,10 +44,19 @@ export function RescheduleRequestsTable() {
     },
   });
 
+  // Helper to get session ID from populated object or return ID
+  const getSessionId = (sessionId: any): string => {
+    if (!sessionId) return 'N/A';
+    if (typeof sessionId === 'string') return sessionId;
+    if (typeof sessionId === 'object' && sessionId.id) return sessionId.id;
+    return 'N/A';
+  };
+
   const columns: ColumnDef<RescheduleRequest>[] = [
     {
       accessorKey: 'sessionId',
       header: 'Session ID',
+      cell: ({ row }) => getSessionId(row.original.sessionId),
     },
     {
       accessorKey: 'newDateTime',
@@ -80,7 +89,7 @@ export function RescheduleRequestsTable() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => approveMutation.mutate(request._id)}
+                  onClick={() => approveMutation.mutate(request.id)}
                   disabled={approveMutation.isPending}
                 >
                   <Check className="h-4 w-4 mr-1" />
@@ -89,7 +98,7 @@ export function RescheduleRequestsTable() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => denyMutation.mutate(request._id)}
+                  onClick={() => denyMutation.mutate(request.id)}
                   disabled={denyMutation.isPending}
                 >
                   <X className="h-4 w-4 mr-1" />

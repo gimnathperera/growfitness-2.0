@@ -26,12 +26,8 @@ import {
   AuditLogDocument,
   Code,
   CodeDocument,
-  Resource,
-  ResourceDocument,
   Quiz,
   QuizDocument,
-  CrmContact,
-  CrmContactDocument,
   Report,
   ReportDocument,
 } from '../src/infra/database/schemas';
@@ -46,9 +42,7 @@ import {
   BannerTargetAudience,
 } from '@grow-fitness/shared-types';
 import { CodeType, CodeStatus } from '../src/infra/database/schemas/code.schema';
-import { ResourceType } from '../src/infra/database/schemas/resource.schema';
 import { QuestionType } from '../src/infra/database/schemas/quiz.schema';
-import { CrmContactStatus } from '../src/infra/database/schemas/crm-contact.schema';
 import { ReportType, ReportStatus } from '../src/infra/database/schemas/report.schema';
 
 const DEFAULT_PASSWORD = 'password123';
@@ -74,9 +68,7 @@ async function seedDatabase() {
   );
   const auditLogModel = app.get<Model<AuditLogDocument>>(getModelToken(AuditLog.name));
   const codeModel = app.get<Model<CodeDocument>>(getModelToken(Code.name));
-  const resourceModel = app.get<Model<ResourceDocument>>(getModelToken(Resource.name));
   const quizModel = app.get<Model<QuizDocument>>(getModelToken(Quiz.name));
-  const crmContactModel = app.get<Model<CrmContactDocument>>(getModelToken(CrmContact.name));
   const reportModel = app.get<Model<ReportDocument>>(getModelToken(Report.name));
 
   try {
@@ -544,59 +536,7 @@ async function seedDatabase() {
     ]);
     console.log(`   ✓ Created ${codes.length} codes`);
 
-    // 13. Seed Resources
-    console.log('\n📚 Creating resources...');
-    const resources = await resourceModel.insertMany([
-      {
-        title: 'Nutrition Guide for Young Athletes',
-        description:
-          'A comprehensive guide on proper nutrition for children engaged in sports activities',
-        type: ResourceType.PDF,
-        fileUrl: 'https://example.com/resources/nutrition-guide.pdf',
-        targetAudience: BannerTargetAudience.PARENT,
-        isActive: true,
-        tags: ['nutrition', 'health', 'parenting'],
-      },
-      {
-        title: 'Warm-up Exercises Video',
-        description: 'Video demonstration of proper warm-up exercises for kids',
-        type: ResourceType.VIDEO,
-        fileUrl: 'https://example.com/resources/warmup-video.mp4',
-        targetAudience: BannerTargetAudience.ALL,
-        isActive: true,
-        tags: ['exercise', 'warmup', 'safety'],
-      },
-      {
-        title: 'Coaching Best Practices',
-        description: 'Essential coaching techniques and best practices for working with children',
-        type: ResourceType.DOCUMENT,
-        content: 'This document covers various coaching methodologies...',
-        targetAudience: BannerTargetAudience.COACH,
-        isActive: true,
-        tags: ['coaching', 'training', 'methodology'],
-      },
-      {
-        title: 'Injury Prevention Guide',
-        description: 'Learn how to prevent common sports injuries in children',
-        type: ResourceType.LINK,
-        externalUrl: 'https://example.com/injury-prevention',
-        targetAudience: BannerTargetAudience.ALL,
-        isActive: true,
-        tags: ['safety', 'injury', 'prevention'],
-      },
-      {
-        title: 'Parent Handbook',
-        description: 'Complete handbook for parents with all necessary information',
-        type: ResourceType.PDF,
-        fileUrl: 'https://example.com/resources/parent-handbook.pdf',
-        targetAudience: BannerTargetAudience.PARENT,
-        isActive: true,
-        tags: ['handbook', 'parenting', 'information'],
-      },
-    ]);
-    console.log(`   ✓ Created ${resources.length} resources`);
-
-    // 14. Seed Quizzes
+    // 13. Seed Quizzes
     console.log('\n📝 Creating quizzes...');
     const quizzes = await quizModel.insertMany([
       {
@@ -674,77 +614,7 @@ async function seedDatabase() {
     ]);
     console.log(`   ✓ Created ${quizzes.length} quizzes`);
 
-    // 15. Seed CRM Contacts
-    console.log('\n📞 Creating CRM contacts...');
-    const crmContacts = await crmContactModel.insertMany([
-      {
-        parentId: parents[0]._id,
-        status: CrmContactStatus.CONVERTED,
-        notes: [
-          {
-            note: 'Initial inquiry about individual sessions for daughter',
-            createdBy: adminId,
-            createdAt: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000),
-          },
-          {
-            note: 'Followed up with pricing information. Very interested.',
-            createdBy: adminId,
-            createdAt: new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000),
-          },
-          {
-            note: 'Converted to paying customer. Enrolled two kids.',
-            createdBy: adminId,
-            createdAt: new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000),
-          },
-        ],
-        source: 'Website',
-        metadata: { initialContactDate: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000) },
-      },
-      {
-        name: 'Jennifer Wilson',
-        email: 'jennifer.wilson@example.com',
-        phone: '+14155553001',
-        status: CrmContactStatus.FOLLOW_UP,
-        notes: [
-          {
-            note: 'Called about group sessions. Interested but needs more information.',
-            createdBy: adminId,
-            createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-          },
-        ],
-        followUpDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-        source: 'Phone Call',
-      },
-      {
-        name: 'Michael Chen',
-        email: 'michael.chen@example.com',
-        phone: '+14155553002',
-        status: CrmContactStatus.LEAD,
-        notes: [
-          {
-            note: 'Submitted free session request form online.',
-            createdBy: adminId,
-            createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-          },
-        ],
-        source: 'Website Form',
-      },
-      {
-        parentId: parents[2]._id,
-        status: CrmContactStatus.CONTACTED,
-        notes: [
-          {
-            note: 'Reached out regarding session scheduling preferences.',
-            createdBy: adminId,
-            createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-          },
-        ],
-        source: 'Email',
-      },
-    ]);
-    console.log(`   ✓ Created ${crmContacts.length} CRM contacts`);
-
-    // 16. Seed Reports
+    // 14. Seed Reports
     console.log('\n📊 Creating reports...');
     const reports = await reportModel.insertMany([
       {
@@ -817,9 +687,7 @@ async function seedDatabase() {
     console.log(`   - ${extraSessionRequests.length} extra session requests`);
     console.log(`   - ${auditLogs.length} audit logs`);
     console.log(`   - ${codes.length} codes`);
-    console.log(`   - ${resources.length} resources`);
     console.log(`   - ${quizzes.length} quizzes`);
-    console.log(`   - ${crmContacts.length} CRM contacts`);
     console.log(`   - ${reports.length} reports`);
     console.log('\n💡 Default password for all users: ' + DEFAULT_PASSWORD);
     console.log('   (Please change passwords after first login)\n');

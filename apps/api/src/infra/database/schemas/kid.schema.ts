@@ -35,6 +35,9 @@ export class Kid {
 
   @Prop({ type: [Types.ObjectId], default: [] })
   milestones?: Types.ObjectId[];
+
+  @Prop({ required: false, type: Boolean, default: false })
+  isApproved: boolean;
 }
 
 export const KidSchema = SchemaFactory.createForClass(Kid);
@@ -42,3 +45,4 @@ export const KidSchema = SchemaFactory.createForClass(Kid);
 // Indexes
 KidSchema.index({ parentId: 1 });
 KidSchema.index({ sessionType: 1 });
+KidSchema.index({ isApproved: 1 });

@@ -203,6 +203,7 @@ export class SessionsService {
       ...(updateSessionDto.capacity && { capacity: updateSessionDto.capacity }),
       ...(updateSessionDto.kids && { kids: this.toObjectIdArray(updateSessionDto.kids, 'kids') }),
       ...(updateSessionDto.status && { status: updateSessionDto.status }),
+      ...(updateSessionDto.isFreeSession !== undefined && { isFreeSession: updateSessionDto.isFreeSession }),
     };
 
     Object.assign(session, {

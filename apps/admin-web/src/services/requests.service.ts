@@ -3,6 +3,7 @@ import {
   FreeSessionRequest,
   RescheduleRequest,
   ExtraSessionRequest,
+  UserRegistrationRequest,
   PaginatedResponse,
 } from '@grow-fitness/shared-types';
 
@@ -36,4 +37,14 @@ export const requestsService = {
     api.post<ExtraSessionRequest>(`/requests/extra-sessions/${id}/approve`),
   denyExtraSessionRequest: (id: string) =>
     api.post<ExtraSessionRequest>(`/requests/extra-sessions/${id}/deny`),
+
+  // User Registration Requests
+  getUserRegistrationRequests: (page: number = 1, limit: number = 10) =>
+    api.get<PaginatedResponse<UserRegistrationRequest>>(
+      `/requests/user-registrations?page=${page}&limit=${limit}`
+    ),
+  approveUserRegistrationRequest: (id: string) =>
+    api.post<UserRegistrationRequest>(`/requests/user-registrations/${id}/approve`),
+  rejectUserRegistrationRequest: (id: string) =>
+    api.post<UserRegistrationRequest>(`/requests/user-registrations/${id}/reject`),
 };

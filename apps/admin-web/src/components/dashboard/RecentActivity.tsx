@@ -58,7 +58,7 @@ export function RecentActivity() {
         ) : (
           <div className="space-y-3">
             {logs.map((log: AuditLog) => (
-              <div key={log._id} className="flex items-start space-x-3">
+              <div key={log.id} className="flex items-start space-x-3">
                 <div className="mt-1">
                   <div className="h-2 w-2 rounded-full bg-primary" />
                 </div>

@@ -9,7 +9,5 @@ export * from './location.schema';
 export * from './banner.schema';
 export * from './audit-log.schema';
 export * from './code.schema';
-export * from './resource.schema';
 export * from './quiz.schema';
-export * from './crm-contact.schema';
 export * from './report.schema';

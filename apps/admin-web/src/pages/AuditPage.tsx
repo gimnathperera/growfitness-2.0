@@ -43,6 +43,19 @@ export function AuditPage() {
       })
   );
 
+  // Helper to extract actor ID/email from populated object or string
+  const getActorDisplay = (actorId: any): string => {
+    if (!actorId) return 'N/A';
+    if (typeof actorId === 'string') return actorId;
+    if (typeof actorId === 'object') {
+      // If it's a populated user object
+      if (actorId.email) return actorId.email;
+      if (actorId._id) return actorId._id.toString();
+      if (actorId.id) return actorId.id;
+    }
+    return 'N/A';
+  };
+
   const columns: ColumnDef<AuditLog>[] = [
     {
       accessorKey: 'action',
@@ -58,7 +71,8 @@ export function AuditPage() {
     },
     {
       accessorKey: 'actorId',
-      header: 'Actor ID',
+      header: 'Actor',
+      cell: ({ row }) => getActorDisplay(row.original.actorId),
     },
     {
       accessorKey: 'timestamp',

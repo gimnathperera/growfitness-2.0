@@ -2,7 +2,7 @@ import { api } from './api';
 import { PaginatedResponse } from '@grow-fitness/shared-types';
 
 export interface Code {
-  _id: string;
+  id: string;
   code: string;
   type: 'DISCOUNT' | 'PROMO' | 'REFERRAL';
   discountPercentage?: number;
