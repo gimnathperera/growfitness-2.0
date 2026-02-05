@@ -87,22 +87,19 @@ export default function ScheduleTab({ }: Props) {
     { enabled: Boolean(startDate) }
   );
 
-  const sessions: Session[] = sessionsData?.data ?? [];
-
   /* ------------------------------------------------------------------
    * Map calendar events
    * ------------------------------------------------------------------ */
 
-  const events: CalendarEvent[] = useMemo(
-    () =>
-      sessions.map(session => ({
-        _id: session.id,
-        title: getSessionLabel(session),
-        date: new Date(session.dateTime),
-        session,
-      })),
-    [sessions]
-  );
+  const events: CalendarEvent[] = useMemo(() => {
+    const sessions: Session[] = sessionsData?.data ?? [];
+    return sessions.map(session => ({
+      _id: session.id,
+      title: getSessionLabel(session),
+      date: new Date(session.dateTime),
+      session,
+    }));
+  }, [sessionsData?.data]);
 
   /* ------------------------------------------------------------------
    * Calendar grid

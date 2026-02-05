@@ -72,7 +72,7 @@ export function DashboardHeader() {
     };
 
     fetchKids();
-  }, [role, user?.id, setKids, setSelectedKid, setIsKidLoading]);
+  }, [role, user?.id, setKids, setSelectedKid, setIsKidLoading, selectedKid]);
 
   /* ---------- LOADING STATE ---------- */
   if (isLoading || !user) {
