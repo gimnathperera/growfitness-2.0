@@ -7,21 +7,23 @@ config({ path: resolve(__dirname, '../.env.local') });
 config({ path: resolve(__dirname, '../.env') });
 
 /**
- * Development script to approve all existing parents and kids in the database
- * WARNING: This is for development use only!
+ * One-time script to set isApproved: true for all existing users and kids.
+ * Run once to ensure everyone created up to now can log in after the approval check was added.
+ *
+ * Usage: pnpm run approve-all (from apps/api)
  */
 async function approveAllUsers() {
   // Get MongoDB connection string from environment
   const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/grow-fitness';
-  
+
   try {
     console.log('\n🔄 Connecting to database...\n');
-    
+
     // Connect directly to MongoDB without NestJS
     await mongoose.connect(mongoUri);
     console.log('   ✓ Connected to database\n');
-    
-    console.log('🔄 Starting approval of all parents and kids...\n');
+
+    console.log('🔄 Setting isApproved: true for all existing users and kids...\n');
 
     // Get collections directly
     const db = mongoose.connection.db;
@@ -32,17 +34,17 @@ async function approveAllUsers() {
     const usersCollection = db.collection('users');
     const kidsCollection = db.collection('kids');
 
-    // Approve all parents
-    const parentResult = await usersCollection.updateMany(
-      { role: 'PARENT' },
+    // Approve all users (any role: PARENT, COACH, ADMIN)
+    const userResult = await usersCollection.updateMany(
+      { isApproved: { $ne: true } },
       { $set: { isApproved: true } }
     );
 
-    console.log(`   ✓ Approved ${parentResult.modifiedCount} parents`);
+    console.log(`   ✓ Approved ${userResult.modifiedCount} users`);
 
     // Approve all kids
     const kidResult = await kidsCollection.updateMany(
-      {},
+      { isApproved: { $ne: true } },
       { $set: { isApproved: true } }
     );
 
@@ -50,8 +52,8 @@ async function approveAllUsers() {
 
     console.log('\n✅ Approval completed successfully!\n');
     console.log('📝 Summary:');
-    console.log(`   - ${parentResult.modifiedCount} parents approved`);
-    console.log(`   - ${kidResult.modifiedCount} kids approved\n`);
+    console.log(`   - ${userResult.modifiedCount} users set to approved`);
+    console.log(`   - ${kidResult.modifiedCount} kids set to approved\n`);
 
     await mongoose.disconnect();
     console.log('   ✓ Disconnected from database\n');

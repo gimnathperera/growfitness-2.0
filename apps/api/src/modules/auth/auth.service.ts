@@ -47,6 +47,13 @@ export class AuthService {
       });
     }
 
+    if (!user.isApproved) {
+      throw new UnauthorizedException({
+        errorCode: ErrorCode.UNAUTHORIZED,
+        message: 'Your account creation is under review',
+      });
+    }
+
     const isPasswordValid = await argon2.verify(user.passwordHash, password);
 
     if (!isPasswordValid) {
@@ -101,6 +108,13 @@ export class AuthService {
         throw new UnauthorizedException({
           errorCode: ErrorCode.UNAUTHORIZED,
           message: 'Invalid refresh token',
+        });
+      }
+
+      if (!user.isApproved) {
+        throw new UnauthorizedException({
+          errorCode: ErrorCode.UNAUTHORIZED,
+          message: 'Your account creation is under review',
         });
       }
 
