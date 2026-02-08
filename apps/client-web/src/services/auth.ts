@@ -6,6 +6,7 @@ export type UserRole = 'PARENT' | 'COACH';
 
 /* ---------- USER ---------- */
 export interface AuthUser {
+  status: string;
   id: string;
   email: string;
   role: UserRole;
@@ -27,7 +28,7 @@ const USER_KEY = 'user';
 export const authService = {
   /* ---------- LOGIN (Same UI for Parent & Coach) ---------- */
   login: async (credentials: LoginDto): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/api/auth/login', credentials);
+    const response = await api.post<AuthResponse>('/auth/login', credentials);
 
     if (response.accessToken) {
       localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);

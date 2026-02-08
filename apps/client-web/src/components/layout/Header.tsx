@@ -15,9 +15,9 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { LogOut, Menu } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "../common/ConfirmDialog";
+import { useAuth } from "@/contexts/useAuth";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -151,16 +151,26 @@ export function Header() {
                               setIsMenuOpen(false);
                               navigate("/dashboard");
                             }}
-                            className="menu-item"
+                            className="menu-item items-center justify-center"
                           >
                             {dashboardLabel}
                           </button>
 
                           <button
-                            onClick={handleLogout}
-                            className="menu-item text-red-600"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              navigate("/profile");
+                            }}
+                            className="menu-item flex items-center pl-8"
                           >
-                            <LogOut className="mr-2 h-4 w-4" />
+                            Profile
+                          </button>
+
+                          <button
+                            onClick={handleLogout}
+                            className="menu-item text-red-600 flex items-center gap-2"
+                          >
+                            <LogOut className="h-4 w-4 ml-3" />
                             Logout
                           </button>
                         </div>

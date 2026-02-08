@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ConfettiPiece {
@@ -9,6 +9,8 @@ interface ConfettiPiece {
   size: number;
   rotation: number;
   delay: number;
+  x1: number;
+  x2: number;
 }
 
 interface ConfettiCelebrationProps {
@@ -42,33 +44,51 @@ const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
     []
   );
 
-  const emojis = ['🎉', '⭐', '🌟', '💪', '🏆', '🎊', '✨', '🎈'];
+  const emojis = useMemo(() => ['🎉', '⭐', '🌟', '💪', '🏆', '🎊', '✨', '🎈'], []);
 
+  // Initialize confetti pieces in a ref to avoid re-renders
+  const confettiPiecesRef = useRef<ConfettiPiece[]>([]);
+
+  // Generate stable random values for confetti pieces
   useEffect(() => {
-    if (isVisible) {
-      // Generate confetti pieces
-      const pieces: ConfettiPiece[] = [];
-      for (let i = 0; i < 50; i++) {
-        pieces.push({
-          id: i,
-          x: Math.random() * 100, // Random x position (0-100%)
-          y: -10, // Start above screen
-          color: colors[Math.floor(Math.random() * colors.length)],
-          size: Math.random() * 8 + 4, // Size between 4-12px
-          rotation: Math.random() * 360,
-          delay: Math.random() * 1000, // Stagger appearance
-        });
-      }
+    if (!isVisible) return;
+
+    // Create a seeded random number generator
+    const seed = 42; // Fixed seed for consistent results
+    const random = (min: number, max: number) => {
+      const x = Math.sin(seed + (min + max) * 10) * 10000;
+      return (x - Math.floor(x)) * (max - min) + min;
+    };
+
+    // Generate confetti pieces
+    const pieces = Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      x: random(0, 100),
+      y: -10,
+      color: colors[Math.floor(random(0, colors.length))],
+      size: random(4, 12),
+      rotation: random(0, 360),
+      delay: random(0, 1000),
+      x1: random(-100, 100),
+      x2: random(-100, 100),
+    }));
+
+    // Use requestAnimationFrame to avoid state updates during render
+    const raf = requestAnimationFrame(() => {
+      confettiPiecesRef.current = pieces;
       setConfettiPieces(pieces);
+    });
 
-      // Clean up after duration
-      const timer = setTimeout(() => {
-        setConfettiPieces([]);
-        onComplete?.();
-      }, duration);
+    // Clean up after duration
+    const timer = setTimeout(() => {
+      setConfettiPieces([]);
+      onComplete?.();
+    }, duration);
 
-      return () => clearTimeout(timer);
-    }
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
   }, [isVisible, duration, onComplete, colors]);
 
   return (
@@ -77,7 +97,7 @@ const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
         {isVisible && (
           <>
             {/* Confetti pieces */}
-            {confettiPieces.map(piece => (
+            {confettiPieces.map((piece) => (
               <motion.div
                 key={piece.id}
                 className="absolute rounded-full shadow-lg"
@@ -98,12 +118,12 @@ const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
                   opacity: [0, 1, 1, 0],
                   rotate: piece.rotation + 360,
                   scale: [0, 1, 1, 0],
-                  x: [0, Math.random() * 100 - 50, Math.random() * 100 - 50],
+                  x: [0, piece.x1, piece.x2]
                 }}
                 transition={{
                   duration: 3,
                   delay: piece.delay / 1000,
-                  ease: 'easeOut',
+                  ease: 'easeOut'
                 }}
               />
             ))}
@@ -114,7 +134,7 @@ const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
                 key={`emoji-${index}`}
                 className="absolute text-2xl"
                 style={{
-                  left: `${Math.random() * 100}%`,
+                  left: `${(index * 10) % 100}%`,
                 }}
                 initial={{
                   y: -20,
@@ -127,11 +147,11 @@ const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
                   opacity: [0, 1, 1, 0],
                   rotate: 360,
                   scale: [0, 1.2, 1, 0],
-                  x: [0, Math.random() * 100 - 50],
+                  x: [0, (index % 5) * 20 - 50],
                 }}
                 transition={{
                   duration: 2.5,
-                  delay: (Math.random() * 1500) / 1000,
+                  delay: (index * 200) / 1000,
                   ease: 'easeOut',
                 }}
               >

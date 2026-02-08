@@ -16,6 +16,7 @@ export type QuestionConfig<T extends string> = {
     | 'number'
     | 'textarea'
     | 'date'
+    | 'datetime'
     | 'phone'
     | 'select'
     | 'multiselect';

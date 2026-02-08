@@ -15,7 +15,7 @@ import { LoadingSpinner } from '../common/LoadingSpinner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginSchema } from '@grow-fitness/shared-schemas';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading } = useAuth();

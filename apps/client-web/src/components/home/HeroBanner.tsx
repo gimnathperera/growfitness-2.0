@@ -79,7 +79,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
       <div className="relative h-72 overflow-hidden md:h-[32rem]">
         {banners.map((banner, index) => (
           <div
-            key={banner._id}
+            key={banner.id}
             className={`absolute inset-0 transition-opacity duration-1000 ${
               index === currentIndex ? 'opacity-100' : 'opacity-0'
             }`}

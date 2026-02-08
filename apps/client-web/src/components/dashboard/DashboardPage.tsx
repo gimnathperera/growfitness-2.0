@@ -1,12 +1,12 @@
-import { useAuth } from '../../contexts/AuthContext';
-import ClientDashboard from '../client-dashboard/ClientDashboard';
+import ParentDashboard from '@/pages/ParentDashboard';
+import { useAuth } from '@/contexts/useAuth';
 import CoachDashboard from '../coach-dashboard/CoachDashboard';
 
 export default function DashboardPage() {
   const { user } = useAuth();
 
   if (user?.role === 'PARENT') {
-    return <ClientDashboard />;
+    return <ParentDashboard />;
   }
 
   if (user?.role === 'COACH') {
