@@ -31,13 +31,15 @@ import { createPortal } from 'react-dom';
 export function Payments() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | ''>('');
-  const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('invoiceId');
+  const { modal, entityId, isOpen, openModal, closeModal } =
+    useModalParams('invoiceId');
+
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const loadedInvoiceId = useRef<string | null>(null);
 
-  // 🔽 Download rendering state
+  // 🔽 Download state
   const [downloadInvoice, setDownloadInvoice] = useState<Invoice | null>(null);
-  const [downloadType, setDownloadType] = useState<'pdf' | 'image'>('pdf');
+  const [downloadType] = useState<'pdf' | 'image'>('pdf');
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -79,7 +81,14 @@ export function Payments() {
   const detailsDialogOpen = modal === 'details' && isOpen;
 
   const { data, isLoading, error } = useApiQuery(
-    ['invoices', page.toString(), pageSize.toString(), statusFilter, user?.id ?? '', user?.role ?? ''],
+    [
+      'invoices',
+      page.toString(),
+      pageSize.toString(),
+      statusFilter,
+      user?.id ?? '',
+      user?.role ?? '',
+    ],
     () =>
       invoicesService.getInvoices(page, pageSize, {
         status: statusFilter || undefined,
@@ -87,15 +96,12 @@ export function Payments() {
       })
   );
 
-  // 🔽 Run download AFTER InvoiceTemplate is mounted
+  // 🔽 Download AFTER portal + styles are mounted
   useEffect(() => {
     if (!downloadInvoice) return;
 
     const runDownload = async () => {
-      console.log('[Download] Template mounted');
-
       const element = document.getElementById('invoice-template');
-      console.log('[Download] Template element:', element);
 
       if (!element) {
         toast.error('Invoice template not found');
@@ -104,38 +110,43 @@ export function Payments() {
       }
 
       try {
-        const canvas = await html2canvas(element, { scale: 2 });
-        console.log('[Download] Canvas created');
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+        });
 
         if (downloadType === 'pdf') {
           const imgData = canvas.toDataURL('image/png');
           const pdf = new jsPDF('p', 'pt', 'a4');
-          const width = pdf.internal.pageSize.getWidth();
-          const height = (canvas.height * width) / canvas.width;
 
-          pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight =
+            (canvas.height * pageWidth) / canvas.width;
+
+          pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
           pdf.save(`invoice-${downloadInvoice.id}.pdf`);
-          console.log('[Download] PDF saved');
         } else {
           const imgURL = canvas.toDataURL('image/png');
           const a = document.createElement('a');
           a.href = imgURL;
           a.download = `invoice-${downloadInvoice.id}.png`;
           a.click();
-          console.log('[Download] Image saved');
         }
 
         toast.success('Invoice downloaded');
       } catch (err) {
-        console.error('[Download] Error:', err);
+        console.error(err);
         toast.error('Download failed');
       } finally {
         setDownloadInvoice(null);
       }
     };
 
-    // allow one paint frame
-    requestAnimationFrame(runDownload);
+    // ✅ wait TWO frames (portal + tailwind paint)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(runDownload);
+    });
   }, [downloadInvoice, downloadType, toast]);
 
   const columns: ColumnDef<Invoice>[] = [
@@ -175,7 +186,6 @@ export function Payments() {
               variant="ghost"
               size="icon"
               onClick={() => {
-                console.log('[UI] View invoice', invoice.id);
                 setSelectedInvoice(invoice);
                 openModal(invoice.id, 'details');
               }}
@@ -186,11 +196,7 @@ export function Payments() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                console.log('[UI] Download clicked', invoice.id);
-                setDownloadType('pdf');
-                setDownloadInvoice(invoice);
-              }}
+              onClick={() => setDownloadInvoice(invoice)}
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -201,10 +207,12 @@ export function Payments() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="m-20 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Payments</h1>
-        <p className="text-muted-foreground mt-1">View and download your invoices</p>
+        <h1 className="text-3xl font-bold">Payment Invoices</h1>
+        <p className="text-muted-foreground mt-1">
+          View and download your invoices
+        </p>
       </div>
 
       <FilterBar>
@@ -230,7 +238,10 @@ export function Payments() {
       </FilterBar>
 
       {error ? (
-        <ErrorState title="Failed to load invoices" onRetry={() => location.reload()} />
+        <ErrorState
+          title="Failed to load invoices"
+          onRetry={() => location.reload()}
+        />
       ) : (
         <>
           <DataTable
@@ -257,10 +268,18 @@ export function Payments() {
         />
       )}
 
-      {/* 🔽 Hidden render for download */}
+      {/* 🔽 Hidden portal render for download */}
       {downloadInvoice &&
         createPortal(
-          <div style={{ position: 'fixed', top: '-9999px' }}>
+          <div
+            style={{
+              position: 'fixed',
+              top: '-10000px',
+              left: 0,
+              width: '800px',
+              background: 'white',
+            }}
+          >
             <InvoiceTemplate invoice={downloadInvoice} />
           </div>,
           document.body

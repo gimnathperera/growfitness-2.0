@@ -34,10 +34,10 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
 }
 
 export function formatCurrency(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
+  if (amount === null || amount === undefined) return 'Rs 0.00';
+  return new Intl.NumberFormat('en-LK', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'LKR',
   }).format(amount);
 }
 
