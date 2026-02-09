@@ -8,7 +8,7 @@ import { UserRole } from "@grow-fitness/shared-types";
 import { OverviewTab } from "./OverviewTab";
 import KidsTab from "./KidsTab";
 import ScheduleTab from "./ScheduleTab";
-import { InvoicesTab } from "./InvoicesTab";
+import { Payments } from "@/pages/Payments";
 
 export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -22,7 +22,7 @@ export default function ClientDashboard() {
     overview: <OverviewTab />,
     kids: <KidsTab />,
     schedule: <ScheduleTab/>,
-    invoice: <InvoicesTab />,
+    invoice: <Payments />,
   };
 
   return (
