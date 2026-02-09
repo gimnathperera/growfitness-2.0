@@ -37,7 +37,7 @@ export function InvoicesTab({ kidId }: KidInvoicesTabProps) {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Failed to download invoice:", err);
+      // Error handled silently
     }
   };
 

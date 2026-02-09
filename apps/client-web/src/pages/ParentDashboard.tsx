@@ -12,7 +12,6 @@ import { useKid } from "@/contexts/kid/useKid";
 
 import { kidsService } from "@/services/kids.service";
 import { getTabsForUser } from "@/constants/dashboard";
-import { InvoicesTab } from "@/components/client-dashboard/InvoiceTab";
 import { KidProfileTab } from "@/components/client-dashboard/KidProfileTab";
 import { useAuth } from "@/contexts/useAuth";
 
@@ -35,8 +34,7 @@ export default function ParentDashboard() {
       try {
         const response = await kidsService.getKidById(kidId);
         setKidData(response);
-      } catch (err) {
-        console.error("Failed to fetch kid data:", err);
+      } catch {
         setKidData(null);
       } finally {
         setIsKidDataLoading(false);
@@ -55,10 +53,6 @@ export default function ParentDashboard() {
     : undefined;
 
   const tabs = getTabsForUser(user?.role as 'COACH' | 'PARENT', kidTypeForTabs);
-
-  console.log('Active tabs:', tabs); // Debug log
-  console.log('Kid session type:', kidData?.sessionType); // Debug log
-  console.log('Kid type for tabs:', kidTypeForTabs); // Debug log
 
   /* ✅ KEEP ACTIVE TAB VALID (MUST BE BEFORE RETURNS) */
   useEffect(() => {
@@ -94,8 +88,7 @@ export default function ParentDashboard() {
   const tabComponents: Record<string, JSX.Element> = {
     overview: <OverviewTab kid={kidData} />,
     achievements: <AchievementsTab />,
-    schedule: <ScheduleTab kid={kidData} />,
-    invoice: <InvoicesTab kidId={kidData.id} />,
+    schedule: <ScheduleTab />,
     kidProfile: <KidProfileTab/>,
   };
 

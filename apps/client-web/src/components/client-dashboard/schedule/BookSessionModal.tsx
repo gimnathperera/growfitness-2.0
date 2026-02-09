@@ -153,7 +153,6 @@
 //       setTime('');
 //       onClose();
 //     } catch (e) {
-//       console.error(e);
 //       setTimeSlots(prevSlots);
 //     }
 //   };
@@ -268,5 +267,5 @@
 // }
 
 export default function BookSessionModal() {
-  return <div>BookSessionModal</div>;
+  return <div></div>;
 }

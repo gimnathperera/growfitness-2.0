@@ -1,4 +1,4 @@
-import{
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -37,8 +37,7 @@ export function Header() {
     return "Dashboard";
   }, [user?.role]);
 
-  const userInitial =
-    user?.email?.charAt(0)?.toUpperCase() ?? "?";
+  const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -98,20 +97,21 @@ export function Header() {
                       <Link
                         to="/login"
                         className={cn(
-                          'px-2 py-2 text-xs md:px-6 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-white text-primary hover:bg-gray-100',
-                          isActive('/login') && 'bg-gray-100'
+                          "px-2 py-2 text-xs md:px-6 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-white text-primary hover:bg-gray-100",
+                          isActive("/login") && "bg-gray-100"
                         )}
                       >
                         Sign In
                       </Link>
                     </NavigationMenuLink>
+
                     <NavigationMenuLink asChild>
                       <Link
                         to="/free-session"
-                         className={cn(
-                          'w-full md:w-auto px-3 py-2 text-xs md:px-8 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-primary hover:bg-[#1e9c70] !text-white',
-                          isActive('/free-session') && 'text-accent-foreground'
-                    )}
+                        className={cn(
+                          "px-3 py-2 text-xs md:px-8 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-primary hover:bg-[#1e9c70] text-white",
+                          isActive("/free-session") && "opacity-90"
+                        )}
                       >
                         Book Free Session
                       </Link>
@@ -159,6 +159,16 @@ export function Header() {
                           <button
                             onClick={() => {
                               setIsMenuOpen(false);
+                              navigate("/payments");
+                            }}
+                            className="menu-item flex items-center pl-8"
+                          >
+                            Payments
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
                               navigate("/profile");
                             }}
                             className="menu-item flex items-center pl-8"
@@ -201,6 +211,7 @@ export function Header() {
                   >
                     Sign In
                   </Link>
+
                   <Link
                     to="/free-session"
                     className="block px-3 py-2 rounded-md bg-primary text-white"
@@ -216,6 +227,14 @@ export function Header() {
                   >
                     {dashboardLabel}
                   </Link>
+
+                  <Link
+                    to="/parent-payments"
+                    className="block px-3 py-2 rounded-md hover:bg-accent"
+                  >
+                    Payments
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-3 py-2 rounded-md text-red-600 hover:bg-accent"

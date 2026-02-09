@@ -1,6 +1,6 @@
 import ParentDashboard from '@/pages/ParentDashboard';
 import { useAuth } from '@/contexts/useAuth';
-import CoachDashboard from '../coach-dashboard/CoachDashboard';
+import CoachDashboardPage from '@/pages/CoachDashboard';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -10,7 +10,7 @@ export default function DashboardPage() {
   }
 
   if (user?.role === 'COACH') {
-    return <CoachDashboard />;
+    return <CoachDashboardPage />;
   }
 
   return (

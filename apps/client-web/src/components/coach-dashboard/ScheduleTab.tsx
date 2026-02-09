@@ -1,30 +1,17 @@
 import { useMemo, useState } from 'react';
-import type { PaginatedResponse } from '@grow-fitness/shared-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Plus,
 } from 'lucide-react';
 
 import { sessionsService } from '@/services/sessions.service';
 import type { Session } from '@grow-fitness/shared-types';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
-import { useKid } from '@/contexts/kid/useKid';
-
-/* ------------------------------------------------------------------ */
-/* Types */
-/* ------------------------------------------------------------------ */
-
-type CalendarEvent = {
-  _id: string;
-  title: string;
-  date: Date;
-  session: Session;
-};
+import { useAuth } from '@/contexts/useAuth';
 
 /* ------------------------------------------------------------------ */
 /* Helpers */
@@ -46,10 +33,10 @@ const getSessionLabel = (session: Session): string => {
 /* ------------------------------------------------------------------ */
 
 export default function ScheduleTab() {
-  const { selectedKid } = useKid();
+  const { user } = useAuth();
+  const coachId = user?.id;
 
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  // Removed unused openBooking state as it's not being used in the component
   const [currentDate, setCurrentDate] = useState(new Date());
 
   /* ------------------------------------------------------------------
@@ -67,32 +54,37 @@ export default function ScheduleTab() {
   }, [currentDate]);
 
   /* ------------------------------------------------------------------
-   * Fetch sessions (kid scoped)
+   * Fetch sessions (coach-based)
    * ------------------------------------------------------------------ */
 
-  const { data: sessionsData } = useApiQuery<PaginatedResponse<Session>>(
-    ['sessions', selectedKid?.id || '', startDate, endDate],
+  const queryKey = [
+    'sessions',
+    coachId || '',
+    startDate || '',
+    endDate || '',
+  ].filter(Boolean) as string[];
+  const { data: sessionsData } = useApiQuery(
+    queryKey,
     () => {
-      if (!selectedKid?.id) {
-        return Promise.resolve({ data: [], total: 0, page: 1, limit: 10, totalPages: 0 });
-      }
-
-      return sessionsService.getSessions(1, 50, {
-        kidId: selectedKid.id,
-        startDate,
-        endDate,
-      });
-    },
-    {
-      enabled: Boolean(selectedKid?.id && startDate),
+      if (!coachId) {
+        throw new Error('Coach ID is required to fetch sessions');
     }
-  );
+    return sessionsService.getSessions(1, 50, {
+      coachId,
+      startDate,
+      endDate,
+    });
+  },
+  {
+    enabled: Boolean(coachId && startDate),
+  }
+);
 
   /* ------------------------------------------------------------------
    * Map calendar events
    * ------------------------------------------------------------------ */
 
-  const events: CalendarEvent[] = useMemo(() => {
+  const events = useMemo(() => {
     const sessions: Session[] = sessionsData?.data ?? [];
 
     return sessions.map(session => ({
@@ -101,7 +93,7 @@ export default function ScheduleTab() {
       date: new Date(session.dateTime),
       session,
     }));
-  }, [sessionsData]);
+  }, [sessionsData?.data]);
 
   /* ------------------------------------------------------------------
    * Calendar grid
@@ -122,10 +114,6 @@ export default function ScheduleTab() {
     month: 'long',
     year: 'numeric',
   });
-
-  function setOpenBooking(): void {
-    throw new Error('Function not implemented.');
-  }
 
   /* ------------------------------------------------------------------
    * Render
@@ -167,11 +155,6 @@ export default function ScheduleTab() {
               }
             >
               <ChevronRight className="h-4 w-4" />
-            </Button>
-
-            <Button size="sm" onClick={() => setOpenBooking()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Book Extra Session
             </Button>
           </div>
         </CardHeader>
@@ -216,18 +199,9 @@ export default function ScheduleTab() {
 
       <SessionDetailsModal
         open={Boolean(selectedSession)}
-        session={selectedSession || undefined} 
+        session={selectedSession || undefined}
         onClose={() => setSelectedSession(null)}
-        kidId={selectedKid?.id}
-        onReschedule={() => {}}
       />
-
-      {/* <BookSessionModal
-        open={openBooking}
-        onClose={() => setOpenBooking(false)}
-        kidId={selectedKid?.id}
-        clientId={selectedKid?.parentId}
-      /> */}
     </>
   );
 }

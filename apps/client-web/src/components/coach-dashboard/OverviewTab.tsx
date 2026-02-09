@@ -1,27 +1,64 @@
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar } from "lucide-react";
-import { type Kid, type Session, SessionStatus, UserRole } from "@grow-fitness/shared-types";
+import {
+  type Session,
+  SessionStatus,
+  UserRole,
+} from "@grow-fitness/shared-types";
 import SessionDetailsModal from "../common/SessionDetailsModal";
 import { StatsGrid } from "../common/StatGrid";
 import type { DashboardStats } from "@/types/dashboard";
-import { useState } from "react";
+import { useAuth } from "@/contexts/useAuth";
 
-interface OverviewTabProps {
-  kid: Kid | null;
-}
+type Coach = {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+};
 
-export function OverviewTab({ kid }: OverviewTabProps) {
+export function OverviewTab() {
+  const { user } = useAuth();
+  const coachId = user?.id;
+
+  const [coach, setCoach] = useState<Coach | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 🔁 Replace with real API call later
+  useEffect(() => {
+    if (!coachId) return;
+
+    const fetchCoach = async () => {
+      try {
+        // mock response
+        const data: Coach = {
+          id: coachId,
+          name: "John Coach",
+          email: "john.coach@email.com",
+          createdAt: new Date().toISOString(),
+        };
+
+        setCoach(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCoach();
+  }, [coachId]);
 
   // Temporary mock sessions & stats (replace later)
   const sessions: Session[] = [];
+
   const stats: DashboardStats = {
-    totalChildren: 1,
-    todaySessions: 1,
-    upcomingSessions: 2,
-    weeklyProgress: 75,
-    avgProgress: 75,
+    totalChildren: 12,
+    todaySessions: 3,
+    upcomingSessions: 5,
+    weeklyProgress: 80,
+    avgProgress: 78,
   };
 
   const getStatusBadge = (status: SessionStatus) => {
@@ -50,10 +87,10 @@ export function OverviewTab({ kid }: OverviewTabProps) {
     >
       <div>
         <h3 className="font-semibold text-[#243E36]">{session.type}</h3>
-        <p className="text-sm text-gray-600">{session.dateTime.toLocaleString()}</p>
-        <p className="text-xs text-gray-500">
-          spots available
+        <p className="text-sm text-gray-600">
+          {session.dateTime.toLocaleString()}
         </p>
+        <p className="text-xs text-gray-500">Spots available</p>
       </div>
       {getStatusBadge(session.status)}
     </div>
@@ -63,53 +100,50 @@ export function OverviewTab({ kid }: OverviewTabProps) {
     <>
       <div className="space-y-6 relative z-0">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Coach Profile */}
           <Card className="border-[#23B685]/20">
             <CardHeader>
               <CardTitle className="text-[#243E36] flex items-center">
                 <User className="mr-2 h-5 w-5" />
-                Child Profile
+                Coach Profile
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-[#23B685]/10 rounded-full flex items-center justify-center">
-                    <User className="h-8 w-8 text-[#23B685]" />
+              {loading ? (
+                <p className="text-sm text-gray-500">Loading coach...</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-[#23B685]/10 rounded-full flex items-center justify-center">
+                      <User className="h-8 w-8 text-[#23B685]" />
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-[#243E36]">
+                        {coach?.name ?? "-"}
+                      </h3>
+                      <p className="text-gray-600">{coach?.email ?? "-"}</p>
+                      <Badge className="bg-[#23B685]/10 text-[#23B685]">
+                        Coach
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-[#243E36]">
-                      {kid?.name ?? "-"}
-                    </h3>
-                    <p className="text-gray-600">
-                      {kid?.birthDate
-                        ? `${new Date().getFullYear() - new Date(kid.birthDate).getFullYear()} years old`
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Member Since</span>
+                    <span className="font-medium text-[#243E36]">
+                      {coach?.createdAt
+                        ? new Date(coach.createdAt).toLocaleDateString()
                         : "-"}
-                    </p>
-                    <Badge variant="secondary" className="bg-[#23B685]/10 text-[#23B685]">
-                      Active Member
-                    </Badge>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Current Coach:</span>
-                    <span className="text-sm font-medium text-[#243E36]">-</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Program:</span>
-                    <span className="text-sm font-medium text-[#243E36]">Kids Fitness Fun</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Member Since:</span>
-                    <span className="text-sm font-medium text-[#243E36]">
-                      {kid?.createdAt ? new Date(kid.createdAt).toLocaleDateString() : "-"}
                     </span>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
+          {/* Upcoming Sessions */}
           <Card className="border-[#23B685]/20">
             <CardHeader>
               <CardTitle className="text-[#243E36] flex items-center">
@@ -117,15 +151,20 @@ export function OverviewTab({ kid }: OverviewTabProps) {
                 Upcoming Sessions
               </CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-4 overflow-y-auto max-h-[400px]">
-              {sessions.map((session: Session) => (
-                <SessionItem key={session.id} session={session} />
-              ))}
+              {sessions.length === 0 ? (
+                <p className="text-sm text-gray-500">No upcoming sessions</p>
+              ) : (
+                sessions.map((session) => (
+                  <SessionItem key={session.id} session={session} />
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
 
-        <StatsGrid stats={stats} role={UserRole.PARENT} />
+        <StatsGrid stats={stats} role={UserRole.COACH} />
       </div>
 
       <SessionDetailsModal
