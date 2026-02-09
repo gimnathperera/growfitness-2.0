@@ -80,9 +80,10 @@ export function MilestoneProgress() {
   const handleSaveProgress = (milestoneId: string) => {
     const ms = milestones.find((m) => m.id === milestoneId);
     if (!ms) return;
-    const payload = ms.tasks
-      .filter((t) => t.category !== 'Fitness')
-      .map((t) => ({ id: t.id, completed: t.completed, category: t.category }));
+    // TODO: Implement save progress functionality
+    // const payload = ms.tasks
+    //   .filter((t) => t.category !== 'Fitness')
+    //   .map((t) => ({ id: t.id, completed: t.completed, category: t.category }));
   };
 
   return (

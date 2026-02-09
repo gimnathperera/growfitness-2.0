@@ -199,7 +199,7 @@ export default function ScheduleTab() {
 
       <SessionDetailsModal
         open={Boolean(selectedSession)}
-        session={selectedSession}
+        session={selectedSession || undefined}
         onClose={() => setSelectedSession(null)}
       />
     </>

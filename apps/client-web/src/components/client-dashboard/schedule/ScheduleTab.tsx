@@ -169,7 +169,7 @@ export default function ScheduleTab() {
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            <Button size="sm" onClick={() => setOpenBooking(true)}>
+            <Button size="sm" onClick={() => setOpenBooking()}>
               <Plus className="h-4 w-4 mr-2" />
               Book Extra Session
             </Button>

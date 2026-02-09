@@ -168,7 +168,7 @@ export function OverviewTab() {
       </div>
 
       <SessionDetailsModal
-        session={selectedSession}
+        session={selectedSession || undefined}
         open={!!selectedSession}
         onClose={() => setSelectedSession(null)}
       />
