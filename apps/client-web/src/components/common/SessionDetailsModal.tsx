@@ -25,12 +25,17 @@ import {
   Award,
   AlertCircle,
   Baby,
+  CalendarClock,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SessionDetailsDialogProps {
   open: boolean;
   onClose: () => void;
   session?: Session;
+  kidId?: string;
+  coachId?: string;
+  onReschedule?: (session: Session) => void;
 }
 
 type CoachObject = {
@@ -63,7 +68,14 @@ function getName(value: NameableType, fallback: string = 'N/A'): string {
   return fallback;
 }
 
-export default function SessionDetailsDialog({ open, onClose, session: sessionProp }: SessionDetailsDialogProps) {
+export default function SessionDetailsDialog({ 
+  open, 
+  onClose, 
+  session: sessionProp,
+  kidId: kidIdProp,
+  // coachId: coachIdProp,
+  onReschedule
+}: SessionDetailsDialogProps) {
   const { entityId } = useModalParams('sessionId');
   
   // Fetch session from URL if prop not provided
@@ -100,6 +112,16 @@ export default function SessionDetailsDialog({ open, onClose, session: sessionPr
 
   const displaySession = sessionData || session;
   const isGroupSession = displaySession?.type === SessionType.GROUP;
+  
+  // Hide Kids tab if kidId prop is provided
+  const shouldShowKidsTab = !kidIdProp;
+  
+  // Handle reschedule action
+  const handleReschedule = () => {
+    if (displaySession && onReschedule) {
+      onReschedule(displaySession);
+    }
+  };
 
   // Fetch coach details if coachId is available
   const coachId = typeof displaySession?.coachId === 'string' 
@@ -329,6 +351,22 @@ export default function SessionDetailsDialog({ open, onClose, session: sessionPr
                   )}
                 </div>
               </div>
+
+              {/* Reschedule Button */}
+              {onReschedule && (
+                <>
+                  <Separator className="my-6" />
+                  <Button 
+                    onClick={handleReschedule}
+                    variant="outline"
+                    size="default"
+                    className="w-full border-primary text-primary"
+                  >
+                    <CalendarClock className="h-4 w-4 mr-2" />
+                    Reschedule Session
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -344,9 +382,11 @@ export default function SessionDetailsDialog({ open, onClose, session: sessionPr
                   <TabsTrigger value="overview" className="flex-1 sm:flex-none">
                     Overview
                   </TabsTrigger>
-                  <TabsTrigger value="kids" className="flex-1 sm:flex-none">
-                    Kids {totalKids > 0 && `(${totalKids})`}
-                  </TabsTrigger>
+                  {shouldShowKidsTab && (
+                    <TabsTrigger value="kids" className="flex-1 sm:flex-none">
+                      Kids {totalKids > 0 && `(${totalKids})`}
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6 space-y-6">
@@ -395,15 +435,16 @@ export default function SessionDetailsDialog({ open, onClose, session: sessionPr
                   </div>
                 </TabsContent>
 
-                <TabsContent value="kids" className="mt-6">
-                  {totalKids === 0 ? (
-                    <div className="text-center py-12">
-                      <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-sm text-muted-foreground">No kids enrolled in this session</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                      {kids.map((kidOrId) => {
+                {shouldShowKidsTab && (
+                  <TabsContent value="kids" className="mt-6">
+                    {totalKids === 0 ? (
+                      <div className="text-center py-12">
+                        <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-sm text-muted-foreground">No kids enrolled in this session</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                        {kids.map((kidOrId) => {
                         // Handle case where kid is either a string ID or a Kid object
                         const kid: Kid = typeof kidOrId === 'string' 
                           ? { 
@@ -509,6 +550,7 @@ export default function SessionDetailsDialog({ open, onClose, session: sessionPr
                     </div>
                   )}
                 </TabsContent>
+                )}
               </Tabs>
             )}
           </div>

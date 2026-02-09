@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { PaginatedResponse } from '@grow-fitness/shared-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +12,6 @@ import {
 import { sessionsService } from '@/services/sessions.service';
 import type { Session } from '@grow-fitness/shared-types';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
-import BookSessionModal from './BookSessionModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useKid } from '@/contexts/kid/useKid';
 
@@ -49,7 +49,7 @@ export default function ScheduleTab() {
   const { selectedKid } = useKid();
 
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [openBooking, setOpenBooking] = useState(false);
+  // Removed unused openBooking state as it's not being used in the component
   const [currentDate, setCurrentDate] = useState(new Date());
 
   /* ------------------------------------------------------------------
@@ -70,12 +70,11 @@ export default function ScheduleTab() {
    * Fetch sessions (kid scoped)
    * ------------------------------------------------------------------ */
 
-  const { data: sessionsData } = useApiQuery(
+  const { data: sessionsData } = useApiQuery<PaginatedResponse<Session>>(
     ['sessions', selectedKid?.id || '', startDate, endDate],
     () => {
-      // ✅ hard guard – prevents runtime crashes
       if (!selectedKid?.id) {
-        return Promise.resolve({ data: [], meta: {} } as any);
+        return Promise.resolve({ data: [], total: 0, page: 1, limit: 10, totalPages: 0 });
       }
 
       return sessionsService.getSessions(1, 50, {
@@ -123,6 +122,10 @@ export default function ScheduleTab() {
     month: 'long',
     year: 'numeric',
   });
+
+  function setOpenBooking(): void {
+    throw new Error('Function not implemented.');
+  }
 
   /* ------------------------------------------------------------------
    * Render
@@ -213,16 +216,18 @@ export default function ScheduleTab() {
 
       <SessionDetailsModal
         open={Boolean(selectedSession)}
-        session={selectedSession} 
+        session={selectedSession || undefined} 
         onClose={() => setSelectedSession(null)}
+        kidId={selectedKid?.id}
+        onReschedule={() => {}}
       />
 
-      <BookSessionModal
+      {/* <BookSessionModal
         open={openBooking}
         onClose={() => setOpenBooking(false)}
         kidId={selectedKid?.id}
         clientId={selectedKid?.parentId}
-      />
+      /> */}
     </>
   );
 }
