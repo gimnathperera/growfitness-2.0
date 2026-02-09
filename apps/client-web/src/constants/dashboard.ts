@@ -28,7 +28,6 @@ export const parentIndividualTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
-  { id: 'invoice', label: 'Invoice', icon: TrendingUp },
   { id: 'kidProfile', label: 'Kid Profile', icon: User },
 ];
 
@@ -36,7 +35,6 @@ export const parentIndividualTabs = [
 export const parentGroupTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
-  { id: 'invoice', label: 'Invoice', icon: TrendingUp },
   { id: 'kidProfile', label: 'Kid Profile', icon: User },
 ];
 

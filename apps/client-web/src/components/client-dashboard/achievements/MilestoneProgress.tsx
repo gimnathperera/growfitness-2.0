@@ -83,7 +83,6 @@ export function MilestoneProgress() {
     const payload = ms.tasks
       .filter((t) => t.category !== 'Fitness')
       .map((t) => ({ id: t.id, completed: t.completed, category: t.category }));
-    console.log('[MilestoneProgress] save', { milestoneId, tasks: payload });
   };
 
   return (

@@ -13,6 +13,7 @@ import type { Session } from '@grow-fitness/shared-types';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import BookSessionModal from './BookSessionModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useKid } from '@/contexts/kid/useKid';
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -23,10 +24,6 @@ type CalendarEvent = {
   title: string;
   date: Date;
   session: Session;
-};
-
-type Props = {
-  kid: unknown; // Replace 'any' with the actual Kid type if you have it defined
 };
 
 /* ------------------------------------------------------------------ */
@@ -48,10 +45,11 @@ const getSessionLabel = (session: Session): string => {
 /* Component */
 /* ------------------------------------------------------------------ */
 
-// eslint-disable-next-line no-empty-pattern
-export default function ScheduleTab({ }: Props) {
+export default function ScheduleTab() {
+  const { selectedKid } = useKid();
+
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [, setOpenBooking] = useState(false);
+  const [openBooking, setOpenBooking] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   /* ------------------------------------------------------------------
@@ -69,22 +67,26 @@ export default function ScheduleTab({ }: Props) {
   }, [currentDate]);
 
   /* ------------------------------------------------------------------
-   * Coach ID
-   * ------------------------------------------------------------------ */
-
-
-  /* ------------------------------------------------------------------
-   * Fetch sessions
+   * Fetch sessions (kid scoped)
    * ------------------------------------------------------------------ */
 
   const { data: sessionsData } = useApiQuery(
-    ['sessions', startDate, endDate],
-    () =>
-      sessionsService.getSessions(1, 50, {
+    ['sessions', selectedKid?.id || '', startDate, endDate],
+    () => {
+      // ✅ hard guard – prevents runtime crashes
+      if (!selectedKid?.id) {
+        return Promise.resolve({ data: [], meta: {} } as any);
+      }
+
+      return sessionsService.getSessions(1, 50, {
+        kidId: selectedKid.id,
         startDate,
         endDate,
-      }),
-    { enabled: Boolean(startDate) }
+      });
+    },
+    {
+      enabled: Boolean(selectedKid?.id && startDate),
+    }
   );
 
   /* ------------------------------------------------------------------
@@ -93,13 +95,14 @@ export default function ScheduleTab({ }: Props) {
 
   const events: CalendarEvent[] = useMemo(() => {
     const sessions: Session[] = sessionsData?.data ?? [];
+
     return sessions.map(session => ({
       _id: session.id,
       title: getSessionLabel(session),
       date: new Date(session.dateTime),
       session,
     }));
-  }, [sessionsData?.data]);
+  }, [sessionsData]);
 
   /* ------------------------------------------------------------------
    * Calendar grid
@@ -145,7 +148,11 @@ export default function ScheduleTab({ }: Props) {
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <Button size="sm" variant="ghost" onClick={() => setCurrentDate(new Date())}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setCurrentDate(new Date())}
+            >
               Today
             </Button>
 
@@ -169,7 +176,10 @@ export default function ScheduleTab({ }: Props) {
         <CardContent>
           <div className="grid grid-cols-7 gap-[1px] bg-muted rounded-lg overflow-hidden text-xs">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="p-2 text-center font-medium bg-muted/50">
+              <div
+                key={day}
+                className="p-2 text-center font-medium bg-muted/50"
+              >
                 {day}
               </div>
             ))}
@@ -203,18 +213,15 @@ export default function ScheduleTab({ }: Props) {
 
       <SessionDetailsModal
         open={Boolean(selectedSession)}
-        session={selectedSession}
+        session={selectedSession} 
         onClose={() => setSelectedSession(null)}
       />
 
       <BookSessionModal
-        // open={openBooking}
-        // onClose={() => setOpenBooking(false)}
-        // kidId={kid.id}
-        // clientId={kid.parentId}
-        // onConfirm={payload =>
-        //   console.log('[ScheduleTab] booked session:', payload)
-        // }
+        open={openBooking}
+        onClose={() => setOpenBooking(false)}
+        kidId={selectedKid?.id}
+        clientId={selectedKid?.parentId}
       />
     </>
   );

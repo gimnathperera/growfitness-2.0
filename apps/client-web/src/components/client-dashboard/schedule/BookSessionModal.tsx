@@ -153,7 +153,6 @@
 //       setTime('');
 //       onClose();
 //     } catch (e) {
-//       console.error(e);
 //       setTimeSlots(prevSlots);
 //     }
 //   };

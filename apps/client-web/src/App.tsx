@@ -9,6 +9,7 @@ import { KidProvider } from "./contexts/kid/KidProvider";
 import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./contexts/AuthProvider";
 import { useAuth } from "./contexts/useAuth";
+import { Payments } from "./pages/Payments";
 
 // Create a wrapper component that conditionally applies KidProvider
 function DashboardWrapper() {
@@ -46,6 +47,7 @@ function App() {
         >
           <Route path="/dashboard" element={<DashboardWrapper />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/payments" element={<Payments />} />
         </Route>
       </Routes>
     </AuthProvider>
