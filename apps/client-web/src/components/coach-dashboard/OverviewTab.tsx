@@ -2,15 +2,11 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar } from "lucide-react";
-import {
-  type Session,
-  SessionStatus,
-  UserRole,
-} from "@grow-fitness/shared-types";
-import SessionDetailsModal from "../common/SessionDetailsModal";
+import { UserRole } from "@grow-fitness/shared-types";
 import { StatsGrid } from "../common/StatGrid";
 import type { DashboardStats } from "@/types/dashboard";
 import { useAuth } from "@/contexts/useAuth";
+import { UpcomingSessions } from "../common/UpcomingSessions";
 
 type Coach = {
   id: string;
@@ -24,16 +20,13 @@ export function OverviewTab() {
   const coachId = user?.id;
 
   const [coach, setCoach] = useState<Coach | null>(null);
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔁 Replace with real API call later
   useEffect(() => {
     if (!coachId) return;
 
     const fetchCoach = async () => {
       try {
-        // mock response
         const data: Coach = {
           id: coachId,
           name: "John Coach",
@@ -50,9 +43,6 @@ export function OverviewTab() {
     fetchCoach();
   }, [coachId]);
 
-  // Temporary mock sessions & stats (replace later)
-  const sessions: Session[] = [];
-
   const stats: DashboardStats = {
     totalChildren: 12,
     todaySessions: 3,
@@ -60,41 +50,6 @@ export function OverviewTab() {
     weeklyProgress: 80,
     avgProgress: 78,
   };
-
-  const getStatusBadge = (status: SessionStatus) => {
-    switch (status) {
-      case SessionStatus.CONFIRMED:
-        return <Badge className="bg-[#23B685] text-white">Confirmed</Badge>;
-      case SessionStatus.SCHEDULED:
-        return <Badge variant="outline">Scheduled</Badge>;
-      case SessionStatus.COMPLETED:
-        return <Badge variant="secondary">Completed</Badge>;
-      case SessionStatus.CANCELLED:
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const SessionItem = ({ session }: { session: Session }) => (
-    <div
-      onClick={() => setSelectedSession(session)}
-      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-        session.status === SessionStatus.CONFIRMED
-          ? "bg-[#23B685]/5 hover:bg-[#23B685]/10"
-          : "border border-gray-200 hover:bg-gray-50"
-      }`}
-    >
-      <div>
-        <h3 className="font-semibold text-[#243E36]">{session.type}</h3>
-        <p className="text-sm text-gray-600">
-          {session.dateTime.toLocaleString()}
-        </p>
-        <p className="text-xs text-gray-500">Spots available</p>
-      </div>
-      {getStatusBadge(session.status)}
-    </div>
-  );
 
   return (
     <>
@@ -151,27 +106,14 @@ export function OverviewTab() {
                 Upcoming Sessions
               </CardTitle>
             </CardHeader>
-
             <CardContent className="space-y-4 overflow-y-auto max-h-[400px]">
-              {sessions.length === 0 ? (
-                <p className="text-sm text-gray-500">No upcoming sessions</p>
-              ) : (
-                sessions.map((session) => (
-                  <SessionItem key={session.id} session={session} />
-                ))
-              )}
+              <UpcomingSessions coachId={coachId} />
             </CardContent>
           </Card>
         </div>
 
         <StatsGrid stats={stats} role={UserRole.COACH} />
       </div>
-
-      <SessionDetailsModal
-        session={selectedSession || undefined}
-        open={!!selectedSession}
-        onClose={() => setSelectedSession(null)}
-      />
     </>
   );
 }
