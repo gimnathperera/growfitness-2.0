@@ -1,21 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar } from "lucide-react";
-import { type Kid, type Session, SessionStatus, UserRole } from "@grow-fitness/shared-types";
-import SessionDetailsModal from "../common/SessionDetailsModal";
+import { UserRole, type Kid } from "@grow-fitness/shared-types";
 import { StatsGrid } from "../common/StatGrid";
 import type { DashboardStats } from "@/types/dashboard";
-import { useState } from "react";
+import { UpcomingSessions } from "../common/UpcomingSessions";
 
 interface OverviewTabProps {
   kid: Kid | null;
 }
 
 export function OverviewTab({ kid }: OverviewTabProps) {
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-
   // Temporary mock sessions & stats (replace later)
-  const sessions: Session[] = [];
   const stats: DashboardStats = {
     totalChildren: 1,
     todaySessions: 1,
@@ -23,41 +19,6 @@ export function OverviewTab({ kid }: OverviewTabProps) {
     weeklyProgress: 75,
     avgProgress: 75,
   };
-
-  const getStatusBadge = (status: SessionStatus) => {
-    switch (status) {
-      case SessionStatus.CONFIRMED:
-        return <Badge className="bg-[#23B685] text-white">Confirmed</Badge>;
-      case SessionStatus.SCHEDULED:
-        return <Badge variant="outline">Scheduled</Badge>;
-      case SessionStatus.COMPLETED:
-        return <Badge variant="secondary">Completed</Badge>;
-      case SessionStatus.CANCELLED:
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const SessionItem = ({ session }: { session: Session }) => (
-    <div
-      onClick={() => setSelectedSession(session)}
-      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-        session.status === SessionStatus.CONFIRMED
-          ? "bg-[#23B685]/5 hover:bg-[#23B685]/10"
-          : "border border-gray-200 hover:bg-gray-50"
-      }`}
-    >
-      <div>
-        <h3 className="font-semibold text-[#243E36]">{session.type}</h3>
-        <p className="text-sm text-gray-600">{session.dateTime.toLocaleString()}</p>
-        <p className="text-xs text-gray-500">
-          spots available
-        </p>
-      </div>
-      {getStatusBadge(session.status)}
-    </div>
-  );
 
   return (
     <>
@@ -118,21 +79,13 @@ export function OverviewTab({ kid }: OverviewTabProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 overflow-y-auto max-h-[400px]">
-              {sessions.map((session: Session) => (
-                <SessionItem key={session.id} session={session} />
-              ))}
+              <UpcomingSessions kidId={kid?.id} />
             </CardContent>
           </Card>
         </div>
 
         <StatsGrid stats={stats} role={UserRole.PARENT} />
       </div>
-
-      <SessionDetailsModal
-        session={selectedSession || undefined}
-        open={!!selectedSession}
-        onClose={() => setSelectedSession(null)}
-      />
     </>
   );
 }
