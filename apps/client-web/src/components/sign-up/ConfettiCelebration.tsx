@@ -46,7 +46,6 @@ const ConfettiCelebration: React.FC<ConfettiCelebrationProps> = ({
 
   const emojis = useMemo(() => ['🎉', '⭐', '🌟', '💪', '🏆', '🎊', '✨', '🎈'], []);
 
-  // Initialize confetti pieces in a ref to avoid re-renders
   const confettiPiecesRef = useRef<ConfettiPiece[]>([]);
 
   // Generate stable random values for confetti pieces
