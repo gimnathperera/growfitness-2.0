@@ -207,7 +207,7 @@ export function Payments() {
   ];
 
   return (
-    <div className="m-20 space-y-6">
+    <div className="m-20 space-y-6 p-20">
       <div>
         <h1 className="text-3xl font-bold">Payment Invoices</h1>
         <p className="text-muted-foreground mt-1">

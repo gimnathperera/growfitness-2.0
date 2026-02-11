@@ -94,7 +94,7 @@ export default function ParentDashboard() {
 
   /* ------------------ RENDER ------------------ */
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <DashboardHeader />
 
       <DesktopTabs

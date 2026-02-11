@@ -10,6 +10,7 @@ import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./contexts/AuthProvider";
 import { useAuth } from "./contexts/useAuth";
 import { Payments } from "./pages/Payments";
+import { SignUpPage } from "./pages/SignUpPage";
 
 // Create a wrapper component that conditionally applies KidProvider
 function DashboardWrapper() {
@@ -35,6 +36,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<SignInPage />} />
           <Route path="/free-session" element={<BookAFreeSession />} />
+          <Route path="/sign-up" element={<SignUpPage />} />
         </Route>
 
         {/* ---------- PROTECTED ROUTES ---------- */}

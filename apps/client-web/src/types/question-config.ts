@@ -1,8 +1,5 @@
 import type { ReactNode } from 'react';
 
-/**
- * Generic reusable question configuration for forms
- */
 export type QuestionConfig<T extends string> = {
   id: T;
   label?: string;
@@ -19,7 +16,8 @@ export type QuestionConfig<T extends string> = {
     | 'datetime'
     | 'phone'
     | 'select'
-    | 'multiselect';
+    | 'multiselect'
+    | 'boolean';
   options?: {
     value: string | boolean;
     label: string;

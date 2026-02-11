@@ -63,7 +63,7 @@ const BookAFreeSessionForm: React.FC = () => {
   const handleRetry = () => setSubmitError(null);
 
   return (
-    <>
+    <div className='pt-20'>
       <Toaster />
       <CollectInfoFlow
         onSubmit={handleCollectInfoSubmit}
@@ -73,7 +73,7 @@ const BookAFreeSessionForm: React.FC = () => {
         error={submitError}
         onRetry={handleRetry}
       />
-    </>
+    </div>
   );
 };
 

@@ -1,35 +1,69 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { LogOut, Menu } from "lucide-react";
+import { useAuth } from "@/contexts/useAuth";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "../common/ConfirmDialog";
-import { useAuth } from "@/contexts/useAuth";
+import {
+  Dumbbell,
+  Users,
+  Phone,
+  Info,
+  Menu,
+  X,
+  LogOut,
+} from "lucide-react";
 
-export function Header() {
+const logo = "/Grow Logo Versions-01.svg";
+
+const navLinks = [
+  { label: "About Us", href: "#about", icon: Info },
+  { label: "Our Plans", href: "#plans", icon: Dumbbell },
+  { label: "Programs", href: "#programs", icon: Users },
+  { label: "Contact Us", href: "#contact", icon: Phone },
+];
+
+type HeaderProps = {
+  forceSolid?: boolean;
+};
+
+export default function Header({ forceSolid = false }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const { confirm, confirmState } = useConfirm();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 🔑 Final header state
+  const isSolid = scrolled || forceSolid;
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        !menuButtonRef.current?.contains(e.target as Node)
+      ) {
+        setAvatarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const dashboardLabel = useMemo(() => {
     if (user?.role === "COACH") return "Coach Dashboard";
@@ -38,8 +72,6 @@ export function Header() {
   }, [user?.role]);
 
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
-
-  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = useCallback(async () => {
     const confirmed = await confirm({
@@ -55,203 +87,174 @@ export function Header() {
     }
   }, [confirm, logout, navigate]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        !menuButtonRef.current?.contains(e.target as Node)
-      ) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
     <>
-      <header className="fixed top-0 z-50 w-full border-b border-border bg-background/60 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="flex h-16 items-center justify-between">
+      <nav
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          isSolid
+            ? "bg-background/95 backdrop-blur-md shadow-card border-b border-border"
+            : "bg-transparent"
+        )}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <Link
-              to="/"
-              className="flex items-center gap-3 text-4xl font-bold text-primary font-insanibc"
-            >
-              <img
-                src="/svg/Grow Logo Versions-01.svg"
-                alt="Grow Fitness Logo"
-                className="w-16 h-16"
-              />
-              <span className="hidden md:inline">Grow Fitness</span>
+            <Link to="/" className="flex items-center gap-2">
+              <img src={logo} alt="Grow Fitness" className="h-10 md:h-12 w-auto" />
+              <span
+                className={cn(
+                  "font-display font-bold text-lg md:text-xl",
+                  isSolid ? "text-primary" : "text-white"
+                )}
+              >
+                GrowFitness
+              </span>
             </Link>
 
-            {/* Desktop Menu */}
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList className="flex items-center gap-4">
-                {!isAuthenticated && (
-                  <>
-                    <NavigationMenuLink asChild>
-                      <Link
-                        to="/login"
-                        className={cn(
-                          "px-2 py-2 text-xs md:px-6 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-white text-primary hover:bg-gray-100",
-                          isActive("/login") && "bg-gray-100"
-                        )}
-                      >
-                        Sign In
-                      </Link>
-                    </NavigationMenuLink>
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isSolid
+                      ? "text-foreground hover:text-primary hover:bg-accent"
+                      : "text-white/90 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  {link.label}
+                </a>
+              ))}
 
-                    <NavigationMenuLink asChild>
-                      <Link
-                        to="/free-session"
-                        className={cn(
-                          "px-3 py-2 text-xs md:px-8 md:py-2 md:text-lg rounded-full font-[Insaniburger_with_Cheese] shadow-lg inline-flex items-center justify-center transition-transform duration-300 hover:scale-105 bg-primary hover:bg-[#1e9c70] text-white",
-                          isActive("/free-session") && "opacity-90"
-                        )}
-                      >
-                        Book Free Session
-                      </Link>
-                    </NavigationMenuLink>
-                  </>
-                )}
-
-                {isAuthenticated && (
-                  <NavigationMenuItem className="relative">
-                    <button
-                      ref={menuButtonRef}
-                      onClick={() => setIsMenuOpen(prev => !prev)}
-                      className="flex items-center justify-center rounded-full"
-                    >
-                      <Avatar className="size-10">
-                        <AvatarFallback className="bg-primary text-white">
-                          {userInitial}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-
-                    {isMenuOpen && (
-                      <div
-                        ref={dropdownRef}
-                        className="absolute right-0 mt-3 w-56 rounded-lg border bg-popover shadow-lg"
-                      >
-                        <div className="px-4 py-3 text-xs text-muted-foreground">
-                          Signed in as
-                          <div className="truncate text-sm text-foreground">
-                            {user?.email}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-1 px-2 pb-2">
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              navigate("/dashboard");
-                            }}
-                            className="menu-item items-center justify-center"
-                          >
-                            {dashboardLabel}
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              navigate("/payments");
-                            }}
-                            className="menu-item flex items-center pl-8"
-                          >
-                            Payments
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              navigate("/profile");
-                            }}
-                            className="menu-item flex items-center pl-8"
-                          >
-                            Profile
-                          </button>
-
-                          <button
-                            onClick={handleLogout}
-                            className="menu-item text-red-600 flex items-center gap-2"
-                          >
-                            <LogOut className="h-4 w-4 ml-3" />
-                            Logout
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </NavigationMenuItem>
-                )}
-              </NavigationMenuList>
-            </NavigationMenu>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(prev => !prev)}
-            >
-              <Menu />
-            </button>
-          </nav>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden border-t py-3 space-y-2">
-              {!isAuthenticated ? (
+              {!isAuthenticated && (
                 <>
-                  <Link
-                    to="/login"
-                    className="block px-3 py-2 rounded-md hover:bg-accent"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "ml-3 font-semibold",
+                      isSolid
+                        ? "border-primary text-primary"
+                        : "border-white/40 text-white bg-white/10 hover:bg-white/20"
+                    )}
+                    onClick={() => navigate("/login")}
                   >
                     Sign In
-                  </Link>
+                  </Button>
 
-                  <Link
-                    to="/free-session"
-                    className="block px-3 py-2 rounded-md bg-primary text-white"
+                  <Button
+                    size="sm"
+                    className="ml-2 font-semibold shadow-md"
+                    onClick={() => navigate("/free-session")}
                   >
                     Book Free Session
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="block px-3 py-2 rounded-md hover:bg-accent"
-                  >
-                    {dashboardLabel}
-                  </Link>
-
-                  <Link
-                    to="/parent-payments"
-                    className="block px-3 py-2 rounded-md hover:bg-accent"
-                  >
-                    Payments
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-3 py-2 rounded-md text-red-600 hover:bg-accent"
-                  >
-                    Logout
-                  </button>
+                  </Button>
                 </>
               )}
-            </div>
-          )}
-        </div>
-      </header>
 
-      {/* Logout Confirm */}
+              {isAuthenticated && (
+                <div className="relative ml-3">
+                  <button
+                    ref={menuButtonRef}
+                    onClick={() => setAvatarOpen((p) => !p)}
+                    className="rounded-full p-1"
+                  >
+                    <Avatar className="size-9">
+                      <AvatarFallback className="bg-primary text-white">
+                        {userInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+
+                  {avatarOpen && (
+                    <div
+                      ref={dropdownRef}
+                      className="absolute right-0 mt-3 w-56 rounded-lg border bg-popover shadow-lg"
+                    >
+                      <div className="px-4 py-3 text-xs text-muted-foreground">
+                        Signed in as
+                        <div className="truncate text-sm text-foreground">
+                          {user?.email}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1 px-2 pb-2">
+                        <button
+                          onClick={() => navigate("/dashboard")}
+                          className="menu-item text-left"
+                        >
+                          {dashboardLabel}
+                        </button>
+
+                        <button
+                          onClick={() => navigate("/payments")}
+                          className="menu-item text-left"
+                        >
+                          Payments
+                        </button>
+
+                        <button
+                          onClick={() => navigate("/profile")}
+                          className="menu-item text-left"
+                        >
+                          Profile
+                        </button>
+
+                        <button
+                          onClick={handleLogout}
+                          className="menu-item text-red-600 flex items-center gap-2"
+                        >
+                          <LogOut className="h-4 w-4" /> Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Toggle */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className={cn(
+                "md:hidden p-2 rounded-lg",
+                isSolid ? "text-foreground" : "text-white"
+              )}
+            >
+              {menuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="md:hidden bg-background/98 backdrop-blur-lg border-b border-border">
+            <div className="px-4 py-4 space-y-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {link.label}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </nav>
+
       <ConfirmDialog
         open={confirmState.open}
-        onOpenChange={open => !open && confirmState.onCancel()}
+        onOpenChange={(open) => !open && confirmState.onCancel()}
         title={confirmState.options?.title || ""}
         description={confirmState.options?.description || ""}
         confirmText={confirmState.options?.confirmText}
