@@ -71,7 +71,13 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   const renderForm = () => (
     <>
       <ProgressBar progress={progress} currentStep={currentStep + 1} totalSteps={collectInfoQuestions.length} />
-      <div className="flex-1 flex flex-col px-4">
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          goToNext();
+        }} 
+        className="flex-1 flex flex-col px-4"
+      >
         <motion.div className="flex-1 flex flex-col w-full max-w-2xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="flex-1 flex flex-col justify-center py-6">
             <AnimatePresence mode="wait">
@@ -123,8 +129,7 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
             <div className="text-sm text-gray-500">{currentStep + 1} / {collectInfoQuestions.length}</div>
 
             <Button
-              type="button"
-              onClick={goToNext}
+              type="submit"
               disabled={isLoading || isSubmitting}
               className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 mr-5 !bg-emerald-500 !text-white hover:!bg-emerald-600 !border-0"
             >
@@ -138,7 +143,7 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
             </Button>
           </div>
         </motion.div>
-      </div>
+      </form>
 
       {onCancel && (
         <div className="p-4 text-center">

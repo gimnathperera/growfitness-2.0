@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react';
 
+export type QuestionOption = {
+  value: string | boolean;
+  label: string;
+  icon?: ReactNode;
+};
+
 export type QuestionConfig<T extends string> = {
   id: T;
   label?: string;
@@ -18,10 +24,6 @@ export type QuestionConfig<T extends string> = {
     | 'select'
     | 'multiselect'
     | 'boolean';
-  options?: {
-    value: string | boolean;
-    label: string;
-    icon?: ReactNode;
-  }[];
+  options?: QuestionOption[] | (() => Promise<QuestionOption[]>);
   required?: boolean;
 };
