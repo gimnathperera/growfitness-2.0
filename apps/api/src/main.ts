@@ -34,7 +34,21 @@ async function bootstrap() {
   // Swagger/OpenAPI Documentation
   const config = new DocumentBuilder()
     .setTitle('Grow Fitness API')
-    .setDescription('API documentation for Grow Fitness Platform')
+    .setDescription(
+      `API documentation for Grow Fitness Platform.
+
+## Public Endpoints (no auth required)
+- **GET /api/sessions/free** - List free sessions (isFreeSession: true)
+- **POST /api/requests/free-sessions** - Create free session request
+- **GET /api/requests/free-sessions** - List free session requests
+- **GET /api/testimonials** - List testimonials (paginated)
+- **GET /api/testimonials/:id** - Get testimonial by ID
+- **GET /api/locations** - List locations
+- **GET /api/banners** - List banners
+
+## Authenticated Endpoints
+Most endpoints require JWT Bearer token. Roles: ADMIN, PARENT, COACH (varies by endpoint).`
+    )
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -51,12 +65,13 @@ async function bootstrap() {
     .addTag('auth', 'Authentication endpoints')
     .addTag('users', 'User management endpoints')
     .addTag('kids', 'Kid management endpoints')
-    .addTag('sessions', 'Session management endpoints')
-    .addTag('requests', 'Request management endpoints')
+    .addTag('sessions', 'Session management. GET /sessions/free is public.')
+    .addTag('requests', 'Request management: free sessions, reschedules, extra sessions, user registrations')
     .addTag('invoices', 'Invoice management endpoints')
     .addTag('locations', 'Location management endpoints')
     .addTag('banners', 'Banner management endpoints')
     .addTag('quizzes', 'Quiz management endpoints')
+    .addTag('testimonials', 'Testimonials CRUD. GET list and GET by ID are public.')
     .addTag('dashboard', 'Dashboard endpoints')
     .addTag('audit', 'Audit log endpoints')
     .build();

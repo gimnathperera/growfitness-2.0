@@ -243,6 +243,20 @@ export interface Location {
   updatedAt: Date;
 }
 
+export interface Testimonial {
+  id: string;
+  authorName: string;
+  content: string;
+  childName?: string;
+  childAge?: number;
+  membershipDuration?: string;
+  rating?: number;
+  order?: number;
+  isActive?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Banner {
   id: string;
   imageUrl: string;

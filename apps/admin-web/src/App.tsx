@@ -14,6 +14,7 @@ import { AuditPage } from './pages/AuditPage';
 import { CodesPage } from './pages/CodesPage';
 import { QuizzesPage } from './pages/QuizzesPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { TestimonialsPage } from './pages/TestimonialsPage';
 import { Layout } from './components/layout/Layout';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
           <Route path="codes" element={<CodesPage />} />
           <Route path="quizzes" element={<QuizzesPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="testimonials" element={<TestimonialsPage />} />
         </Route>
       </Routes>
     </AuthProvider>

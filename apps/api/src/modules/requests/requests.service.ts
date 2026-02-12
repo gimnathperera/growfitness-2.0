@@ -15,6 +15,8 @@ import {
 } from '../../infra/database/schemas/extra-session-request.schema';
 import {
   CreateFreeSessionRequestDto,
+  CreateRescheduleRequestDto,
+  CreateExtraSessionRequestDto,
 } from '@grow-fitness/shared-schemas';
 import {
   UserRegistrationRequest,
@@ -22,7 +24,8 @@ import {
 } from '../../infra/database/schemas/user-registration-request.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
-import { RequestStatus, UserStatus } from '@grow-fitness/shared-types';
+import { Session, SessionDocument } from '../../infra/database/schemas/session.schema';
+import { RequestStatus, UserStatus, UserRole } from '@grow-fitness/shared-types';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notifications/notifications.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
@@ -42,6 +45,7 @@ export class RequestsService {
     private userRegistrationRequestModel: Model<UserRegistrationRequestDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Kid.name) private kidModel: Model<KidDocument>,
+    @InjectModel(Session.name) private sessionModel: Model<SessionDocument>,
     private auditService: AuditService,
     private notificationService: NotificationService
   ) {}
@@ -61,17 +65,18 @@ export class RequestsService {
   }
 
   async findFreeSessionRequests(pagination: PaginationDto) {
+    const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
     const [data, total] = await Promise.all([
       this.freeSessionRequestModel
-        .find()
+        .find(filter)
         .populate('selectedSessionId')
         .populate('locationId')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pagination.limit)
         .exec(),
-      this.freeSessionRequestModel.countDocuments().exec(),
+      this.freeSessionRequestModel.countDocuments(filter).exec(),
     ]);
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
@@ -117,18 +122,48 @@ export class RequestsService {
   }
 
   // Reschedule Requests
+  async createRescheduleRequest(dto: CreateRescheduleRequestDto, requestedById: string) {
+    const session = await this.sessionModel.findById(dto.sessionId).exec();
+    if (!session) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Session not found',
+      });
+    }
+
+    const request = new this.rescheduleRequestModel({
+      sessionId: new Types.ObjectId(dto.sessionId),
+      requestedBy: new Types.ObjectId(requestedById),
+      newDateTime: new Date(dto.newDateTime),
+      reason: dto.reason,
+      status: RequestStatus.PENDING,
+    });
+    const saved = await request.save();
+
+    await this.auditService.log({
+      actorId: requestedById,
+      action: 'CREATE_RESCHEDULE_REQUEST',
+      entityType: 'RescheduleRequest',
+      entityId: saved._id.toString(),
+      metadata: dto,
+    });
+
+    return saved.populate(['sessionId', 'requestedBy']);
+  }
+
   async findRescheduleRequests(pagination: PaginationDto) {
+    const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
     const [data, total] = await Promise.all([
       this.rescheduleRequestModel
-        .find()
+        .find(filter)
         .populate('sessionId')
         .populate('requestedBy', 'email')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pagination.limit)
         .exec(),
-      this.rescheduleRequestModel.countDocuments().exec(),
+      this.rescheduleRequestModel.countDocuments(filter).exec(),
     ]);
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
@@ -187,11 +222,58 @@ export class RequestsService {
   }
 
   // Extra Session Requests
+  async createExtraSessionRequest(
+    dto: CreateExtraSessionRequestDto,
+    actorId: string,
+    actorRole: UserRole
+  ) {
+    const parentId = actorRole === UserRole.PARENT ? actorId : dto.parentId;
+    if (!parentId) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.INVALID_INPUT,
+        message: 'Parent ID is required (required in body when creating as admin)',
+      });
+    }
+
+    // Validate kid belongs to parent when PARENT creates
+    if (actorRole === UserRole.PARENT) {
+      const kid = await this.kidModel.findOne({ _id: dto.kidId, parentId }).exec();
+      if (!kid) {
+        throw new NotFoundException({
+          errorCode: ErrorCode.NOT_FOUND,
+          message: 'Kid not found or does not belong to you',
+        });
+      }
+    }
+
+    const request = new this.extraSessionRequestModel({
+      parentId: new Types.ObjectId(parentId),
+      kidId: new Types.ObjectId(dto.kidId),
+      coachId: new Types.ObjectId(dto.coachId),
+      sessionType: dto.sessionType,
+      locationId: new Types.ObjectId(dto.locationId),
+      preferredDateTime: new Date(dto.preferredDateTime),
+      status: RequestStatus.PENDING,
+    });
+    const saved = await request.save();
+
+    await this.auditService.log({
+      actorId,
+      action: 'CREATE_EXTRA_SESSION_REQUEST',
+      entityType: 'ExtraSessionRequest',
+      entityId: saved._id.toString(),
+      metadata: { ...dto, parentId },
+    });
+
+    return saved.populate(['parentId', 'kidId', 'coachId', 'locationId']);
+  }
+
   async findExtraSessionRequests(pagination: PaginationDto) {
+    const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
     const [data, total] = await Promise.all([
       this.extraSessionRequestModel
-        .find()
+        .find(filter)
         .populate('parentId', 'email parentProfile')
         .populate('kidId')
         .populate('coachId', 'email coachProfile')
@@ -200,7 +282,7 @@ export class RequestsService {
         .skip(skip)
         .limit(pagination.limit)
         .exec(),
-      this.extraSessionRequestModel.countDocuments().exec(),
+      this.extraSessionRequestModel.countDocuments(filter).exec(),
     ]);
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
@@ -430,17 +512,18 @@ export class RequestsService {
 
   // User Registration Requests
   async findUserRegistrationRequests(pagination: PaginationDto) {
+    const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
     const [data, total] = await Promise.all([
       this.userRegistrationRequestModel
-        .find()
+        .find(filter)
         .populate('parentId', 'email phone parentProfile status')
         .populate('processedBy', 'email')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pagination.limit)
         .exec(),
-      this.userRegistrationRequestModel.countDocuments().exec(),
+      this.userRegistrationRequestModel.countDocuments(filter).exec(),
     ]);
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
