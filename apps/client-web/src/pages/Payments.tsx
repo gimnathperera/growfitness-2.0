@@ -37,7 +37,6 @@ export function Payments() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const loadedInvoiceId = useRef<string | null>(null);
 
-  // 🔽 Download state
   const [downloadInvoice, setDownloadInvoice] = useState<Invoice | null>(null);
   const [downloadType] = useState<'pdf' | 'image'>('pdf');
 
@@ -207,7 +206,7 @@ export function Payments() {
   ];
 
   return (
-    <div className="m-20 space-y-6 p-20">
+    <div className="mt-24 mx-12 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Payment Invoices</h1>
         <p className="text-muted-foreground mt-1">

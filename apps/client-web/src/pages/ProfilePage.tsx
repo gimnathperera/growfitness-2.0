@@ -146,10 +146,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 pt-20">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background mx-12 mt-24">
+      <div className="mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center space-y-1">
+        <div className="text-start space-y-1">
           <h1 className="text-3xl font-bold">Your Profile</h1>
           <p className="text-muted-foreground">
             Update your personal information
@@ -186,7 +186,7 @@ export default function ProfilePage() {
                 <Label className="flex items-center gap-2 text-muted-foreground">
                   <User className="h-4 w-4" /> Status
                 </Label>
-                <Input disabled value={user.status} />
+                <Input disabled value={user.status ?? "ACTIVE"} />
               </div>
             </div>
 

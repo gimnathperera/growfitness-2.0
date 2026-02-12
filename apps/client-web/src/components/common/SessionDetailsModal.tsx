@@ -391,46 +391,94 @@ export default function SessionDetailsDialog({
 
                 <TabsContent value="overview" className="mt-6 space-y-6">
                   {/* Session Details */}
-                  <div>
-                    <h3 className="font-semibold mb-3 text-base sm:text-lg">Session Information</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Date & Time</h4>
-                        <p className="text-sm break-words">{formatDateTime(displaySession.dateTime)}</p>
+                  <div className="rounded-2xl border bg-card p-5 pt-12 shadow-sm">
+                    <h3 className="font-semibold text-lg mb-5">Session Information</h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      
+                      {/* Date & Time */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Date & Time
+                        </p>
+                        <p className="text-sm font-medium break-words">
+                          {formatDateTime(displaySession.dateTime)}
+                        </p>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Coach</h4>
-                        <p className="text-sm break-words">{coachName}</p>
+
+                      {/* Coach */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Coach
+                        </p>
+                        <p className="text-sm font-medium break-words">
+                          {coachName}
+                        </p>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Location</h4>
+
+                      {/* Location */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1 sm:col-span-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Location
+                        </p>
                         <div className="flex items-start gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <p className="text-sm break-words flex-1">{locationName}</p>
+                          <p className="text-sm font-medium break-words">
+                            {locationName}
+                          </p>
                         </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Type</h4>
-                        <Badge variant="outline">{formatSessionType(displaySession.type)}</Badge>
+
+                      {/* Type */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Type
+                        </p>
+                        <Badge variant="outline" className="w-fit">
+                          {formatSessionType(displaySession.type)}
+                        </Badge>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Duration</h4>
-                        <p className="text-sm">{displaySession.duration} minutes</p>
+
+                      {/* Duration */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Duration
+                        </p>
+                        <p className="text-sm font-medium">
+                          {displaySession.duration} minutes
+                        </p>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
+
+                      {/* Status */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Status
+                        </p>
                         <StatusBadge status={displaySession.status} />
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Free Session</h4>
-                        <p className="text-sm">{displaySession.isFreeSession ? 'Yes' : 'No'}</p>
+
+                      {/* Free Session */}
+                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Free Session
+                        </p>
+                        <p className="text-sm font-medium">
+                          {displaySession.isFreeSession ? "Yes" : "No"}
+                        </p>
                       </div>
+
+                      {/* Capacity (Group only) */}
                       {isGroupSession && capacity > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-muted-foreground mb-1">Capacity</h4>
-                          <p className="text-sm">{enrolled} / {capacity}</p>
+                        <div className="bg-muted/40 rounded-xl p-4 space-y-1 sm:col-span-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Capacity
+                          </p>
+                          <p className="text-sm font-medium">
+                            {enrolled} / {capacity}
+                          </p>
                         </div>
                       )}
+
                     </div>
                   </div>
                 </TabsContent>

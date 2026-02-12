@@ -1,7 +1,7 @@
-export default function KidsTab() {
+export default function SessionsTab() {
     return (
-        <div>
-            <h1>Kids Tab</h1>
+        <div className="flex items-center justify-center h-full p-20">
+            <p>Coming Soon...</p>
         </div>
     );
 }

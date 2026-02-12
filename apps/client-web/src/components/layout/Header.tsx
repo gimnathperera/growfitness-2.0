@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -33,16 +33,19 @@ export default function Header({ forceSolid = false }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const { confirm, confirmState } = useConfirm();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [avatarOpen, setAvatarOpen] = useState(false);
 
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Detect Home Page
+  const isHomePage = location.pathname === "/";
 
-  // 🔑 Final header state
-  const isSolid = scrolled || forceSolid;
+  // Header should be solid if:
+  // - Not home page
+  // - OR user scrolled
+  // - OR forceSolid prop is true
+  const isSolid = !isHomePage || scrolled || forceSolid;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -50,26 +53,13 @@ export default function Header({ forceSolid = false }: HeaderProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close mobile menu when route changes
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        !menuButtonRef.current?.contains(e.target as Node)
-      ) {
-        setAvatarOpen(false);
-      }
+    // This will run when the component unmounts or when location.pathname changes
+    return () => {
+      setMenuOpen(false);
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const dashboardLabel = useMemo(() => {
-    if (user?.role === "COACH") return "Coach Dashboard";
-    if (user?.role === "PARENT") return "Parent Dashboard";
-    return "Dashboard";
-  }, [user?.role]);
+  }, [location.pathname]);
 
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
 
@@ -99,6 +89,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
+            
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <img src={logo} alt="Grow Fitness" className="h-10 md:h-12 w-auto" />
@@ -156,62 +147,30 @@ export default function Header({ forceSolid = false }: HeaderProps) {
               )}
 
               {isAuthenticated && (
-                <div className="relative ml-3">
+                <div className="flex items-center gap-3 ml-3">
+                  
+                  {/* Avatar → Dashboard */}
                   <button
-                    ref={menuButtonRef}
-                    onClick={() => setAvatarOpen((p) => !p)}
-                    className="rounded-full p-1"
+                    onClick={() => navigate("/dashboard")}
+                    className="rounded-full p-1 border-none hover:bg-gray-50"
                   >
-                    <Avatar className="size-9">
+                    <Avatar className="size-9 cursor-pointer">
                       <AvatarFallback className="bg-primary text-white">
                         {userInitial}
                       </AvatarFallback>
                     </Avatar>
                   </button>
 
-                  {avatarOpen && (
-                    <div
-                      ref={dropdownRef}
-                      className="absolute right-0 mt-3 w-56 rounded-lg border bg-popover shadow-lg"
-                    >
-                      <div className="px-4 py-3 text-xs text-muted-foreground">
-                        Signed in as
-                        <div className="truncate text-sm text-foreground">
-                          {user?.email}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1 px-2 pb-2">
-                        <button
-                          onClick={() => navigate("/dashboard")}
-                          className="menu-item text-left"
-                        >
-                          {dashboardLabel}
-                        </button>
-
-                        <button
-                          onClick={() => navigate("/payments")}
-                          className="menu-item text-left"
-                        >
-                          Payments
-                        </button>
-
-                        <button
-                          onClick={() => navigate("/profile")}
-                          className="menu-item text-left"
-                        >
-                          Profile
-                        </button>
-
-                        <button
-                          onClick={handleLogout}
-                          className="menu-item text-red-600 flex items-center gap-2"
-                        >
-                          <LogOut className="h-4 w-4" /> Logout
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {/* Logout */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 hover:bg-gray-50 border-none"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </Button>
                 </div>
               )}
             </div>
@@ -239,7 +198,6 @@ export default function Header({ forceSolid = false }: HeaderProps) {
                   <a
                     key={link.label}
                     href={link.href}
-                    onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent"
                   >
                     <Icon className="h-4 w-4" />
@@ -247,6 +205,36 @@ export default function Header({ forceSolid = false }: HeaderProps) {
                   </a>
                 );
               })}
+
+              {isAuthenticated && (
+                <div className="pt-3 border-t mt-3 flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/dashboard")}
+                  >
+                    Dashboard
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </Button>
+                </div>
+              )}
+
+              {!isAuthenticated && (
+                <div className="pt-3 border-t mt-3 flex flex-col gap-2">
+                  <Button onClick={() => navigate("/login")}>
+                    Sign In
+                  </Button>
+
+                  <Button onClick={() => navigate("/free-session")}>
+                    Book Free Session
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}

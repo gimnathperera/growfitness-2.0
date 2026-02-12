@@ -2,7 +2,7 @@ import CoachDashboard from "../components/coach-dashboard/CoachDashboard";
 
 export default function CoachDashboardPage() {
     return (
-        <div className="pt-20">
+         <div className="min-h-screen bg-white mt-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 {/* ---------- LEFT ---------- */}

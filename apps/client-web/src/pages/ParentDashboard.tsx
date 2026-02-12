@@ -75,7 +75,7 @@ export default function ParentDashboard() {
 
   if (!user || user.role !== UserRole.PARENT || !kidData) {
     return (
-      <div className="min-h-screen bg-gray-50">
+       <div className="min-h-screen bg-white mt-24">
         <DashboardHeader />
         <div className="flex justify-center py-20 text-gray-500">
           Please select a child to continue.
@@ -94,7 +94,7 @@ export default function ParentDashboard() {
 
   /* ------------------ RENDER ------------------ */
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-white mt-24">
       <DashboardHeader />
 
       <DesktopTabs

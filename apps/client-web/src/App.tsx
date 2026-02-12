@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
-import { Layout } from "./components/layout/Layout";
+import { DashboardLayout, Layout } from "./components/layout/Layout";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import DashboardPage from "./components/dashboard/DashboardPage";
 import SignInPage from "./pages/SignInPage";
@@ -12,18 +12,18 @@ import { useAuth } from "./contexts/useAuth";
 import { Payments } from "./pages/Payments";
 import { SignUpPage } from "./pages/SignUpPage";
 
-// Create a wrapper component that conditionally applies KidProvider
+// Dashboard wrapper (unchanged)
 function DashboardWrapper() {
   const { role } = useAuth();
-  
-  if (role === 'PARENT') {
+
+  if (role === "PARENT") {
     return (
       <KidProvider>
         <DashboardPage />
       </KidProvider>
     );
   }
-  
+
   return <DashboardPage />;
 }
 
@@ -39,11 +39,11 @@ function App() {
           <Route path="/sign-up" element={<SignUpPage />} />
         </Route>
 
-        {/* ---------- PROTECTED ROUTES ---------- */}
+        {/* ---------- PROTECTED ROUTES WITH SIDENAV ---------- */}
         <Route
           element={
             <ProtectedRoute>
-              <Layout />
+              <DashboardLayout />
             </ProtectedRoute>
           }
         >

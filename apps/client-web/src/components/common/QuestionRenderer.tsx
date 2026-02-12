@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type {
   Control,
   FieldError,
@@ -8,7 +9,7 @@ import type {
 } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Controller } from 'react-hook-form';
-import type { QuestionConfig } from '@/types/question-config';
+import type { QuestionConfig, QuestionOption } from '@/types/question-config';
 
 interface QuestionRendererProps<TFormValues extends FieldValues = FieldValues> {
   question: QuestionConfig<FieldPath<TFormValues>>;
@@ -33,6 +34,48 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
   error,
   shouldAutoFocus = true,
 }: QuestionRendererProps<TFormValues>) => {
+  const [options, setOptions] = useState<QuestionOption[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+
+  // Load options for select/multiselect types
+  useEffect(() => {
+    const loadOptions = async () => {
+      if (question.type !== 'select' && question.type !== 'multiselect') {
+        return;
+      }
+
+      const options = question.options;
+      if (!options) {
+        setOptions([]);
+        return;
+      }
+
+      if (Array.isArray(options)) {
+        setOptions(options);
+        return;
+      }
+
+      // Handle async options
+      if (typeof options === 'function') {
+        setIsLoadingOptions(true);
+        setOptionsError(null);
+        try {
+          const fetchedOptions = await options();
+          setOptions(fetchedOptions);
+        } catch (err) {
+          console.error('Error loading options:', err);
+          setOptionsError('Failed to load options. Please try again.');
+          setOptions([]);
+        } finally {
+          setIsLoadingOptions(false);
+        }
+      }
+    };
+
+    loadOptions();
+  }, [question.options, question.type]);
+
   const renderInput = () => {
     switch (question.type) {
       case 'text': {
@@ -165,10 +208,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field }) => {
-              const raw = field.value as PathValue<
-                TFormValues,
-                Path<TFormValues>
-              >;
+              const raw = field.value as PathValue<TFormValues, Path<TFormValues>>;
               const val = raw === undefined ? '' : (raw as number);
               const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const v = e.target.value;
@@ -265,6 +305,65 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             control={control}
             render={({ field }) => {
               const current = field.value as string | number | undefined;
+
+              // Show loading state
+              if (isLoadingOptions) {
+                return (
+                  <motion.div
+                    className="w-full p-6 bg-amber-50 border-2 border-amber-200 rounded-xl"
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <motion.div
+                        className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                      />
+                      <span className="text-gray-600 text-lg">
+                        Loading available options...
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // Show error state
+              if (optionsError) {
+                return (
+                  <motion.div
+                    className="w-full p-6 bg-red-50 border-2 border-red-200 rounded-xl"
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <p className="text-red-600 text-center">{optionsError}</p>
+                  </motion.div>
+                );
+              }
+
+              // Show empty state
+              if (options.length === 0) {
+                return (
+                  <motion.div
+                    className="w-full p-6 bg-amber-50 border-2 border-amber-200 rounded-xl"
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <p className="text-amber-700 text-center text-lg">
+                      No options available at this time
+                    </p>
+                  </motion.div>
+                );
+              }
+
+              // Show options
               return (
                 <motion.div
                   className="grid gap-3 sm:gap-4 w-full"
@@ -272,16 +371,13 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   initial="hidden"
                   animate="visible"
                 >
-                  {question.options?.map((option, index) => (
+                  {options.map((option, index) => (
                     <motion.button
                       key={String(option.value)}
                       type="button"
                       onClick={() =>
                         field.onChange(
-                          option.value as PathValue<
-                            TFormValues,
-                            Path<TFormValues>
-                          >,
+                          option.value as PathValue<TFormValues, Path<TFormValues>>,
                         )
                       }
                       style={{
@@ -355,6 +451,63 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                 );
               };
 
+              // Show loading state
+              if (isLoadingOptions) {
+                return (
+                  <motion.div
+                    className="w-full p-6 bg-amber-50 border-2 border-amber-200 rounded-xl"
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <motion.div
+                        className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                      />
+                      <span className="text-gray-600 text-lg">
+                        Loading available options...
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // Show error state
+              if (optionsError) {
+                return (
+                  <motion.div
+                    className="w-full p-6 bg-red-50 border-2 border-red-200 rounded-xl"
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <p className="text-red-600 text-center">{optionsError}</p>
+                  </motion.div>
+                );
+              }
+
+              // Show empty state
+              if (options.length === 0) {
+                return (
+                  <motion.div
+                    className="w-full p-6 bg-amber-50 border-2 border-amber-200 rounded-xl"
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <p className="text-amber-700 text-center text-lg">
+                      No options available at this time
+                    </p>
+                  </motion.div>
+                );
+              }
+
               return (
                 <motion.div
                   className="grid gap-3 sm:gap-4 w-full"
@@ -362,7 +515,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   initial="hidden"
                   animate="visible"
                 >
-                  {question.options?.map((option, index) => {
+                  {options.map((option, index) => {
                     const isSelected = selectedValues.includes(option.value);
                     return (
                       <motion.button
@@ -428,7 +581,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                       transition={{ duration: 0.3 }}
                     >
                       <p className="text-sm text-emerald-700">
-                        Selected: {selectedValues.length} goal
+                        Selected: {selectedValues.length} option
                         {selectedValues.length !== 1 ? 's' : ''}
                       </p>
                     </motion.div>

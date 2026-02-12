@@ -394,6 +394,9 @@ importers:
       framer-motion:
         specifier: ^12.27.1
         version: 12.27.1(react-dom@19.2.3)(react@19.2.3)
+      hero-slider:
+        specifier: ^3.2.1
+        version: 3.2.1(react-dom@19.2.3)(react@19.2.3)
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
@@ -7256,6 +7259,17 @@ packages:
       hermes-estree: 0.25.1
     dev: true
 
+  /hero-slider@3.2.1(react-dom@19.2.3)(react@19.2.3):
+    resolution: {integrity: sha512-tjL8Pq7A7XIaq70TMktoH4WzNlsIcPTfbLczX/aYdRvGSxjFmTcknwzqacZRWMz+PV4oO2okcBLpnFChuUb7BA==}
+    peerDependencies:
+      react: 16 - 18
+      react-dom: 16 - 18
+    dependencies:
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      react-intersection-observer: 9.4.0(react@19.2.3)
+    dev: false
+
   /html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
     dev: true
@@ -9156,6 +9170,14 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+    dependencies:
+      react: 19.2.3
+    dev: false
+
+  /react-intersection-observer@9.4.0(react@19.2.3):
+    resolution: {integrity: sha512-v0403CmomOVlzhqFXlzOxg0ziLcVq8mfbP0AwAcEQWgZmR2OulOT79Ikznw4UlB3N+jlUYqLMe4SDHUOyp0t2A==}
+    peerDependencies:
+      react: ^15.0.0 || ^16.0.0 || ^17.0.0|| ^18.0.0
     dependencies:
       react: 19.2.3
     dev: false

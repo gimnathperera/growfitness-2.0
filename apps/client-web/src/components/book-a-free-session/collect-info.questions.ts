@@ -1,23 +1,51 @@
-
+import { sessionsService } from '@/services/sessions.service';
 import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
-import { SessionType } from '@grow-fitness/shared-types';
+import { SessionType, type SessionStatus } from '@grow-fitness/shared-types';
+import type { QuestionConfig, QuestionOption } from '@/types/question-config';
 
-interface QuestionOption {
-  value: string;
-  label: string;
-}
+const fetchFreeSessions = async (): Promise<QuestionOption[]> => {
+  try {
+    const today = new Date().toISOString();
+    
+    const response = await sessionsService.getSessions(
+      1,
+      100,
+      {
+        status: 'FREE' as SessionStatus,
+        startDate: today,
+      }
+    );
+    
+    return (response.data || []).map(session => {
+      const dateTime = new Date(session.dateTime);
+      const formattedDate = dateTime.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      const formattedTime = dateTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return {
+        value: session.id,
+        label: `${formattedDate} at ${formattedTime}`,
+      };
+    });
+  } catch (error) {
+    // Log the full error to see what's happening
+    console.error('Error fetching free sessions:', error);
+    
+    // Return empty array instead of throwing
+    // This prevents auth redirects
+    return [];
+  }
+};
 
-interface Question {
-  id: keyof CreateFreeSessionRequestDto;
-  type: 'text' | 'email' | 'phone' | 'select' | 'datetime';
-  title: string;
-  placeholder?: string;
-  required: boolean;
-  options?: QuestionOption[];
-  subtitle?: string;
-}
-
-export const collectInfoQuestions: Question[] = [
+export const collectInfoQuestions: QuestionConfig<keyof CreateFreeSessionRequestDto>[] = [
   {
     id: 'parentName',
     type: 'text',
@@ -64,10 +92,11 @@ export const collectInfoQuestions: Question[] = [
     required: true,
   },
   {
-    id: 'preferredDateTime',
-    type: 'datetime',
-    title: 'Preferred Date and Time',
+    id: 'selectedSessionId',
+    type: 'select',
+    title: 'Select Available Session',
     required: true,
-    subtitle: 'Select the date and time you prefer for your session',
+    subtitle: 'Choose from available date and time slots',
+    options: fetchFreeSessions,
   },
 ];
