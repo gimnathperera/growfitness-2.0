@@ -12,13 +12,18 @@ import ProgressBar from '../common/ProgressBar';
 import ConfettiCelebration from './ConfettiCelebration';
 
 interface CollectInfoFlowProps {
-  onSubmit: (data: CreateFreeSessionRequestDto) => Promise<void> | void;
-  onCancel?: () => void;
+  onSubmit: (data: CreateFreeSessionRequestDto) => void;
+  onCancel: () => void;
   onSubmitSuccess?: () => void;
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  sessionOptions: {
+    value: string;
+    label: string;
+  }[];
 }
+
 
 const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   onSubmit,
