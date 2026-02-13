@@ -1,51 +1,76 @@
-import { sessionsService } from '@/services/sessions.service';
 import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
-import { SessionType, type SessionStatus } from '@grow-fitness/shared-types';
+import type { Session } from '@grow-fitness/shared-types';
 import type { QuestionConfig, QuestionOption } from '@/types/question-config';
+import { sessionsService } from '@/services/sessions.service';
 
-const fetchFreeSessions = async (): Promise<QuestionOption[]> => {
+interface SessionOption extends QuestionOption {
+  value: string;
+  label: string;
+  dateTime: Date | string;
+  locationId: string;
+}
+
+const fetchFreeSessions = async (): Promise<SessionOption[]> => {
   try {
-    const today = new Date().toISOString();
-    
-    const response = await sessionsService.getSessions(
-      1,
-      100,
-      {
-        status: 'FREE' as SessionStatus,
-        startDate: today,
+    const now = new Date();
+
+    const response = await sessionsService.getFreeSessions(1, 100);
+    const sessions = response?.data ?? [];
+
+    if (!sessions.length) {
+      return [];
+    }
+
+    const filteredAndSorted = sessions
+      .filter((session: Session) => {
+        return (
+          session?.dateTime &&
+          new Date(session.dateTime).getTime() > now.getTime()
+        );
+      })
+      .sort(
+        (a: Session, b: Session) =>
+          new Date(a.dateTime).getTime() -
+          new Date(b.dateTime).getTime()
+      );
+
+    const mappedOptions = filteredAndSorted.map((session: Session) => {
+        const dateObj = new Date(session.dateTime);
+
+        const formattedDate = dateObj.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+
+        const formattedTime = dateObj.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+
+        return {
+          value: session.id,
+          label: `${formattedDate} at ${formattedTime} - ${
+            session.location?.name ?? 'Location'
+          }`,
+          dateTime: new Date(session.dateTime),
+          locationId: session.locationId,
+        };
       }
     );
-    
-    return (response.data || []).map(session => {
-      const dateTime = new Date(session.dateTime);
-      const formattedDate = dateTime.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-      const formattedTime = dateTime.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      return {
-        value: session.id,
-        label: `${formattedDate} at ${formattedTime}`,
-      };
-    });
+
+    return mappedOptions;
   } catch (error) {
-    // Log the full error to see what's happening
-    console.error('Error fetching free sessions:', error);
-    
-    // Return empty array instead of throwing
-    // This prevents auth redirects
+    console.error('❌ ERROR FETCHING FREE SESSIONS:', error);
     return [];
   }
 };
 
-export const collectInfoQuestions: QuestionConfig<keyof CreateFreeSessionRequestDto>[] = [
+export const collectInfoQuestions: QuestionConfig<
+  keyof CreateFreeSessionRequestDto
+>[] = [
   {
     id: 'parentName',
     type: 'text',
@@ -75,28 +100,14 @@ export const collectInfoQuestions: QuestionConfig<keyof CreateFreeSessionRequest
     required: true,
   },
   {
-    id: 'sessionType',
-    type: 'select',
-    title: 'What type of session are you interested in?',
-    required: true,
-    options: [
-      { value: SessionType.INDIVIDUAL, label: 'Individual Session' },
-      { value: SessionType.GROUP, label: 'Group Session' },
-    ],
-  },
-  {
-    id: 'locationId',
-    type: 'text',
-    title: 'Preferred Location',
-    placeholder: 'Enter location',
-    required: true,
-  },
-  {
     id: 'selectedSessionId',
     type: 'select',
     title: 'Select Available Session',
+    subtitle: 'Choose from available date, time & location',
     required: true,
-    subtitle: 'Choose from available date and time slots',
-    options: fetchFreeSessions,
+    options: async () => {
+      return await fetchFreeSessions();
+    },
   },
 ];
+

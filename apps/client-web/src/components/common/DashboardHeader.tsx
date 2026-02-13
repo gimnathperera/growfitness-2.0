@@ -131,7 +131,7 @@ export function DashboardHeader() {
                   if (kid) setSelectedKid(kid);
                 }}
               >
-                <SelectTrigger className="w-[160px] text-sm">
+                <SelectTrigger className="w-[200px] text-sm">
                   <SelectValue placeholder="Select Kid" />
                 </SelectTrigger>
 
