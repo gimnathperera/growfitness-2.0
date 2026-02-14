@@ -28,6 +28,8 @@ import {
   CalendarClock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import RescheduleSessionDialog from './RescheduleSessionDialog';
 
 interface SessionDetailsDialogProps {
   open: boolean;
@@ -72,10 +74,7 @@ export default function SessionDetailsDialog({
   open, 
   onClose, 
   session: sessionProp,
-  kidId: kidIdProp,
-  // coachId: coachIdProp,
-  onReschedule
-}: SessionDetailsDialogProps) {
+  kidId: kidIdProp}: SessionDetailsDialogProps) {
   const { entityId } = useModalParams('sessionId');
   
   // Fetch session from URL if prop not provided
@@ -115,13 +114,6 @@ export default function SessionDetailsDialog({
   
   // Hide Kids tab if kidId prop is provided
   const shouldShowKidsTab = !kidIdProp;
-  
-  // Handle reschedule action
-  const handleReschedule = () => {
-    if (displaySession && onReschedule) {
-      onReschedule(displaySession);
-    }
-  };
 
   // Fetch coach details if coachId is available
   const coachId = typeof displaySession?.coachId === 'string' 
@@ -184,6 +176,7 @@ export default function SessionDetailsDialog({
   
   const shouldFetchKids = open && kidsIds.length > 0 && !areKidsPopulated;
   const shouldFetchIndividualKid = open && !isGroupSession && !!individualKidId && kidsIds.length === 0 && !areKidsPopulated;
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
 
   // Fetch kids for both group and individual sessions from kids array (only if not already populated)
   const { data: kidsData } = useApiQuery(
@@ -353,16 +346,15 @@ export default function SessionDetailsDialog({
               </div>
 
               {/* Reschedule Button */}
-              {onReschedule && (
+              {!isGroupSession && (
                 <>
-                  <Separator className="my-6" />
-                  <Button 
-                    onClick={handleReschedule}
+                  <Separator />
+                  <Button
+                    onClick={() => setRescheduleOpen(true)}
                     variant="outline"
-                    size="default"
-                    className="w-full border-primary text-primary"
+                    className="w-full mt-6 hover:bg-muted"
                   >
-                    <CalendarClock className="h-4 w-4 mr-2" />
+                    <CalendarClock className="h-4 w-4 mr-2 hover:bg-muted"/>
                     Reschedule Session
                   </Button>
                 </>
@@ -603,6 +595,11 @@ export default function SessionDetailsDialog({
             )}
           </div>
         </div>
+        <RescheduleSessionDialog
+          open={rescheduleOpen}
+          onClose={() => setRescheduleOpen(false)}
+          sessionId={displaySession.id}
+        />
       </DialogContent>
     </Dialog>
   );
