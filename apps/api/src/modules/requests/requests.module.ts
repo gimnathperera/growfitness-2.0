@@ -20,6 +20,7 @@ import {
 } from '../../infra/database/schemas/user-registration-request.schema';
 import { User, UserSchema } from '../../infra/database/schemas/user.schema';
 import { Kid, KidSchema } from '../../infra/database/schemas/kid.schema';
+import { Session, SessionSchema } from '../../infra/database/schemas/session.schema';
 import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -32,6 +33,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: UserRegistrationRequest.name, schema: UserRegistrationRequestSchema },
       { name: User.name, schema: UserSchema },
       { name: Kid.name, schema: KidSchema },
+      { name: Session.name, schema: SessionSchema },
     ]),
     AuditModule,
     NotificationsModule,

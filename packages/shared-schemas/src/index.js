@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PaginationSchema = exports.ReorderBannersSchema = exports.UpdateBannerSchema = exports.CreateBannerSchema = exports.UpdateLocationSchema = exports.CreateLocationSchema = exports.UpdateInvoicePaymentStatusSchema = exports.CreateInvoiceSchema = exports.CreateExtraSessionRequestSchema = exports.CreateRescheduleRequestSchema = exports.CreateFreeSessionRequestSchema = exports.UpdateSessionSchema = exports.CreateSessionSchema = exports.UpdateKidSchema = exports.CreateKidSchema = exports.UpdateCoachSchema = exports.CreateCoachSchema = exports.UpdateParentSchema = exports.CreateParentSchema = exports.LoginSchema = void 0;
+exports.PaginationSchema = exports.UpdateTestimonialSchema = exports.CreateTestimonialSchema = exports.ReorderBannersSchema = exports.UpdateBannerSchema = exports.CreateBannerSchema = exports.UpdateLocationSchema = exports.CreateLocationSchema = exports.UpdateInvoicePaymentStatusSchema = exports.CreateInvoiceSchema = exports.CreateExtraSessionRequestSchema = exports.CreateRescheduleRequestSchema = exports.CreateFreeSessionRequestSchema = exports.UpdateSessionSchema = exports.CreateSessionSchema = exports.UpdateKidSchema = exports.CreateKidSchema = exports.UpdateCoachSchema = exports.CreateCoachSchema = exports.UpdateParentSchema = exports.CreateParentSchema = exports.LoginSchema = void 0;
 const zod_1 = require("zod");
 const shared_types_1 = require("@grow-fitness/shared-types");
 exports.LoginSchema = zod_1.z.object({
@@ -154,6 +154,26 @@ exports.UpdateBannerSchema = zod_1.z.object({
 });
 exports.ReorderBannersSchema = zod_1.z.object({
     bannerIds: zod_1.z.array(zod_1.z.string()).min(1),
+});
+exports.CreateTestimonialSchema = zod_1.z.object({
+    authorName: zod_1.z.string().min(1, 'Author name is required'),
+    content: zod_1.z.string().min(1, 'Content is required'),
+    childName: zod_1.z.string().optional(),
+    childAge: zod_1.z.coerce.number().min(0).max(18).optional(),
+    membershipDuration: zod_1.z.string().optional(),
+    rating: zod_1.z.coerce.number().min(1).max(5).default(5),
+    order: zod_1.z.coerce.number().min(0).default(0),
+    isActive: zod_1.z.boolean().default(true),
+});
+exports.UpdateTestimonialSchema = zod_1.z.object({
+    authorName: zod_1.z.string().min(1).optional(),
+    content: zod_1.z.string().min(1).optional(),
+    childName: zod_1.z.string().optional(),
+    childAge: zod_1.z.coerce.number().min(0).max(18).optional(),
+    membershipDuration: zod_1.z.string().optional(),
+    rating: zod_1.z.coerce.number().min(1).max(5).optional(),
+    order: zod_1.z.coerce.number().min(0).optional(),
+    isActive: zod_1.z.boolean().optional(),
 });
 exports.PaginationSchema = zod_1.z.object({
     page: zod_1.z.coerce.number().int().min(1).default(1),

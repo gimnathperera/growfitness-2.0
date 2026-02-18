@@ -22,6 +22,7 @@ import { SessionsService } from './sessions.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole, SessionStatus } from '@grow-fitness/shared-types';
 import { CreateSessionDto, UpdateSessionDto } from '@grow-fitness/shared-schemas';
@@ -84,6 +85,62 @@ export class SessionsController {
         status,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
+      }
+    );
+  }
+
+  @Get('free')
+  @Public()
+  @ApiOperation({
+    summary: 'Get free sessions (public)',
+    description: 'Public endpoint. No auth required. Returns sessions where isFreeSession is true. Same filters as GET /sessions.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10, max: 100)' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search string' })
+  @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
+  @ApiQuery({ name: 'locationId', required: false, type: String, description: 'Filter by location ID' })
+  @ApiQuery({
+    name: 'kidId',
+    required: false,
+    type: String,
+    description: 'Filter by kid ID (sessions that include this kid)',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: SessionStatus,
+    description: 'Filter by session status',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Filter sessions from this date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Filter sessions until this date (ISO format)',
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of free sessions (isFreeSession: true). Same filters as GET /sessions.',
+    type: PaginatedSessionResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
+  findFreeSessions(@Query() query: GetSessionsQueryDto) {
+    const { page, limit, search, coachId, locationId, kidId, status, startDate, endDate } = query;
+    return this.sessionsService.findAll(
+      { page, limit, search },
+      {
+        coachId,
+        locationId,
+        kidId,
+        status,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        isFreeSession: true,
       }
     );
   }

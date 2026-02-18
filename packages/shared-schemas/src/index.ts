@@ -159,9 +159,9 @@ export const CreateRescheduleRequestSchema = z.object({
 
 export type CreateRescheduleRequestDto = z.infer<typeof CreateRescheduleRequestSchema>;
 
-// Extra Session Request Schema
+// Extra Session Request Schema (parentId optional when caller is PARENT - derived from token)
 export const CreateExtraSessionRequestSchema = z.object({
-  parentId: z.string().min(1, 'Parent ID is required'),
+  parentId: z.string().min(1, 'Parent ID is required').optional(),
   kidId: z.string().min(1, 'Kid ID is required'),
   coachId: z.string().min(1, 'Coach ID is required'),
   sessionType: z.nativeEnum(SessionType),
@@ -246,6 +246,33 @@ export const ReorderBannersSchema = z.object({
 });
 
 export type ReorderBannersDto = z.infer<typeof ReorderBannersSchema>;
+
+// Testimonial Schemas
+export const CreateTestimonialSchema = z.object({
+  authorName: z.string().min(1, 'Author name is required'),
+  content: z.string().min(1, 'Content is required'),
+  childName: z.string().optional(),
+  childAge: z.coerce.number().min(0).max(18).optional(),
+  membershipDuration: z.string().optional(),
+  rating: z.coerce.number().min(1).max(5).default(5),
+  order: z.coerce.number().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+
+export type CreateTestimonialDto = z.infer<typeof CreateTestimonialSchema>;
+
+export const UpdateTestimonialSchema = z.object({
+  authorName: z.string().min(1).optional(),
+  content: z.string().min(1).optional(),
+  childName: z.string().optional(),
+  childAge: z.coerce.number().min(0).max(18).optional(),
+  membershipDuration: z.string().optional(),
+  rating: z.coerce.number().min(1).max(5).optional(),
+  order: z.coerce.number().min(0).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateTestimonialDto = z.infer<typeof UpdateTestimonialSchema>;
 
 // Pagination Schema
 export const PaginationSchema = z.object({

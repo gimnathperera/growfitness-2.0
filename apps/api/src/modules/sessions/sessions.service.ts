@@ -39,9 +39,14 @@ export class SessionsService {
       status?: SessionStatus;
       startDate?: Date;
       endDate?: Date;
+      isFreeSession?: boolean;
     }
   ) {
     const query: Record<string, unknown> = {};
+
+    if (filters?.isFreeSession !== undefined) {
+      query.isFreeSession = filters.isFreeSession;
+    }
 
     if (filters?.coachId) {
       query.coachId = this.toObjectId(filters.coachId, 'coachId');

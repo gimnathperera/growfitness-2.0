@@ -23,11 +23,17 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserRole } from '@grow-fitness/shared-types';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
-import { RequestStatus } from '@grow-fitness/shared-types';
-import { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
+import { RequestStatus, UserRole } from '@grow-fitness/shared-types';
+import {
+  CreateFreeSessionRequestDto,
+  CreateRescheduleRequestDto,
+  CreateRescheduleRequestSchema,
+  CreateExtraSessionRequestDto,
+  CreateExtraSessionRequestSchema,
+} from '@grow-fitness/shared-schemas';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 
 @ApiTags('requests')
 @ApiBearerAuth('JWT-auth')
@@ -137,6 +143,68 @@ export class RequestsController {
     @CurrentUser('sub') actorId: string
   ) {
     return this.requestsService.deleteFreeSessionRequest(id, actorId);
+  }
+
+  @Post('reschedules')
+  @Roles(UserRole.ADMIN, UserRole.PARENT, UserRole.COACH)
+  @ApiOperation({
+    summary: 'Create a reschedule request',
+    description: 'Requires JWT. Allowed roles: Admin, Parent, Coach. requestedBy is set from token.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionId: { type: 'string', description: 'Session ID to reschedule', example: '507f1f77bcf86cd799439011' },
+        newDateTime: { type: 'string', format: 'date-time', description: 'New date and time (ISO format)' },
+        reason: { type: 'string', description: 'Reason for reschedule' },
+      },
+      required: ['sessionId', 'newDateTime', 'reason'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Reschedule request created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - valid JWT required' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  createRescheduleRequest(
+    @Body(new ZodValidationPipe(CreateRescheduleRequestSchema)) createDto: CreateRescheduleRequestDto,
+    @CurrentUser('sub') requestedById: string
+  ) {
+    return this.requestsService.createRescheduleRequest(createDto, requestedById);
+  }
+
+  @Post('extra-sessions')
+  @Roles(UserRole.ADMIN, UserRole.PARENT)
+  @ApiOperation({
+    summary: 'Create an extra session request',
+    description: 'Requires JWT. Allowed roles: Admin, Parent. Parent creates for own kids; Admin provides parentId in body.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        parentId: {
+          type: 'string',
+          description: 'Parent ID (required for admin; ignored when caller is parent)',
+          example: '507f1f77bcf86cd799439011',
+        },
+        kidId: { type: 'string', description: 'Kid ID', example: '507f1f77bcf86cd799439011' },
+        coachId: { type: 'string', description: 'Coach ID', example: '507f1f77bcf86cd799439011' },
+        sessionType: { type: 'string', enum: ['INDIVIDUAL', 'GROUP'] },
+        locationId: { type: 'string', description: 'Location ID', example: '507f1f77bcf86cd799439011' },
+        preferredDateTime: { type: 'string', format: 'date-time' },
+      },
+      required: ['kidId', 'coachId', 'sessionType', 'locationId', 'preferredDateTime'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Extra session request created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - valid JWT required' })
+  @ApiResponse({ status: 404, description: 'Kid not found or does not belong to parent' })
+  createExtraSessionRequest(
+    @Body(new ZodValidationPipe(CreateExtraSessionRequestSchema)) createDto: CreateExtraSessionRequestDto,
+    @CurrentUser('sub') actorId: string,
+    @CurrentUser('role') actorRole: UserRole
+  ) {
+    return this.requestsService.createExtraSessionRequest(createDto, actorId, actorRole);
   }
 
   @Get('reschedules')
