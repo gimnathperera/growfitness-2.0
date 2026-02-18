@@ -15,6 +15,7 @@ import { requestsService } from '@/services/requests.service';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
+const DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm";
 
 interface Props {
   open: boolean;
@@ -107,20 +108,18 @@ export default function RescheduleSessionDialog({
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
-            {/* Date Time Picker */}
             <div className="space-y-2">
               <Label htmlFor="newDateTime">New Date & Time</Label>
               <Input
                 id="newDateTime"
                 type="datetime-local"
-                value={newDateTime ? format(newDateTime, "yyyy-MM-dd'T'HH:mm") : ''}
+                value={newDateTime ? format(newDateTime, DATE_TIME_FORMAT) : ''}
                 onChange={handleDateTimeChange}
-                min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                min={format(new Date(), DATE_TIME_FORMAT)}
                 required
               />
             </div>
 
-            {/* Reason */}
             <div className="space-y-2">
               <Label htmlFor="rescheduleReason">Reason</Label>
               <Textarea
