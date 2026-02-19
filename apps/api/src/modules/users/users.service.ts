@@ -356,6 +356,7 @@ export class UsersService {
       phone: createCoachDto.phone,
       passwordHash,
       status: UserStatus.ACTIVE,
+      isApproved: true, // Coaches created by admins are automatically approved
       coachProfile: {
         name: createCoachDto.name,
       },
