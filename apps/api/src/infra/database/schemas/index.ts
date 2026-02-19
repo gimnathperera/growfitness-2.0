@@ -11,3 +11,4 @@ export * from './audit-log.schema';
 export * from './code.schema';
 export * from './quiz.schema';
 export * from './report.schema';
+export * from './password-reset-token.schema';

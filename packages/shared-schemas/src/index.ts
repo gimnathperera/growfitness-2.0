@@ -16,6 +16,19 @@ export const LoginSchema = z.object({
 
 export type LoginDto = z.infer<typeof LoginSchema>;
 
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export type ForgotPasswordDto = z.infer<typeof ForgotPasswordSchema>;
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+export type ResetPasswordDto = z.infer<typeof ResetPasswordSchema>;
+
 // User Schemas
 export const CreateParentSchema = z.object({
   name: z.string().min(1, 'Name is required'),

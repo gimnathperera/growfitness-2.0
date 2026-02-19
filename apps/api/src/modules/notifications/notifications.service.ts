@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EmailProvider } from './providers/email.provider';
 import { WhatsAppProvider } from './providers/whatsapp.provider';
+import { UserDocument } from '../../infra/database/schemas/user.schema';
 
 export interface FreeSessionConfirmationData {
   email: string;
@@ -27,7 +29,8 @@ export interface InvoiceUpdateData {
 export class NotificationService {
   constructor(
     private emailProvider: EmailProvider,
-    private whatsAppProvider: WhatsAppProvider
+    private whatsAppProvider: WhatsAppProvider,
+    private configService: ConfigService
   ) {}
 
   async sendFreeSessionConfirmation(data: FreeSessionConfirmationData) {
@@ -68,5 +71,39 @@ export class NotificationService {
     // In a real implementation, fetch parent email/phone from database
     // For now, this is a placeholder
     console.log('Invoice update notification:', data);
+  }
+
+  async sendPasswordResetEmail(user: UserDocument, resetToken: string): Promise<void> {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+    const userName = user.parentProfile?.name || user.coachProfile?.name || 'User';
+    const expiryHours = parseInt(
+      this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY', '3600'),
+      10
+    ) / 3600;
+
+    const subject = 'Reset Your Password';
+    const body = `Hello ${userName},
+
+You requested to reset your password for your Grow Fitness account.
+
+Click the link below to reset your password:
+${resetUrl}
+
+This link will expire in ${expiryHours} hour${expiryHours !== 1 ? 's' : ''}.
+
+If you did not request this password reset, please ignore this email. Your password will remain unchanged.
+
+For security reasons, please do not share this link with anyone.
+
+Best regards,
+Grow Fitness Team`;
+
+    await this.emailProvider.send({
+      to: user.email,
+      subject,
+      body,
+    });
   }
 }
