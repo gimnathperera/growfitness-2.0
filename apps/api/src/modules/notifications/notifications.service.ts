@@ -268,6 +268,28 @@ export class NotificationService {
     return { count: result.modifiedCount };
   }
 
+  async deleteOne(id: string, userId: string): Promise<void> {
+    const result = await this.notificationModel
+      .findOneAndDelete({
+        _id: new Types.ObjectId(id),
+        userId: new Types.ObjectId(userId),
+      })
+      .exec();
+    if (!result) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Notification not found',
+      });
+    }
+  }
+
+  async deleteAll(userId: string): Promise<{ deletedCount: number }> {
+    const result = await this.notificationModel
+      .deleteMany({ userId: new Types.ObjectId(userId) })
+      .exec();
+    return { deletedCount: result.deletedCount };
+  }
+
   async sendPasswordResetEmail(user: UserDocument, resetToken: string): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;

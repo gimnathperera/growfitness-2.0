@@ -40,6 +40,11 @@ export class MarkAllReadResponseDto {
   count: number;
 }
 
+export class ClearAllResponseDto {
+  @ApiProperty({ description: 'Number of notifications deleted', example: 5 })
+  deletedCount: number;
+}
+
 export class PaginatedNotificationsResponseDto {
   @ApiProperty({ type: [NotificationResponseDto], description: 'List of notifications' })
   data: NotificationResponseDto[];

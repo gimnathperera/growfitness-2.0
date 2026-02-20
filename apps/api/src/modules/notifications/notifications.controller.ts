@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -18,6 +18,7 @@ import {
   UnreadCountResponseDto,
   MarkAllReadResponseDto,
   PaginatedNotificationsResponseDto,
+  ClearAllResponseDto,
 } from './dto/notification-response.dto';
 
 @ApiTags('notifications')
@@ -67,6 +68,31 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - invalid or missing JWT' })
   markAllAsRead(@CurrentUser() user: JwtPayload) {
     return this.notificationService.markAllAsRead(user.sub);
+  }
+
+  @Delete('clear-all')
+  @ApiOperation({ summary: 'Clear all notifications for current user' })
+  @ApiOkResponse({
+    description: 'Number of notifications deleted',
+    type: ClearAllResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - invalid or missing JWT' })
+  clearAll(@CurrentUser() user: JwtPayload) {
+    return this.notificationService.deleteAll(user.sub);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Clear a single notification' })
+  @ApiResponse({ status: 204, description: 'Notification deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - invalid or missing JWT' })
+  @ApiResponse({ status: 404, description: 'Notification not found or does not belong to user' })
+  @ApiResponse({ status: 400, description: 'Invalid notification ID format' })
+  deleteOne(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @CurrentUser() user: JwtPayload
+  ) {
+    return this.notificationService.deleteOne(id, user.sub);
   }
 
   @Patch(':id/read')

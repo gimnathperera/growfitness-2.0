@@ -53,7 +53,9 @@ Most endpoints require JWT Bearer token. Roles: ADMIN, PARENT, COACH (varies by 
 - **GET /api/notifications** - List notifications for current user (paginated, optional read filter)
 - **GET /api/notifications/unread-count** - Unread count for badge
 - **PATCH /api/notifications/:id/read** - Mark one as read
-- **PATCH /api/notifications/read-all** - Mark all as read`
+- **PATCH /api/notifications/read-all** - Mark all as read
+- **DELETE /api/notifications/clear-all** - Clear all notifications for current user
+- **DELETE /api/notifications/:id** - Clear one notification`
     )
     .setVersion('1.0')
     .addBearerAuth(

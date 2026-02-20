@@ -26,4 +26,8 @@ export const notificationsService = {
     api.patch<Notification>(`/notifications/${id}/read`),
   markAllAsRead: () =>
     api.patch<{ count: number }>('/notifications/read-all'),
+  deleteOne: (id: string) =>
+    api.delete<void>(`/notifications/${id}`),
+  clearAll: () =>
+    api.delete<{ deletedCount: number }>('/notifications/clear-all'),
 };
