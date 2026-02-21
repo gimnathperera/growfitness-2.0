@@ -16,6 +16,7 @@ export type QuestionConfig<T extends string> = {
     | 'text'
     | 'email'
     | 'password'
+    | 'confirmPassword'
     | 'number'
     | 'textarea'
     | 'date'

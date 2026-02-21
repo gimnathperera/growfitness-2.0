@@ -87,8 +87,8 @@ export default function ParentDashboard() {
   /* ------------------ TAB COMPONENTS ------------------ */
   const tabComponents: Record<string, JSX.Element> = {
     overview: <OverviewTab kid={kidData} />,
-    achievements: <AchievementsTab />,
     schedule: <ScheduleTab />,
+    achievements: <AchievementsTab />,
     kidProfile: <KidProfileTab/>,
   };
 

@@ -10,7 +10,7 @@ type ParentFieldPath = keyof Omit<CreateParentDto, 'kids'>;
 type KidFieldPath = keyof CreateParentDto['kids'][number];
 
 interface BaseQuestion {
-  type: 'text' | 'email' | 'phone' | 'select' | 'date' | 'multiselect' | 'textarea' | 'password' | 'number' | 'datetime' | 'boolean';
+  type: 'text' | 'email' | 'phone' | 'select' | 'date' | 'multiselect' | 'textarea' | 'password' | 'confirmPassword' | 'number' | 'datetime' | 'boolean';
   title: string;
   subtitle?: string;
   placeholder?: string;
@@ -82,10 +82,19 @@ export const parentQuestions: ParentQuestion[] = [
   {
     id: 'password',
     section: 'parent',
-    type: 'text',
+    type: 'password',
     title: 'Create a secure password',
     subtitle: 'Must be at least 6 characters',
     placeholder: 'Enter a strong password',
+    required: true,
+  },
+  {
+    id: 'confirmPassword',
+    section: 'parent',
+    type: 'confirmPassword',
+    title: 'Confirm your password',
+    subtitle: 'Re-enter your password to verify',
+    placeholder: 'Confirm your password',
     required: true,
   },
 ];
@@ -113,7 +122,6 @@ export const kidAttributeQuestions: KidQuestion[] = [
     options: [
       { value: 'male', label: 'Male' },
       { value: 'female', label: 'Female' },
-      { value: 'other', label: 'Prefer not to say' },
     ],
   },
   {
@@ -141,7 +149,7 @@ export const kidAttributeQuestions: KidQuestion[] = [
     type: 'boolean',
     title: 'Is {name} currently involved in sports?',
     perChildLabel: 'Currently in sports',
-    required: true,
+    required: true
   },
   {
     id: 'medicalConditions',
