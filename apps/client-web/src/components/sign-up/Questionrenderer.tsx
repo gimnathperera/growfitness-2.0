@@ -11,10 +11,15 @@ interface QuestionOption {
 
 interface QuestionConfig<T extends FieldPath<FieldValues>> {
   id: T;
-  type: 'text' | 'email' | 'phone' | 'select' | 'date' | 'multiselect' | 'boolean';
+  type: 'text' | 'email' | 'phone' | 'select' | 'date' | 'multiselect' | 'textarea' | 'password' | 'confirmPassword' | 'number' | 'datetime' | 'boolean';
+  title: string;
+  subtitle?: string;
   placeholder?: string;
-  required?: boolean;
+  required: boolean;
   options?: QuestionOption[];
+  booleanOptions?: boolean;
+  section?: string;
+  perChildLabel?: string;
 }
 
 interface QuestionRendererProps<T extends FieldValues> {

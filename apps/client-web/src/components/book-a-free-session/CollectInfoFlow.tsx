@@ -9,12 +9,10 @@ import { CreateFreeSessionRequestSchema } from '@grow-fitness/shared-schemas';
 import { collectInfoQuestions } from './collect-info.questions';
 import QuestionRenderer from '../common/QuestionRenderer';
 import ProgressBar from '../common/ProgressBar';
-import ConfettiCelebration from './ConfettiCelebration';
 
 interface CollectInfoFlowProps {
   onSubmit: (data: CreateFreeSessionRequestDto) => void;
   onCancel: () => void;
-  onSubmitSuccess?: () => void;
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -28,7 +26,6 @@ interface CollectInfoFlowProps {
 const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   onSubmit,
   onCancel,
-  onSubmitSuccess,
   isLoading = false,
   error,
   onRetry,
@@ -170,35 +167,14 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
     </motion.div>
   );
 
-  const renderSuccess = () => (
-    <motion.div className="flex flex-1 items-center justify-center text-center px-6" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-      <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-white/50 p-8 max-w-md w-full">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}>
-          <Check className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
-        </motion.div>
-        <motion.h2 className="text-3xl font-bold text-gray-800 mb-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          Request Submitted! 🎉
-        </motion.h2>
-        <motion.p className="text-gray-600 text-lg mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-          Your request has been recorded. We'll contact you soon to schedule your free session.
-        </motion.p>
-        <Button onClick={onSubmitSuccess} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors transform hover:scale-105">
-          Continue to Home
-        </Button>
-      </div>
-    </motion.div>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col relative">
-      {!isSubmitSuccess && !isSubmitting ? renderForm() : isSubmitting ? renderSubmitting() : renderSuccess()}
-      <ConfettiCelebration
-        isVisible={isSubmitSuccess}
-        duration={5000}
-        title="Request Submitted!"
-        message="We'll contact you soon to schedule your free session."
-        onComplete={onSubmitSuccess}
-      />
+    {!isSubmitSuccess && !isSubmitting
+        ? renderForm()
+        : isSubmitting
+        ? renderSubmitting()
+        : null}
+     
     </div>
   );
 };

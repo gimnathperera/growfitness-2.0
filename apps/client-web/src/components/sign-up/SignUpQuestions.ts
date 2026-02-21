@@ -122,7 +122,6 @@ export const kidAttributeQuestions: KidQuestion[] = [
     options: [
       { value: 'male', label: 'Male' },
       { value: 'female', label: 'Female' },
-      { value: 'other', label: 'Prefer not to say' },
     ],
   },
   {
@@ -150,7 +149,7 @@ export const kidAttributeQuestions: KidQuestion[] = [
     type: 'boolean',
     title: 'Is {name} currently involved in sports?',
     perChildLabel: 'Currently in sports',
-    required: true,
+    required: true
   },
   {
     id: 'medicalConditions',
