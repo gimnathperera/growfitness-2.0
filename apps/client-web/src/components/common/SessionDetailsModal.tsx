@@ -15,6 +15,7 @@ import { usersService } from '@/services/users.service';
 import { locationsService } from '@/services/locations.service';
 import { kidsService } from '@/services/kids.service';
 import { useModalParams } from '@/hooks/useModalParams';
+import { useAuth } from '@/contexts/useAuth';
 import {
   Calendar,
   Clock,
@@ -76,6 +77,8 @@ export default function SessionDetailsDialog({
   session: sessionProp,
   kidId: kidIdProp}: SessionDetailsDialogProps) {
   const { entityId } = useModalParams('sessionId');
+  const { role } = useAuth();
+  console.log('User role:', role);
   
   // Fetch session from URL if prop not provided
   const { data: sessionFromUrl } = useApiQuery<Session>(
@@ -346,7 +349,7 @@ export default function SessionDetailsDialog({
               </div>
 
               {/* Reschedule Button */}
-              {!isGroupSession && (
+              {(!isGroupSession && role === 'PARENT') && (
                 <>
                   <Separator />
                   <Button
