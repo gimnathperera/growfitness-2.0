@@ -11,6 +11,9 @@ export class Location {
   @Prop({ required: true })
   address: string;
 
+  @Prop({ required: false })
+  placeUrl?: string;
+
   @Prop({
     type: {
       lat: { type: Number, required: false },

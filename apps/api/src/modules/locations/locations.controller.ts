@@ -86,6 +86,11 @@ export class LocationsController {
           },
           description: 'Geographic coordinates (optional)',
         },
+        placeUrl: {
+          type: 'string',
+          description: 'Optional link to map or place page (e.g. Google Maps)',
+          example: 'https://maps.google.com/...',
+        },
       },
       required: ['name', 'address'],
     },
@@ -111,6 +116,10 @@ export class LocationsController {
           },
         },
         isActive: { type: 'boolean', description: 'Whether the location is active' },
+        placeUrl: {
+          type: 'string',
+          description: 'Optional link to map or place page (e.g. Google Maps)',
+        },
       },
     },
   })

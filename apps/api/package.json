@@ -22,7 +22,8 @@
     "clean": "rm -rf dist",
     "create-admin": "ts-node -r tsconfig-paths/register scripts/create-admin.ts",
     "seed": "ts-node -r tsconfig-paths/register scripts/seed-database.ts",
-    "approve-all": "ts-node --transpile-only -r tsconfig-paths/register scripts/approve-all-users.ts"
+    "approve-all": "ts-node --transpile-only -r tsconfig-paths/register scripts/approve-all-users.ts",
+    "backfill-place-urls": "ts-node -r tsconfig-paths/register scripts/backfill-location-place-urls.ts"
   },
   "dependencies": {
     "@grow-fitness/shared-schemas": "workspace:*",

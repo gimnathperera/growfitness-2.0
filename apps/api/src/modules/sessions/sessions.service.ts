@@ -157,6 +157,7 @@ export class SessionsService {
             address: s.locationId.address,
             geo: s.locationId.geo,
             isActive: s.locationId.isActive,
+            placeUrl: s.locationId.placeUrl,
           }
         : undefined;
     const kids = Array.isArray(s.kids)

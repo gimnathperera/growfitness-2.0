@@ -20,6 +20,8 @@ class SessionLocationRefDto {
   geo?: { lat: number; lng: number };
   @ApiProperty({ example: true })
   isActive: boolean;
+  @ApiPropertyOptional({ description: 'Link to map or place page', example: 'https://maps.google.com/...' })
+  placeUrl?: string;
 }
 
 export class SessionResponseDto {
