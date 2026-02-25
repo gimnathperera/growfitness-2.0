@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import { MessageCircle, Send, X } from 'lucide-react';
+import { Bot, MessageCircle, Send, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { useChatSounds } from './useChatSounds';
@@ -34,10 +34,7 @@ const BotAvatar = ({ size = 32 }: { size?: number }) => (
     style={{ width: size, height: size, background: BRAND, flexShrink: 0 }}
     className="rounded-full flex items-center justify-center"
   >
-    <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="white">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-    </svg>
+    <Bot className="text-white" style={{ width: size * 0.55, height: size * 0.55 }} strokeWidth={2} />
   </div>
 );
 
