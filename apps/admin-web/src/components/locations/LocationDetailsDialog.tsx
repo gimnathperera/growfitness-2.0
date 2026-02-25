@@ -163,6 +163,24 @@ export function LocationDetailsDialog({
                       <h4 className="text-sm font-medium text-muted-foreground mb-1">Address</h4>
                       <p className="text-sm">{location.address}</p>
                     </div>
+                    {location.placeUrl ? (
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Place link</h4>
+                        <a
+                          href={location.placeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline break-all"
+                        >
+                          {location.placeUrl}
+                        </a>
+                      </div>
+                    ) : (
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Place link</h4>
+                        <p className="text-sm text-muted-foreground">Not set</p>
+                      </div>
+                    )}
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
                       <div className="flex items-center gap-2">

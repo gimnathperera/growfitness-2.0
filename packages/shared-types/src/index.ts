@@ -150,6 +150,7 @@ export interface SessionLocationRef {
   address: string;
   geo?: { lat: number; lng: number };
   isActive: boolean;
+  placeUrl?: string;
 }
 
 export interface Session {
@@ -261,6 +262,7 @@ export interface Location {
   id: string;
   name: string;
   address: string;
+  placeUrl?: string;
   geo?: {
     lat: number;
     lng: number;
