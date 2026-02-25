@@ -20,9 +20,13 @@ async function bootstrap() {
     })
   );
 
-  // CORS - Allow all origins
+  // CORS - use CORS_ORIGIN from env, or allow all if unset (e.g. local dev)
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', '');
+  const allowedOrigins = corsOrigin
+    ? corsOrigin.split(',').map((o) => o.trim()).filter(Boolean)
+    : true;
   app.enableCors({
-    origin: true, // Allow all origins
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
