@@ -26,6 +26,7 @@ import {
   Award,
   AlertCircle,
   Baby,
+  ExternalLink,
 } from 'lucide-react';
 
 interface SessionDetailsDialogProps {
@@ -338,8 +339,9 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
                               href={locationData.placeUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline mt-1 inline-block break-all"
+                              className="text-sm text-primary hover:underline mt-1 inline-flex items-center gap-1.5 break-all"
                             >
+                              <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
                               Open map / place link
                             </a>
                           )}
