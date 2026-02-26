@@ -17,7 +17,6 @@ import { formatDistanceToNow } from 'date-fns';
 const NOTIFICATION_SOUND_URL =
   `${(import.meta.env.BASE_URL || '/').replace(/\/*$/, '')}/sounds/notification.mp3`;
 
-/** Single Audio instance so we can reuse after unlock. */
 let notificationAudio: HTMLAudioElement | null = null;
 
 function getNotificationAudio(): HTMLAudioElement {
@@ -28,7 +27,6 @@ function getNotificationAudio(): HTMLAudioElement {
   return notificationAudio;
 }
 
-/** Call on first user gesture (e.g. opening the bell) so later play() is allowed. */
 function unlockNotificationSound() {
   const audio = getNotificationAudio();
   if (audio.paused) {
@@ -37,22 +35,25 @@ function unlockNotificationSound() {
   }
 }
 
-/** Play notification sound. Must have been unlocked first (e.g. user opened bell). */
 function playNotificationSound() {
   const audio = getNotificationAudio();
   audio.currentTime = 0;
   audio.play().catch(() => {
-    // Fallback: file failed or autoplay blocked – use Web Audio beep
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
+
       osc.connect(gain);
       gain.connect(ctx.destination);
+
       osc.frequency.value = 800;
       osc.type = 'sine';
+
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.2);
     } catch {
@@ -74,6 +75,7 @@ export function NotificationBell() {
     () => notificationsService.getUnreadCount(),
     { refetchInterval: 30_000 }
   );
+
   const { data: listData } = useApiQuery(
     ['notifications', 'list', open ? 'open' : 'closed'],
     () => notificationsService.getNotifications(1, 20),
@@ -85,23 +87,31 @@ export function NotificationBell() {
 
   useEffect(() => {
     const prev = previousUnreadCountRef.current;
+
     if (prev !== undefined && unreadCount > prev) {
       const added = unreadCount - prev;
+
       setTimeout(() => {
         setBubbleMessage(
           added === 1
             ? 'You have 1 new notification'
             : `You have ${added} new notifications`
         );
+
         setBubbleVisible(true);
         playNotificationSound();
-        if (bubbleAutoDismissRef.current) clearTimeout(bubbleAutoDismissRef.current);
+
+        if (bubbleAutoDismissRef.current) {
+          clearTimeout(bubbleAutoDismissRef.current);
+        }
+
         bubbleAutoDismissRef.current = setTimeout(() => {
           setBubbleVisible(false);
           bubbleAutoDismissRef.current = null;
         }, 8000);
       }, 0);
     }
+
     previousUnreadCountRef.current = unreadCount;
   }, [unreadCount]);
 
@@ -109,14 +119,17 @@ export function NotificationBell() {
     (id: string) => notificationsService.markAsRead(id),
     { invalidateQueries: [['notifications', 'unread-count'], ['notifications', 'list']] }
   );
+
   const markAllReadMutation = useApiMutation(
     () => notificationsService.markAllAsRead(),
     { invalidateQueries: [['notifications', 'unread-count'], ['notifications', 'list']] }
   );
+
   const deleteOneMutation = useApiMutation(
     (id: string) => notificationsService.deleteOne(id),
     { invalidateQueries: [['notifications', 'unread-count'], ['notifications', 'list']] }
   );
+
   const clearAllMutation = useApiMutation(
     () => notificationsService.clearAll(),
     { invalidateQueries: [['notifications', 'unread-count'], ['notifications', 'list']] }
@@ -128,25 +141,38 @@ export function NotificationBell() {
   };
 
   const handleMarkAsRead = (n: Notification) => {
-    if (!n.read) markReadMutation.mutate(n.id);
+    if (!n.read) {
+      markReadMutation.mutate(n.id);
+    }
   };
 
   const handleClearAll = async () => {
     const confirmed = await confirm({
       title: 'Clear all notifications',
-      description: 'Are you sure you want to remove all notifications? This cannot be undone.',
+      description:
+        'Are you sure you want to remove all notifications? This cannot be undone.',
       confirmText: 'Clear all',
       cancelText: 'Cancel',
       variant: 'destructive',
     });
-    if (confirmed) clearAllMutation.mutate(undefined!);
+
+    if (confirmed) {
+      clearAllMutation.mutate(undefined!);
+    }
   };
 
   const handleDismissBubble = () => {
     setBubbleVisible(false);
+
     if (bubbleAutoDismissRef.current) {
       clearTimeout(bubbleAutoDismissRef.current);
       bubbleAutoDismissRef.current = null;
+    }
+  };
+
+  const handleConfirmDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      confirmState.onCancel();
     }
   };
 
@@ -158,6 +184,7 @@ export function NotificationBell() {
         onDismiss={handleDismissBubble}
         onOpenList={() => setOpen(true)}
       />
+
       <DropdownMenu onOpenChange={handleOpenChange}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
@@ -169,6 +196,7 @@ export function NotificationBell() {
             )}
           </Button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent align="end" className="w-80">
           <div className="flex flex-col gap-1 px-2 py-1.5 border-b">
             <div className="flex items-center justify-between">
@@ -183,6 +211,7 @@ export function NotificationBell() {
                     Mark all read
                   </button>
                 )}
+
                 {notifications.length > 0 && (
                   <>
                     <span className="text-muted-foreground text-xs">|</span>
@@ -198,6 +227,7 @@ export function NotificationBell() {
               </div>
             </div>
           </div>
+
           <div className="max-h-[320px] overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -218,11 +248,16 @@ export function NotificationBell() {
                     onClick={() => handleMarkAsRead(n)}
                   >
                     <p className="font-medium truncate text-sm">{n.title}</p>
-                    <p className="text-muted-foreground text-xs line-clamp-2 mt-0.5">{n.body}</p>
+                    <p className="text-muted-foreground text-xs line-clamp-2 mt-0.5">
+                      {n.body}
+                    </p>
                     <p className="text-muted-foreground text-[10px] mt-1">
-                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(n.createdAt), {
+                        addSuffix: true,
+                      })}
                     </p>
                   </button>
+
                   <Button
                     variant="ghost"
                     size="icon"
@@ -241,11 +276,10 @@ export function NotificationBell() {
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+
       <ConfirmDialog
         open={confirmState.open}
-        onOpenChange={(open) => {
-          if (!open) confirmState.onCancel();
-        }}
+        onOpenChange={handleConfirmDialogOpenChange}
         title={confirmState.options?.title ?? ''}
         description={confirmState.options?.description ?? ''}
         confirmText={confirmState.options?.confirmText}

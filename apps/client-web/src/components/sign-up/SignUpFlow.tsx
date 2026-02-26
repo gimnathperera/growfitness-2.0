@@ -448,51 +448,6 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
     </motion.div>
   );
 
-  // const renderSuccess = () => (
-  //   <motion.div
-  //     className="flex flex-1 items-center justify-center text-center px-6"
-  //     initial={{ opacity: 0, scale: 0.9 }}
-  //     animate={{ opacity: 1, scale: 1 }}
-  //     transition={{ duration: 0.5 }}
-  //   >
-  //     <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-white/50 p-8 max-w-md w-full">
-  //       <motion.div
-  //         initial={{ scale: 0 }}
-  //         animate={{ scale: 1 }}
-  //         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-  //       >
-  //         <Check className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
-  //       </motion.div>
-
-  //       <motion.h2
-  //         className="text-2xl font-bold text-gray-800 mb-4"
-  //         initial={{ opacity: 0, y: 20 }}
-  //         animate={{ opacity: 1, y: 0 }}
-  //         transition={{ delay: 0.4 }}
-  //       >
-  //         Request Submitted Successfully 🎉
-  //       </motion.h2>
-
-  //       <motion.p
-  //         className="text-gray-600 mb-6"
-  //         initial={{ opacity: 0, y: 20 }}
-  //         animate={{ opacity: 1, y: 0 }}
-  //         transition={{ delay: 0.6 }}
-  //       >
-  //         Your pharmacy registration request has been sent to the admin for review.
-  //         You will be notified once it is approved.
-  //       </motion.p>
-
-  //       <Button
-  //         onClick={onSubmitSuccess}
-  //         className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors transform hover:scale-105"
-  //       >
-  //         Go to Home
-  //       </Button>
-  //     </div>
-  //   </motion.div>
-  // );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col relative">
       {!isSubmitSuccess && !isSubmitting

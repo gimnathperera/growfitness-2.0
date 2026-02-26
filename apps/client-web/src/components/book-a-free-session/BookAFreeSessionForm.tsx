@@ -118,12 +118,6 @@ const BookAFreeSessionForm: React.FC = () => {
       await requestsService.createFreeSessionRequest(dto);
 
       setShowConfetti(true);
-      
-      // toast({
-      //   title: 'Request Submitted!',
-      //   description:
-      //     '🎉 Your free session request has been submitted. Our team will get back to you soon!',
-      // });
 
       setTimeout(() => {
         navigate('/');
