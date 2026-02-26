@@ -14,13 +14,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    
+
     if (isPublic) {
       // For public endpoints, still try to authenticate if token is present
       // This allows us to detect admin vs public registrations
       const request = context.switchToHttp().getRequest();
       const authHeader = request.headers?.authorization;
-      
+
       if (authHeader && authHeader.startsWith('Bearer ')) {
         // Token is present, try to authenticate (but don't fail if invalid)
         try {
@@ -31,11 +31,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
           return true;
         }
       }
-      
+
       // No token, allow public access
       return true;
     }
-    
+
     return super.canActivate(context) as Promise<boolean>;
   }
 }

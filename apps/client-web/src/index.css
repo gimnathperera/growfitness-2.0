@@ -202,3 +202,88 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* ------------------- */
+/* Support Chat Widget  */
+/* ------------------- */
+@keyframes support-chat-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px hsl(var(--primary) / 0);
+  }
+}
+
+@keyframes support-chat-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes support-chat-message-user {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes support-chat-message-assistant {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes support-chat-btn-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.support-chat-panel-in {
+  animation: support-chat-panel-in 0.25s ease-out forwards;
+}
+
+.support-chat-btn-pulse {
+  animation: support-chat-pulse 2s ease-in-out infinite;
+}
+
+.support-chat-message-user {
+  animation: support-chat-message-user 0.2s ease-out;
+}
+
+.support-chat-message-assistant {
+  animation: support-chat-message-assistant 0.2s ease-out;
+}
+
+/* Header gradient + curved bottom (match reference) */
+.support-chat-header {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.85) 50%,
+    hsl(var(--primary) / 0.75) 100%
+  );
+  border-radius: 0 0 2rem 2rem;
+}
+
+.support-chat-quick-reply:hover {
+  transform: translateY(-1px);
+}

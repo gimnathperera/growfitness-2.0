@@ -149,14 +149,23 @@ export class RequestsController {
   @Roles(UserRole.ADMIN, UserRole.PARENT, UserRole.COACH)
   @ApiOperation({
     summary: 'Create a reschedule request',
-    description: 'Requires JWT. Allowed roles: Admin, Parent, Coach. requestedBy is set from token.',
+    description:
+      'Requires JWT. Allowed roles: Admin, Parent, Coach. requestedBy is set from token.',
   })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        sessionId: { type: 'string', description: 'Session ID to reschedule', example: '507f1f77bcf86cd799439011' },
-        newDateTime: { type: 'string', format: 'date-time', description: 'New date and time (ISO format)' },
+        sessionId: {
+          type: 'string',
+          description: 'Session ID to reschedule',
+          example: '507f1f77bcf86cd799439011',
+        },
+        newDateTime: {
+          type: 'string',
+          format: 'date-time',
+          description: 'New date and time (ISO format)',
+        },
         reason: { type: 'string', description: 'Reason for reschedule' },
       },
       required: ['sessionId', 'newDateTime', 'reason'],
@@ -166,7 +175,8 @@ export class RequestsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - valid JWT required' })
   @ApiResponse({ status: 404, description: 'Session not found' })
   createRescheduleRequest(
-    @Body(new ZodValidationPipe(CreateRescheduleRequestSchema)) createDto: CreateRescheduleRequestDto,
+    @Body(new ZodValidationPipe(CreateRescheduleRequestSchema))
+    createDto: CreateRescheduleRequestDto,
     @CurrentUser('sub') requestedById: string
   ) {
     return this.requestsService.createRescheduleRequest(createDto, requestedById);
@@ -176,7 +186,8 @@ export class RequestsController {
   @Roles(UserRole.ADMIN, UserRole.PARENT)
   @ApiOperation({
     summary: 'Create an extra session request',
-    description: 'Requires JWT. Allowed roles: Admin, Parent. Parent creates for own kids; Admin provides parentId in body.',
+    description:
+      'Requires JWT. Allowed roles: Admin, Parent. Parent creates for own kids; Admin provides parentId in body.',
   })
   @ApiBody({
     schema: {
@@ -190,7 +201,11 @@ export class RequestsController {
         kidId: { type: 'string', description: 'Kid ID', example: '507f1f77bcf86cd799439011' },
         coachId: { type: 'string', description: 'Coach ID', example: '507f1f77bcf86cd799439011' },
         sessionType: { type: 'string', enum: ['INDIVIDUAL', 'GROUP'] },
-        locationId: { type: 'string', description: 'Location ID', example: '507f1f77bcf86cd799439011' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID',
+          example: '507f1f77bcf86cd799439011',
+        },
         preferredDateTime: { type: 'string', format: 'date-time' },
       },
       required: ['kidId', 'coachId', 'sessionType', 'locationId', 'preferredDateTime'],
@@ -200,7 +215,8 @@ export class RequestsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - valid JWT required' })
   @ApiResponse({ status: 404, description: 'Kid not found or does not belong to parent' })
   createExtraSessionRequest(
-    @Body(new ZodValidationPipe(CreateExtraSessionRequestSchema)) createDto: CreateExtraSessionRequestDto,
+    @Body(new ZodValidationPipe(CreateExtraSessionRequestSchema))
+    createDto: CreateExtraSessionRequestDto,
     @CurrentUser('sub') actorId: string,
     @CurrentUser('role') actorRole: UserRole
   ) {

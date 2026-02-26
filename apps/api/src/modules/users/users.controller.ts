@@ -102,10 +102,7 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 201, description: 'Parent created successfully' })
-  createParent(
-    @Body() createParentDto: CreateParentDto,
-    @CurrentUser() user?: any
-  ) {
+  createParent(@Body() createParentDto: CreateParentDto, @CurrentUser() user?: any) {
     // If user is authenticated (admin creating from portal), use their ID
     // If no user (public registration), pass null to require approval
     const actorId = user?.sub || user?.id || null;

@@ -53,6 +53,14 @@ cd apps/admin-web
 pnpm dev
 ```
 
+## Support Chat (client-web)
+
+The client app includes a floating support chat widget (bottom-right) that answers questions using repo-based knowledge. The backend calls OpenAI; the API key is never exposed to the frontend.
+
+- **Env**: Set `OPENAI_API_KEY` in `apps/api/.env` or `apps/api/.env.local`. See `apps/api/.env.example`. The frontend uses `VITE_API_BASE_URL` (no new vars).
+- **Knowledge**: Edit Markdown/JSON in `apps/api/src/knowledge/` (`business.json`, `procedures.md`, `faq.md`, `payments.md`). Restart the API to reload.
+- **Run locally**: Start the API (`cd apps/api && pnpm dev`), then start client-web (`cd apps/client-web && pnpm dev`). Open the app and use the chat button to test.
+
 ## Deployment
 
 See `deploy/README.md` for Docker Compose + Nginx instructions to run the API and admin web on an AWS host.

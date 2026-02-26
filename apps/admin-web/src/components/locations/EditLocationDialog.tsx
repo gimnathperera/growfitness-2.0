@@ -64,6 +64,7 @@ export function EditLocationDialog({ open, onOpenChange, location: locationProp 
     defaultValues: {
       name: location.name,
       address: location.address,
+      placeUrl: location.placeUrl ?? '',
       isActive: location.isActive,
       geo: location.geo || undefined,
     },
@@ -74,6 +75,7 @@ export function EditLocationDialog({ open, onOpenChange, location: locationProp 
       form.reset({
         name: location.name,
         address: location.address,
+        placeUrl: location.placeUrl ?? '',
         isActive: location.isActive,
         geo: location.geo || undefined,
       });
@@ -95,7 +97,8 @@ export function EditLocationDialog({ open, onOpenChange, location: locationProp 
   );
 
   const onSubmit = (data: UpdateLocationDto) => {
-    updateMutation.mutate(data);
+    const placeUrl = form.getValues('placeUrl')?.trim() ?? '';
+    updateMutation.mutate({ ...data, placeUrl });
   };
 
   return (
@@ -120,6 +123,17 @@ export function EditLocationDialog({ open, onOpenChange, location: locationProp 
               <CustomFormField label="Address" required error={form.formState.errors.address?.message}>
                 <Input {...form.register('address')} />
               </CustomFormField>
+
+              <CustomFormField label="Place URL" error={form.formState.errors.placeUrl?.message}>
+                <Input
+                  {...form.register('placeUrl')}
+                  type="url"
+                  placeholder="https://maps.google.com/..."
+                />
+              </CustomFormField>
+              <p className="text-[0.8rem] text-muted-foreground -mt-2">
+                Optional link to map or place page (e.g. Google Maps).
+              </p>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

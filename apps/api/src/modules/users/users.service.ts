@@ -214,7 +214,11 @@ export class UsersService {
         status: RequestStatus.PENDING,
       });
       await registrationRequest.save();
-      const admins = await this.userModel.find({ role: UserRole.ADMIN }).select('_id').lean().exec();
+      const admins = await this.userModel
+        .find({ role: UserRole.ADMIN })
+        .select('_id')
+        .lean()
+        .exec();
       const requestId = registrationRequest._id.toString();
       const parentName = parent.parentProfile?.name ?? parent.email;
       for (const a of admins) {

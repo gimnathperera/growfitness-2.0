@@ -5,7 +5,10 @@ class InvoiceParentRefDto {
   id: string;
   @ApiProperty({ example: 'parent@example.com' })
   email: string;
-  @ApiPropertyOptional({ description: 'Parent profile', example: { name: 'John', location: 'NYC' } })
+  @ApiPropertyOptional({
+    description: 'Parent profile',
+    example: { name: 'John', location: 'NYC' },
+  })
   parentProfile?: { name: string; location?: string };
 }
 

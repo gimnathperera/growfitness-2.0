@@ -50,7 +50,13 @@ export class RequestsService {
     private notificationService: NotificationService
   ) {}
 
-  private async notifyAdmins(type: NotificationType, title: string, body: string, entityType?: string, entityId?: string): Promise<void> {
+  private async notifyAdmins(
+    type: NotificationType,
+    title: string,
+    body: string,
+    entityType?: string,
+    entityId?: string
+  ): Promise<void> {
     const admins = await this.userModel.find({ role: UserRole.ADMIN }).select('_id').lean().exec();
     for (const a of admins) {
       const id = (a as any)._id?.toString?.();
@@ -195,9 +201,14 @@ export class RequestsService {
       'RescheduleRequest',
       saved._id.toString()
     );
-    const sessionWithCoach = await this.sessionModel.findById(dto.sessionId).select('coachId').lean().exec();
+    const sessionWithCoach = await this.sessionModel
+      .findById(dto.sessionId)
+      .select('coachId')
+      .lean()
+      .exec();
     if (sessionWithCoach && (sessionWithCoach as any).coachId) {
-      const coachId = (sessionWithCoach as any).coachId?.toString?.() ?? (sessionWithCoach as any).coachId;
+      const coachId =
+        (sessionWithCoach as any).coachId?.toString?.() ?? (sessionWithCoach as any).coachId;
       if (coachId) {
         await this.notificationService.createNotification({
           userId: coachId,
@@ -236,7 +247,11 @@ export class RequestsService {
   }
 
   async approveRescheduleRequest(id: string, actorId: string) {
-    const request = await this.rescheduleRequestModel.findById(id).populate('sessionId').populate('requestedBy', 'email').exec();
+    const request = await this.rescheduleRequestModel
+      .findById(id)
+      .populate('sessionId')
+      .populate('requestedBy', 'email')
+      .exec();
 
     if (!request) {
       throw new NotFoundException({
@@ -249,9 +264,10 @@ export class RequestsService {
     request.processedAt = new Date();
     await request.save();
 
-    const requestedById = request.requestedBy instanceof Types.ObjectId
-      ? request.requestedBy.toString()
-      : (request.requestedBy as any)?._id?.toString?.() ?? (request.requestedBy as any)?.id;
+    const requestedById =
+      request.requestedBy instanceof Types.ObjectId
+        ? request.requestedBy.toString()
+        : ((request.requestedBy as any)?._id?.toString?.() ?? (request.requestedBy as any)?.id);
     if (requestedById) {
       await this.notificationService.createNotification({
         userId: requestedById,
@@ -274,7 +290,10 @@ export class RequestsService {
   }
 
   async denyRescheduleRequest(id: string, actorId: string) {
-    const request = await this.rescheduleRequestModel.findById(id).populate('requestedBy', 'email').exec();
+    const request = await this.rescheduleRequestModel
+      .findById(id)
+      .populate('requestedBy', 'email')
+      .exec();
 
     if (!request) {
       throw new NotFoundException({
@@ -287,9 +306,10 @@ export class RequestsService {
     request.processedAt = new Date();
     await request.save();
 
-    const requestedById = request.requestedBy instanceof Types.ObjectId
-      ? request.requestedBy.toString()
-      : (request.requestedBy as any)?._id?.toString?.() ?? (request.requestedBy as any)?.id;
+    const requestedById =
+      request.requestedBy instanceof Types.ObjectId
+        ? request.requestedBy.toString()
+        : ((request.requestedBy as any)?._id?.toString?.() ?? (request.requestedBy as any)?.id);
     if (requestedById) {
       await this.notificationService.createNotification({
         userId: requestedById,
@@ -696,7 +716,8 @@ export class RequestsService {
       }
 
       // Convert to string if needed for findById
-      const parentIdString = parentId instanceof Types.ObjectId ? parentId.toString() : String(parentId);
+      const parentIdString =
+        parentId instanceof Types.ObjectId ? parentId.toString() : String(parentId);
       const parent = await this.userModel.findById(parentIdString).exec();
       if (!parent) {
         throw new NotFoundException({
@@ -716,7 +737,7 @@ export class RequestsService {
       // Update request status
       request.status = RequestStatus.APPROVED;
       request.processedAt = new Date();
-      
+
       // Safely convert actorId to ObjectId
       if (actorId) {
         try {
@@ -733,7 +754,7 @@ export class RequestsService {
           // Continue without processedBy
         }
       }
-      
+
       await request.save();
 
       await this.notificationService.createNotification({
@@ -813,7 +834,8 @@ export class RequestsService {
     }
 
     // Convert to string if needed for findById
-    const parentIdString = parentId instanceof Types.ObjectId ? parentId.toString() : String(parentId);
+    const parentIdString =
+      parentId instanceof Types.ObjectId ? parentId.toString() : String(parentId);
     const parent = await this.userModel.findById(parentIdString).exec();
     if (!parent) {
       throw new NotFoundException({
@@ -832,7 +854,7 @@ export class RequestsService {
     // Update request status
     request.status = RequestStatus.DENIED;
     request.processedAt = new Date();
-    
+
     // Safely convert actorId to ObjectId
     if (actorId) {
       try {
@@ -849,7 +871,7 @@ export class RequestsService {
         // Continue without processedBy
       }
     }
-    
+
     await request.save();
 
     await this.notificationService.createNotification({

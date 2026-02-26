@@ -260,10 +260,7 @@ export class NotificationService {
 
   async markAllAsRead(userId: string): Promise<{ count: number }> {
     const result = await this.notificationModel
-      .updateMany(
-        { userId: new Types.ObjectId(userId), read: false },
-        { $set: { read: true } }
-      )
+      .updateMany({ userId: new Types.ObjectId(userId), read: false }, { $set: { read: true } })
       .exec();
     return { count: result.modifiedCount };
   }
@@ -295,10 +292,8 @@ export class NotificationService {
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const userName = user.parentProfile?.name || user.coachProfile?.name || 'User';
-    const expiryHours = parseInt(
-      this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY', '3600'),
-      10
-    ) / 3600;
+    const expiryHours =
+      parseInt(this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY', '3600'), 10) / 3600;
 
     const subject = 'Reset Your Password';
     const body = `Hello ${userName},

@@ -205,11 +205,7 @@ export class InvoicesService {
 
     if (invoice.type === InvoiceType.PARENT_INVOICE && invoice.parentId) {
       const parentIdStr = invoice.parentId.toString();
-      const parent = await this.userModel
-        .findById(parentIdStr)
-        .select('email phone')
-        .lean()
-        .exec();
+      const parent = await this.userModel.findById(parentIdStr).select('email phone').lean().exec();
       const email = parent ? (parent as any).email : undefined;
       const phone = parent ? (parent as any).phone : undefined;
       await this.notificationService.sendInvoiceUpdate({

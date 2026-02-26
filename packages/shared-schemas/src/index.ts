@@ -224,6 +224,7 @@ export type UpdateInvoicePaymentStatusDto = z.infer<typeof UpdateInvoicePaymentS
 export const CreateLocationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   address: z.string().min(1, 'Address is required'),
+  placeUrl: z.union([z.string().url('Invalid URL'), z.literal('')]).optional(),
   geo: z
     .object({
       lat: z.number(),
@@ -237,6 +238,7 @@ export type CreateLocationDto = z.infer<typeof CreateLocationSchema>;
 export const UpdateLocationSchema = z.object({
   name: z.string().min(1).optional(),
   address: z.string().min(1).optional(),
+  placeUrl: z.union([z.string().url('Invalid URL'), z.literal('')]).optional(),
   geo: z
     .object({
       lat: z.number(),

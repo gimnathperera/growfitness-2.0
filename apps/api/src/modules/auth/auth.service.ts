@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -6,7 +11,10 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
-import { PasswordResetToken, PasswordResetTokenDocument } from '../../infra/database/schemas/password-reset-token.schema';
+import {
+  PasswordResetToken,
+  PasswordResetTokenDocument,
+} from '../../infra/database/schemas/password-reset-token.schema';
 import { UserRole, UserStatus } from '@grow-fitness/shared-types';
 import { LoginDto } from '@grow-fitness/shared-schemas';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
@@ -32,7 +40,8 @@ export interface AuthResponse {
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(PasswordResetToken.name) private passwordResetTokenModel: Model<PasswordResetTokenDocument>,
+    @InjectModel(PasswordResetToken.name)
+    private passwordResetTokenModel: Model<PasswordResetTokenDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
     private notificationService: NotificationService
@@ -105,7 +114,7 @@ export class AuthService {
     try {
       const payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET', 'default-refresh-secret'),
-      }) as JwtPayload;
+      });
 
       const user = await this.userModel.findById(payload.sub).exec();
 
@@ -164,10 +173,9 @@ export class AuthService {
     expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds);
 
     // Invalidate any existing tokens for this user
-    await this.passwordResetTokenModel.updateMany(
-      { userId: user._id, used: false },
-      { used: true }
-    ).exec();
+    await this.passwordResetTokenModel
+      .updateMany({ userId: user._id, used: false }, { used: true })
+      .exec();
 
     // Create new reset token
     await this.passwordResetTokenModel.create({

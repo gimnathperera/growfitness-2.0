@@ -8,7 +8,10 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { User, UserSchema } from '../../infra/database/schemas/user.schema';
-import { PasswordResetToken, PasswordResetTokenSchema } from '../../infra/database/schemas/password-reset-token.schema';
+import {
+  PasswordResetToken,
+  PasswordResetTokenSchema,
+} from '../../infra/database/schemas/password-reset-token.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Global()

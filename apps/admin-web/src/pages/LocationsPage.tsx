@@ -6,7 +6,7 @@ import { Location } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, ExternalLink } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDate } from '@/lib/formatters';
@@ -84,6 +84,25 @@ export function LocationsPage() {
     {
       accessorKey: 'address',
       header: 'Address',
+    },
+    {
+      accessorKey: 'placeUrl',
+      header: 'Place URL',
+      cell: ({ row }) => {
+        const url = row.original.placeUrl;
+        if (!url) return '—';
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline inline-flex items-center gap-1.5 max-w-[200px]"
+          >
+            <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="truncate">View link</span>
+          </a>
+        );
+      },
     },
     {
       accessorKey: 'isActive',

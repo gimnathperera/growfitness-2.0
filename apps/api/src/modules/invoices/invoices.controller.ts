@@ -31,16 +31,14 @@ export class InvoicesController {
   @Get()
   @ApiOperation({ summary: 'Get all invoices' })
   @ApiOkResponse({
-    description: 'Paginated list of invoices. Each invoice includes parentId/coachId as IDs and optional parent/coach when expanded.',
+    description:
+      'Paginated list of invoices. Each invoice includes parentId/coachId as IDs and optional parent/coach when expanded.',
     type: PaginatedInvoiceResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
   findAll(@Query() query: GetInvoicesQueryDto) {
     const { page, limit, type, parentId, coachId, status } = query;
-    return this.invoicesService.findAll(
-      { page, limit },
-      { type, parentId, coachId, status }
-    );
+    return this.invoicesService.findAll({ page, limit }, { type, parentId, coachId, status });
   }
 
   @Get(':id')
@@ -114,7 +112,8 @@ export class InvoicesController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Invoice created successfully. Returns invoice with optional parent/coach populated.',
+    description:
+      'Invoice created successfully. Returns invoice with optional parent/coach populated.',
     type: InvoiceResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error' })

@@ -50,36 +50,37 @@ export class AuthController {
   @Post('forgot-password')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Request password reset',
-    description: 'Public endpoint to request a password reset link. An email will be sent if the email exists and the account is active. Always returns success to prevent email enumeration.'
+    description:
+      'Public endpoint to request a password reset link. An email will be sent if the email exists and the account is active. Always returns success to prevent email enumeration.',
   })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        email: { 
-          type: 'string', 
+        email: {
+          type: 'string',
           format: 'email',
           example: 'user@example.com',
-          description: 'Email address of the account'
+          description: 'Email address of the account',
         },
       },
       required: ['email'],
     },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'If the email exists, a password reset link has been sent',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'If the email exists, a password reset link has been sent'
-        }
-      }
-    }
+          example: 'If the email exists, a password reset link has been sent',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Validation error - invalid email format' })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
@@ -92,63 +93,64 @@ export class AuthController {
   @Post('reset-password')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Reset password with token',
-    description: 'Public endpoint to reset password using a valid reset token received via email. Token must not be expired or already used.'
+    description:
+      'Public endpoint to reset password using a valid reset token received via email. Token must not be expired or already used.',
   })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        token: { 
+        token: {
           type: 'string',
           example: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-          description: 'Password reset token received via email'
+          description: 'Password reset token received via email',
         },
-        newPassword: { 
-          type: 'string', 
+        newPassword: {
+          type: 'string',
           minLength: 6,
           example: 'newSecurePassword123',
-          description: 'New password (minimum 6 characters)'
+          description: 'New password (minimum 6 characters)',
         },
       },
       required: ['token', 'newPassword'],
     },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Password reset successfully',
     schema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
-          example: 'Password reset successfully'
-        }
-      }
-    }
+          example: 'Password reset successfully',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: 'Invalid or expired token, or account is not active',
     schema: {
       type: 'object',
       properties: {
         errorCode: { type: 'string', example: 'TOKEN_INVALID' },
-        message: { type: 'string', example: 'Invalid or expired reset token' }
-      }
-    }
+        message: { type: 'string', example: 'Invalid or expired reset token' },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: 'Token not found or user not found',
     schema: {
       type: 'object',
       properties: {
         errorCode: { type: 'string', example: 'USER_NOT_FOUND' },
-        message: { type: 'string', example: 'User not found' }
-      }
-    }
+        message: { type: 'string', example: 'User not found' },
+      },
+    },
   })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);

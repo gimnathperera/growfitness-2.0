@@ -16,7 +16,12 @@ export class KidsService {
     private auditService: AuditService
   ) {}
 
-  async findAll(pagination: PaginationDto, parentId?: string, sessionType?: string, search?: string) {
+  async findAll(
+    pagination: PaginationDto,
+    parentId?: string,
+    sessionType?: string,
+    search?: string
+  ) {
     const query: Record<string, unknown> = { isApproved: true };
 
     if (parentId) {
@@ -30,10 +35,7 @@ export class KidsService {
     // Add search functionality - search by name or goal
     if (search && search.trim()) {
       const searchRegex = new RegExp(search.trim(), 'i');
-      query.$or = [
-        { name: searchRegex },
-        { goal: searchRegex },
-      ];
+      query.$or = [{ name: searchRegex }, { goal: searchRegex }];
     }
 
     const skip = (pagination.page - 1) * pagination.limit;

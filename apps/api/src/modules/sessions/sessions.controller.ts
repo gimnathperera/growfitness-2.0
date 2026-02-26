@@ -40,11 +40,26 @@ export class SessionsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all sessions' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10, max: 100)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
   @ApiQuery({ name: 'search', required: false, type: String, description: 'Search string' })
   @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
-  @ApiQuery({ name: 'locationId', required: false, type: String, description: 'Filter by location ID' })
+  @ApiQuery({
+    name: 'locationId',
+    required: false,
+    type: String,
+    description: 'Filter by location ID',
+  })
   @ApiQuery({
     name: 'kidId',
     required: false,
@@ -70,7 +85,8 @@ export class SessionsController {
     description: 'Filter sessions until this date (ISO format)',
   })
   @ApiOkResponse({
-    description: 'Paginated list of sessions. Each session includes coachId/locationId as IDs and optional coach/location when expanded.',
+    description:
+      'Paginated list of sessions. Each session includes coachId/locationId as IDs and optional coach/location when expanded.',
     type: PaginatedSessionResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
@@ -93,13 +109,29 @@ export class SessionsController {
   @Public()
   @ApiOperation({
     summary: 'Get free sessions (public)',
-    description: 'Public endpoint. No auth required. Returns sessions where isFreeSession is true. Same filters as GET /sessions.',
+    description:
+      'Public endpoint. No auth required. Returns sessions where isFreeSession is true. Same filters as GET /sessions.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10, max: 100)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
   @ApiQuery({ name: 'search', required: false, type: String, description: 'Search string' })
   @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
-  @ApiQuery({ name: 'locationId', required: false, type: String, description: 'Filter by location ID' })
+  @ApiQuery({
+    name: 'locationId',
+    required: false,
+    type: String,
+    description: 'Filter by location ID',
+  })
   @ApiQuery({
     name: 'kidId',
     required: false,
@@ -125,7 +157,8 @@ export class SessionsController {
     description: 'Filter sessions until this date (ISO format)',
   })
   @ApiOkResponse({
-    description: 'Paginated list of free sessions (isFreeSession: true). Same filters as GET /sessions.',
+    description:
+      'Paginated list of free sessions (isFreeSession: true). Same filters as GET /sessions.',
     type: PaginatedSessionResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
@@ -163,7 +196,11 @@ export class SessionsController {
     schema: {
       type: 'object',
       properties: {
-        title: { type: 'string', description: 'Session title/name', example: 'Morning Training Session' },
+        title: {
+          type: 'string',
+          description: 'Session title/name',
+          example: 'Morning Training Session',
+        },
         type: { type: 'string', enum: ['INDIVIDUAL', 'GROUP'], description: 'Session type' },
         coachId: { type: 'string', description: 'Coach ID', example: '507f1f77bcf86cd799439011' },
         locationId: {
@@ -199,7 +236,8 @@ export class SessionsController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Session created successfully. Returns session with optional coach/location populated.',
+    description:
+      'Session created successfully. Returns session with optional coach/location populated.',
     type: SessionResponseDto,
   })
   create(@Body() createSessionDto: CreateSessionDto, @CurrentUser('sub') actorId: string) {
@@ -212,9 +250,17 @@ export class SessionsController {
     schema: {
       type: 'object',
       properties: {
-        title: { type: 'string', description: 'Session title/name', example: 'Morning Training Session' },
+        title: {
+          type: 'string',
+          description: 'Session title/name',
+          example: 'Morning Training Session',
+        },
         coachId: { type: 'string', description: 'Coach ID', example: '507f1f77bcf86cd799439011' },
-        locationId: { type: 'string', description: 'Location ID', example: '507f1f77bcf86cd799439011' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID',
+          example: '507f1f77bcf86cd799439011',
+        },
         dateTime: {
           type: 'string',
           format: 'date-time',

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
-  Query,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -46,7 +37,8 @@ export class TestimonialsController {
   @Public()
   @ApiOperation({
     summary: 'Get all testimonials',
-    description: 'Public endpoint. No auth required. Returns paginated testimonials. Use activeOnly=false to include inactive.',
+    description:
+      'Public endpoint. No auth required. Returns paginated testimonials. Use activeOnly=false to include inactive.',
   })
   @ApiQuery({
     name: 'page',

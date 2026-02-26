@@ -157,10 +157,13 @@ export class SessionsService {
             address: s.locationId.address,
             geo: s.locationId.geo,
             isActive: s.locationId.isActive,
+            placeUrl: s.locationId.placeUrl,
           }
         : undefined;
     const kids = Array.isArray(s.kids)
-      ? s.kids.map((k: any) => (k && typeof k === 'object' && k._id ? k._id.toString() : k?.toString?.() ?? k))
+      ? s.kids.map((k: any) =>
+          k && typeof k === 'object' && k._id ? k._id.toString() : (k?.toString?.() ?? k)
+        )
       : undefined;
     return {
       id: s._id?.toString(),
@@ -199,7 +202,7 @@ export class SessionsService {
     const capacity =
       createSessionDto.capacity ?? (createSessionDto.type === SessionType.GROUP ? 10 : 1);
 
-    if (createSessionDto.type === SessionType.GROUP && createSessionDto.kids!.length > capacity) {
+    if (createSessionDto.type === SessionType.GROUP && createSessionDto.kids.length > capacity) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_SESSION_CAPACITY,
         message: 'Number of kids exceeds session capacity',
@@ -303,7 +306,9 @@ export class SessionsService {
       ...(updateSessionDto.capacity && { capacity: updateSessionDto.capacity }),
       ...(updateSessionDto.kids && { kids: this.toObjectIdArray(updateSessionDto.kids, 'kids') }),
       ...(updateSessionDto.status && { status: updateSessionDto.status }),
-      ...(updateSessionDto.isFreeSession !== undefined && { isFreeSession: updateSessionDto.isFreeSession }),
+      ...(updateSessionDto.isFreeSession !== undefined && {
+        isFreeSession: updateSessionDto.isFreeSession,
+      }),
     };
 
     const previousStatus = session.status;
@@ -323,7 +328,8 @@ export class SessionsService {
       metadata: updateSessionDto,
     });
 
-    const statusChanged = updateSessionDto.status !== undefined && updateSessionDto.status !== previousStatus;
+    const statusChanged =
+      updateSessionDto.status !== undefined && updateSessionDto.status !== previousStatus;
     const dateTimeChanged =
       updateSessionDto.dateTime !== undefined &&
       new Date(updateSessionDto.dateTime).getTime() !== previousDateTime.getTime();
@@ -346,7 +352,9 @@ export class SessionsService {
         .populate('kids')
         .exec();
       if (sessionPopulated) {
-        const coachIdStr = (sessionPopulated.coachId as any)?._id?.toString?.() ?? sessionPopulated.coachId?.toString?.();
+        const coachIdStr =
+          (sessionPopulated.coachId as any)?._id?.toString?.() ??
+          sessionPopulated.coachId?.toString?.();
         const parentIds = await this.getParentIdsFromKidIds(sessionPopulated.kids ?? []);
         const recipientIds = [coachIdStr, ...parentIds].filter(Boolean);
 
@@ -373,7 +381,11 @@ export class SessionsService {
           });
         }
         for (const parentId of parentIds) {
-          const parent = await this.userModel.findById(parentId).select('email phone').lean().exec();
+          const parent = await this.userModel
+            .findById(parentId)
+            .select('email phone')
+            .lean()
+            .exec();
           if (parent && (parent as any).email) {
             await this.notificationService.sendSessionChange({
               email: (parent as any).email,

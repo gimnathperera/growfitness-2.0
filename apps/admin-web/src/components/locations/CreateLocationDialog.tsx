@@ -38,6 +38,7 @@ export function CreateLocationDialog({ open, onOpenChange }: CreateLocationDialo
   const defaultValues = {
     name: '',
     address: '',
+    placeUrl: '',
     geo: undefined,
   };
 
@@ -73,7 +74,8 @@ export function CreateLocationDialog({ open, onOpenChange }: CreateLocationDialo
   );
 
   const onSubmit = (data: CreateLocationDto) => {
-    createMutation.mutate(data);
+    const placeUrl = form.getValues('placeUrl')?.trim() ?? '';
+    createMutation.mutate({ ...data, placeUrl: placeUrl || undefined });
   };
 
   return (
@@ -98,6 +100,17 @@ export function CreateLocationDialog({ open, onOpenChange }: CreateLocationDialo
               <CustomFormField label="Address" required error={form.formState.errors.address?.message}>
                 <Input {...form.register('address')} />
               </CustomFormField>
+
+              <CustomFormField label="Place URL" error={form.formState.errors.placeUrl?.message}>
+                <Input
+                  {...form.register('placeUrl')}
+                  type="url"
+                  placeholder="https://maps.google.com/..."
+                />
+              </CustomFormField>
+              <p className="text-[0.8rem] text-muted-foreground -mt-2">
+                Optional link to map or place page (e.g. Google Maps).
+              </p>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

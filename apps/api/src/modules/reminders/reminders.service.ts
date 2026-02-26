@@ -85,7 +85,8 @@ export class RemindersService {
         .exec();
       const seen = new Set<string>();
       for (const inv of invoices) {
-        const parentId = (inv as any).parentId?._id?.toString?.() ?? (inv as any).parentId?.toString?.();
+        const parentId =
+          (inv as any).parentId?._id?.toString?.() ?? (inv as any).parentId?.toString?.();
         if (!parentId || seen.has(parentId)) continue;
         seen.add(parentId);
         await this.notificationService.createNotification({
@@ -187,7 +188,9 @@ export class RemindersService {
         }
 
         const kidIds = (s as any).kids ?? [];
-        const objectKidIds = kidIds.map((k: any) => (k && typeof k === 'object' && k._id ? k._id : k));
+        const objectKidIds = kidIds.map((k: any) =>
+          k && typeof k === 'object' && k._id ? k._id : k
+        );
         if (objectKidIds.length === 0) continue;
         const kids = await this.kidModel
           .find({ _id: { $in: objectKidIds } })

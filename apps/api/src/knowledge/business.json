@@ -1,0 +1,16 @@
+{
+  "name": "Grow Fitness",
+  "support": {
+    "email": "support@growfitness.example.com",
+    "phone": null,
+    "hours": "Monday–Friday 9am–5pm (placeholder)"
+  },
+  "links": {
+    "pricing": "/",
+    "contact": "/",
+    "booking": "/free-session",
+    "terms": "/",
+    "refund": "/"
+  },
+  "instructions": "Use only this business info and the other knowledge files to answer. Never invent contact details, prices, or links not listed here."
+}

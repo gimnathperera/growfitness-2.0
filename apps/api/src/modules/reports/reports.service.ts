@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Report, ReportDocument, ReportType, ReportStatus } from '../../infra/database/schemas/report.schema';
+import {
+  Report,
+  ReportDocument,
+  ReportType,
+  ReportStatus,
+} from '../../infra/database/schemas/report.schema';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
@@ -10,7 +15,13 @@ import { Session, SessionDocument } from '../../infra/database/schemas/session.s
 import { Invoice, InvoiceDocument } from '../../infra/database/schemas/invoice.schema';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { Location, LocationDocument } from '../../infra/database/schemas/location.schema';
-import { SessionType, SessionStatus, InvoiceStatus, InvoiceType, UserRole } from '@grow-fitness/shared-types';
+import {
+  SessionType,
+  SessionStatus,
+  InvoiceStatus,
+  InvoiceType,
+  UserRole,
+} from '@grow-fitness/shared-types';
 
 export interface CreateReportDto {
   type: string;
@@ -93,7 +104,9 @@ export class ReportsService {
 
   async generate(generateReportDto: GenerateReportDto, actorId: string) {
     try {
-      const startDate = generateReportDto.startDate ? new Date(generateReportDto.startDate) : undefined;
+      const startDate = generateReportDto.startDate
+        ? new Date(generateReportDto.startDate)
+        : undefined;
       const endDate = generateReportDto.endDate ? new Date(generateReportDto.endDate) : undefined;
 
       if (startDate && endDate && startDate > endDate) {
@@ -107,19 +120,39 @@ export class ReportsService {
 
       switch (generateReportDto.type as ReportType) {
         case ReportType.ATTENDANCE:
-          reportData = await this.generateAttendanceReport(startDate, endDate, generateReportDto.filters);
+          reportData = await this.generateAttendanceReport(
+            startDate,
+            endDate,
+            generateReportDto.filters
+          );
           break;
         case ReportType.FINANCIAL:
-          reportData = await this.generateFinancialReport(startDate, endDate, generateReportDto.filters);
+          reportData = await this.generateFinancialReport(
+            startDate,
+            endDate,
+            generateReportDto.filters
+          );
           break;
         case ReportType.SESSION_SUMMARY:
-          reportData = await this.generateSessionSummaryReport(startDate, endDate, generateReportDto.filters);
+          reportData = await this.generateSessionSummaryReport(
+            startDate,
+            endDate,
+            generateReportDto.filters
+          );
           break;
         case ReportType.PERFORMANCE:
-          reportData = await this.generatePerformanceReport(startDate, endDate, generateReportDto.filters);
+          reportData = await this.generatePerformanceReport(
+            startDate,
+            endDate,
+            generateReportDto.filters
+          );
           break;
         case ReportType.CUSTOM:
-          reportData = await this.generateCustomReport(startDate, endDate, generateReportDto.filters);
+          reportData = await this.generateCustomReport(
+            startDate,
+            endDate,
+            generateReportDto.filters
+          );
           break;
         default:
           throw new BadRequestException({
@@ -128,7 +161,9 @@ export class ReportsService {
           });
       }
 
-      const title = generateReportDto.filters?.title as string || `${generateReportDto.type} Report${startDate && endDate ? ` - ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}` : ''}`;
+      const title =
+        (generateReportDto.filters?.title as string) ||
+        `${generateReportDto.type} Report${startDate && endDate ? ` - ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}` : ''}`;
 
       const report = new this.reportModel({
         type: generateReportDto.type as ReportType,
@@ -207,7 +242,9 @@ export class ReportsService {
     const totalSessions = sessions.length;
     const completedSessions = sessions.filter(s => s.status === SessionStatus.COMPLETED).length;
     const cancelledSessions = sessions.filter(s => s.status === SessionStatus.CANCELLED).length;
-    const noShowSessions = sessions.filter(s => s.status === SessionStatus.SCHEDULED || s.status === SessionStatus.CONFIRMED).length;
+    const noShowSessions = sessions.filter(
+      s => s.status === SessionStatus.SCHEDULED || s.status === SessionStatus.CONFIRMED
+    ).length;
 
     const byType = {
       INDIVIDUAL: sessions.filter(s => s.type === SessionType.INDIVIDUAL).length,
@@ -432,14 +469,13 @@ export class ReportsService {
       query.sessionType = filters.sessionType;
     }
 
-    const kids = await this.kidModel
-      .find(query)
-      .populate('parentId', 'email parentProfile')
-      .exec();
+    const kids = await this.kidModel.find(query).populate('parentId', 'email parentProfile').exec();
 
     const totalKids = kids.length;
     const kidsWithMilestones = kids.filter(k => k.milestones && k.milestones.length > 0).length;
-    const kidsWithAchievements = kids.filter(k => k.achievements && k.achievements.length > 0).length;
+    const kidsWithAchievements = kids.filter(
+      k => k.achievements && k.achievements.length > 0
+    ).length;
 
     const bySessionType = {
       INDIVIDUAL: kids.filter(k => k.sessionType === SessionType.INDIVIDUAL).length,
@@ -475,8 +511,12 @@ export class ReportsService {
         totalKids,
         kidsWithMilestones,
         kidsWithAchievements,
-        averageMilestonesPerKid: milestoneStats[0] ? Math.round((milestoneStats[0].totalMilestones / totalKids) * 100) / 100 : 0,
-        averageAchievementsPerKid: achievementStats[0] ? Math.round((achievementStats[0].totalAchievements / totalKids) * 100) / 100 : 0,
+        averageMilestonesPerKid: milestoneStats[0]
+          ? Math.round((milestoneStats[0].totalMilestones / totalKids) * 100) / 100
+          : 0,
+        averageAchievementsPerKid: achievementStats[0]
+          ? Math.round((achievementStats[0].totalAchievements / totalKids) * 100) / 100
+          : 0,
       },
       bySessionType,
       milestoneStats: milestoneStats[0] || { totalMilestones: 0, kidsWithMilestones: 0 },
@@ -605,7 +645,10 @@ export class ReportsService {
           const arr = obj[key] as unknown[];
           arr.forEach((item, index) => {
             if (typeof item === 'object' && item !== null) {
-              Object.assign(flattened, flattenData(item as Record<string, unknown>, `${newKey}[${index}]`));
+              Object.assign(
+                flattened,
+                flattenData(item as Record<string, unknown>, `${newKey}[${index}]`)
+              );
             } else {
               flattened[`${newKey}[${index}]`] = item;
             }
@@ -634,7 +677,10 @@ export class ReportsService {
       ['Report Type', report.type],
       ['Report Title', report.title],
       ['Generated At', report.generatedAt?.toISOString() || ''],
-      ['Date Range', `${report.startDate?.toISOString() || 'N/A'} to ${report.endDate?.toISOString() || 'N/A'}`],
+      [
+        'Date Range',
+        `${report.startDate?.toISOString() || 'N/A'} to ${report.endDate?.toISOString() || 'N/A'}`,
+      ],
       [],
       headers.join(','),
       ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),

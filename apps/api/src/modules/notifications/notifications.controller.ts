@@ -1,4 +1,14 @@
-import { Controller, Get, Patch, Delete, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -30,9 +40,24 @@ export class NotificationsController {
 
   @Get()
   @ApiOperation({ summary: 'List notifications for current user' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10, max: 100)' })
-  @ApiQuery({ name: 'read', required: false, type: Boolean, description: 'Filter by read status (true/false)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'read',
+    required: false,
+    type: Boolean,
+    description: 'Filter by read status (true/false)',
+  })
   @ApiOkResponse({
     description: 'Paginated list of notifications for the authenticated user',
     type: PaginatedNotificationsResponseDto,
@@ -43,8 +68,7 @@ export class NotificationsController {
     @Query() pagination: PaginationDto,
     @Query('read') read?: string
   ) {
-    const filter =
-      read !== undefined ? { read: read === 'true' } : undefined;
+    const filter = read !== undefined ? { read: read === 'true' } : undefined;
     return this.notificationService.findAllForUser(user.sub, pagination, filter);
   }
 
@@ -88,10 +112,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - invalid or missing JWT' })
   @ApiResponse({ status: 404, description: 'Notification not found or does not belong to user' })
   @ApiResponse({ status: 400, description: 'Invalid notification ID format' })
-  deleteOne(
-    @Param('id', ObjectIdValidationPipe) id: string,
-    @CurrentUser() user: JwtPayload
-  ) {
+  deleteOne(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.notificationService.deleteOne(id, user.sub);
   }
 
@@ -104,10 +125,7 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - invalid or missing JWT' })
   @ApiResponse({ status: 404, description: 'Notification not found or does not belong to user' })
   @ApiResponse({ status: 400, description: 'Invalid notification ID format' })
-  markAsRead(
-    @Param('id', ObjectIdValidationPipe) id: string,
-    @CurrentUser() user: JwtPayload
-  ) {
+  markAsRead(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.notificationService.markAsRead(id, user.sub);
   }
 }

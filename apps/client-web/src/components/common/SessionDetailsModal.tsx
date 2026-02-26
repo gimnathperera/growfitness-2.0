@@ -27,6 +27,7 @@ import {
   AlertCircle,
   Baby,
   CalendarClock,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -418,9 +419,22 @@ export default function SessionDetailsDialog({
                         </p>
                         <div className="flex items-start gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <p className="text-sm font-medium break-words">
-                            {locationName}
-                          </p>
+                          <div>
+                            <p className="text-sm font-medium break-words">
+                              {locationName}
+                            </p>
+                            {locationData?.placeUrl && (
+                              <a
+                                href={locationData.placeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-primary hover:underline mt-1 inline-flex items-center gap-1.5 break-all"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                                Open map / place link
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
 

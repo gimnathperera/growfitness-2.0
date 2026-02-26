@@ -24,6 +24,7 @@ import { QuizzesModule } from './modules/quizzes/quizzes.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
+import { SupportChatModule } from './modules/support-chat/support-chat.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { RemindersModule } from './modules/reminders/reminders.module';
     ReportsModule,
     TestimonialsModule,
     RemindersModule,
+    SupportChatModule,
   ],
   controllers: [AppController],
   providers: [

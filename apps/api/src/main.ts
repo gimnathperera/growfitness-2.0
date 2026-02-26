@@ -20,9 +20,16 @@ async function bootstrap() {
     })
   );
 
-  // CORS - Allow all origins
+  // CORS - use CORS_ORIGIN from env, or allow all if unset (e.g. local dev)
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', '');
+  const allowedOrigins = corsOrigin
+    ? corsOrigin
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean)
+    : true;
   app.enableCors({
-    origin: true, // Allow all origins
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -74,7 +81,10 @@ Most endpoints require JWT Bearer token. Roles: ADMIN, PARENT, COACH (varies by 
     .addTag('users', 'User management endpoints')
     .addTag('kids', 'Kid management endpoints')
     .addTag('sessions', 'Session management. GET /sessions/free is public.')
-    .addTag('requests', 'Request management: free sessions, reschedules, extra sessions, user registrations')
+    .addTag(
+      'requests',
+      'Request management: free sessions, reschedules, extra sessions, user registrations'
+    )
     .addTag('invoices', 'Invoice management endpoints')
     .addTag('locations', 'Location management endpoints')
     .addTag('banners', 'Banner management endpoints')
@@ -82,7 +92,10 @@ Most endpoints require JWT Bearer token. Roles: ADMIN, PARENT, COACH (varies by 
     .addTag('testimonials', 'Testimonials CRUD. GET list and GET by ID are public.')
     .addTag('dashboard', 'Dashboard endpoints')
     .addTag('audit', 'Audit log endpoints')
-    .addTag('notifications', 'In-app notifications: list, unread count, mark read. Used by admin-web and client-web.')
+    .addTag(
+      'notifications',
+      'In-app notifications: list, unread count, mark read. Used by admin-web and client-web.'
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, {

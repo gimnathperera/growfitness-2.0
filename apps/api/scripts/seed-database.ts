@@ -92,6 +92,7 @@ async function seedDatabase() {
       {
         name: 'Main Fitness Center',
         address: '123 Fitness St, San Francisco, CA 94102',
+        placeUrl: 'https://www.google.com/maps?q=37.7749,-122.4194',
         geo: { lat: 37.7749, lng: -122.4194 },
         isActive: true,
       },
