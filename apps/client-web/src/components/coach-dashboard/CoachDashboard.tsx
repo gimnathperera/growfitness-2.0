@@ -19,8 +19,8 @@ export default function ClientDashboard() {
 
   const tabComponents: Record<string, JSX.Element> = {
     overview: <OverviewTab />,
-    sessions: <SessionsTab />,
     schedule: <ScheduleTab/>,
+    sessions: <SessionsTab />,
   };
 
   return (

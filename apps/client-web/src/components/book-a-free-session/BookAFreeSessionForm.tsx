@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import CollectInfoFlow from './CollectInfoFlow';
+import ConfettiCelebration from './ConfettiCelebration';
 import { useHandleError } from '@/lib/errors';
 import { requestsService } from '@/services/requests.service';
 import { sessionsService } from '@/services/sessions.service';
@@ -21,6 +21,7 @@ const BookAFreeSessionForm: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionOptions, setSessionOptions] = useState<SessionOption[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
   const navigate = useNavigate();
   const handleError = useHandleError();
 
@@ -81,9 +82,6 @@ const BookAFreeSessionForm: React.FC = () => {
     fetchSessions();
   }, []);
 
-  /**
-   * Handle Submit
-   */
   const handleCollectInfoSubmit = async (
     data: CreateFreeSessionRequestDto
   ) => {
@@ -116,13 +114,11 @@ const BookAFreeSessionForm: React.FC = () => {
 
       await requestsService.createFreeSessionRequest(dto);
 
-      toast({
-        title: 'Request Submitted!',
-        description:
-          '🎉 Your free session request has been submitted. Our team will get back to you soon!',
-      });
+      setShowConfetti(true);
 
-      navigate('/');
+      setTimeout(() => {
+        navigate('/');
+      }, 5000);
     } catch (error) {
       const appError = handleError(error);
       setSubmitError(appError.message);
@@ -144,6 +140,13 @@ const BookAFreeSessionForm: React.FC = () => {
         error={submitError}
         onRetry={handleRetry}
         sessionOptions={sessionOptions}
+      />
+      <ConfettiCelebration
+        isVisible={showConfetti}
+        duration={5000}
+        title="Request Submitted!"
+        message="Your request has been recorded. We'll contact you soon to schedule your free session."
+        onComplete={() => setShowConfetti(false)}
       />
     </div>
   );

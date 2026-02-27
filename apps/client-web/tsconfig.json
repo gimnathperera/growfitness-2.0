@@ -13,10 +13,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/types": ["../../packages/shared-types/src"],
-      "@shared/schemas": ["../../packages/shared-schemas/src"],
-      "@grow-fitness/shared-types": ["../../packages/shared-types/src"],
-      "@grow-fitness/shared-schemas": ["../../packages/shared-schemas/src"]
+      "@shared/types": ["../../packages/shared-types/dist"],
+      "@shared/schemas": ["../../packages/shared-schemas/dist"],
+      "@grow-fitness/shared-types": ["../../packages/shared-types/dist"],
+      "@grow-fitness/shared-schemas": ["../../packages/shared-schemas/dist"]
     },
     "strict": true,
     "esModuleInterop": true,

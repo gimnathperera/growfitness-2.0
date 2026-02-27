@@ -15,6 +15,7 @@ import {
   X,
   LogOut,
 } from "lucide-react";
+import { NotificationBell } from "../notifications/NotificationBell";
 
 const logo = "/Grow Logo Versions-01.svg";
 
@@ -148,6 +149,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
 
               {isAuthenticated && (
                 <div className="flex items-center gap-3 ml-3">
+                  <NotificationBell />
                   
                   {/* Avatar → Dashboard */}
                   <button

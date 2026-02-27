@@ -16,6 +16,7 @@ interface QuestionRendererProps<TFormValues extends FieldValues = FieldValues> {
   control: Control<TFormValues>;
   error?: FieldError;
   shouldAutoFocus?: boolean;
+  passwordValue?: string; // For confirmPassword field validation
 }
 
 const inputVariants = {
@@ -33,6 +34,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
   control,
   error,
   shouldAutoFocus = true,
+  passwordValue,
 }: QuestionRendererProps<TFormValues>) => {
   const [options, setOptions] = useState<QuestionOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
@@ -165,6 +167,52 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   animate="visible"
                   autoFocus={shouldAutoFocus}
                 />
+              );
+            }}
+          />
+        );
+      }
+
+      case 'confirmPassword': {
+        return (
+          <Controller
+            name={question.id as Path<TFormValues>}
+            control={control}
+            render={({ field: { value, onChange, ...field } }) => {
+              const val =
+                (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+              
+              // Real-time password validation
+              const isPasswordMismatch = val && passwordValue && val !== passwordValue;
+              
+              return (
+                <div className="space-y-2">
+                  <motion.input
+                    {...field}
+                    value={val as string}
+                    type="password"
+                    onChange={e => onChange(e.target.value)}
+                    placeholder={question.placeholder || "Confirm password"}
+                    className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
+                      error || isPasswordMismatch
+                        ? 'border-red-400 focus:border-red-500'
+                        : 'border-amber-200 focus:border-emerald-400'
+                    }`}
+                    variants={inputVariants}
+                    initial="hidden"
+                    animate="visible"
+                    autoFocus={shouldAutoFocus}
+                  />
+                  {isPasswordMismatch && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-sm font-medium px-2"
+                    >
+                      Passwords do not match
+                    </motion.p>
+                  )}
+                </div>
               );
             }}
           />
@@ -586,6 +634,103 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                       </p>
                     </motion.div>
                   )}
+                </motion.div>
+              );
+            }}
+          />
+        );
+      }
+
+      case 'boolean': {
+        return (
+          <Controller
+            name={question.id as Path<TFormValues>}
+            control={control}
+            render={({ field }) => {
+              const currentValue = field.value as boolean | undefined;
+              
+              return (
+                <motion.div
+                  className="grid gap-3 sm:gap-4 w-full"
+                  variants={inputVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <motion.button
+                    type="button"
+                    onClick={() => field.onChange(true)}
+                    style={{
+                      backgroundColor: currentValue === true ? '#ecfdf5' : '#fffbeb',
+                      borderColor: currentValue === true ? '#10b981' : '#f3e8d0',
+                    }}
+                    className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
+                      currentValue === true
+                        ? '!border-emerald-500 !bg-emerald-50 shadow-md'
+                        : '!border-amber-200 !bg-amber-50 hover:border-amber-300 hover:!bg-amber-100'
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <span className="text-lg sm:text-xl font-medium text-gray-900">
+                          Yes
+                        </span>
+                      </div>
+                      {currentValue === true && (
+                        <motion.div
+                          className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 500,
+                            damping: 30,
+                          }}
+                        >
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    onClick={() => field.onChange(false)}
+                    style={{
+                      backgroundColor: currentValue === false ? '#ecfdf5' : '#fffbeb',
+                      borderColor: currentValue === false ? '#10b981' : '#f3e8d0',
+                    }}
+                    className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
+                      currentValue === false
+                        ? '!border-emerald-500 !bg-emerald-50 shadow-md'
+                        : '!border-amber-200 !bg-amber-50 hover:border-amber-300 hover:!bg-amber-100'
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <span className="text-lg sm:text-xl font-medium text-gray-900">
+                          No
+                        </span>
+                      </div>
+                      {currentValue === false && (
+                        <motion.div
+                          className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 500,
+                            damping: 30,
+                          }}
+                        >
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.button>
                 </motion.div>
               );
             }}

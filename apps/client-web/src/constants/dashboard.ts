@@ -17,15 +17,15 @@ import {
 // Coach Tabs
 export const coachTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
-  { id: 'sessions', label: 'Sessions', icon: User },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
+  { id: 'sessions', label: 'Sessions', icon: User },
 ];
 
 // Parent Tabs (Individual Kid)
 export const parentIndividualTabs = [
   { id: 'overview', label: 'Overview', icon: Home },
-  { id: 'achievements', label: 'Achievements', icon: Trophy },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
+  { id: 'achievements', label: 'Achievements', icon: Trophy },
   { id: 'kidProfile', label: 'Kid Profile', icon: User },
 ];
 

@@ -68,6 +68,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
       phone: '',
       location: '',
       password: '',
+      confirmPassword: '',
       kids: [createEmptyKid()],
     },
   });
@@ -159,6 +160,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
             }}
             control={control}
             error={errors[question.id] as FieldError | undefined}
+            passwordValue={question.type === 'confirmPassword' ? watch('password') : undefined}
           />
         </div>
       );
@@ -191,18 +193,19 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
                 )}
               </div>
 
-             <QuestionRenderer
-                question={{
-                  id: `kids.${index}.${attribute.id}` as const,  // This is the key change
-                  type: attribute.type,
-                  placeholder: attribute.placeholder,
-                  options: attribute.options,
-                  required: attribute.required,
-                }}
-                control={control}
-                error={errors.kids?.[index]?.[attribute.id] as FieldError | undefined}
-                shouldAutoFocus={index === 0}
-              />
+             <div className="space-y-3">
+                <QuestionRenderer
+                  question={{
+                    id: `kids.${index}.name` as const,
+                    type: 'text',
+                    placeholder: "Child's name",
+                    required: true,
+                  }}
+                  control={control}
+                  error={errors.kids?.[index]?.name as FieldError | undefined}
+                  shouldAutoFocus={index === 0}
+                />
+              </div>
             </motion.div>
           ))}
 
@@ -243,7 +246,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
 
               <QuestionRenderer
                 question={{
-                   id: `kids.${index}.${attribute.id}` as const, 
+                  id: `kids.${index}.${attribute.id}` as const, 
                   type: attribute.type,
                   placeholder: attribute.placeholder,
                   options: attribute.options,
@@ -359,7 +362,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
             </motion.div>
           )}
 
-          <div className="flex justify-between items-center py-4 border-t border-amber-100 bg-white/70 backdrop-blur rounded-t-2xl shadow-md">
+          <div className="flex justify-between items-center py-4 border-t px-4 border-amber-100 bg-white/70 backdrop-blur rounded-t-2xl shadow-md">
             <Button
               type="button"
               variant="outline"
@@ -436,52 +439,11 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
           />
         </motion.div>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Creating Your Account...
+          Sending Your Request...
         </h2>
         <p className="text-gray-600">
-          Please wait while we set up your family profile.
+          Please wait while we submit your request for review.
         </p>
-      </div>
-    </motion.div>
-  );
-
-  const renderSuccess = () => (
-    <motion.div
-      className="flex flex-1 items-center justify-center text-center px-6"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-white/50 p-8 max-w-md w-full">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        >
-          <Check className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
-        </motion.div>
-        <motion.h2
-          className="text-3xl font-bold text-gray-800 mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          Welcome to Grow Fitness! 🎉
-        </motion.h2>
-        <motion.p
-          className="text-gray-600 text-lg mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          Your account has been created successfully. Let's get your kids moving!
-        </motion.p>
-        <Button
-          onClick={onSubmitSuccess}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors transform hover:scale-105"
-        >
-          Continue to Dashboard
-        </Button>
       </div>
     </motion.div>
   );
@@ -492,12 +454,12 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
         ? renderForm()
         : isSubmitting
         ? renderSubmitting()
-        : renderSuccess()}
+        : null}
       <ConfettiCelebration
         isVisible={isSubmitSuccess}
         duration={5000}
-        title="Account Created!"
-        message="Welcome to Grow Fitness! Let's get started."
+        title="Request Submitted!"
+        message="Your parent registration request has been sent to the admin for review. You will be notified once it is approved."
         onComplete={onSubmitSuccess}
       />
     </div>

@@ -30,26 +30,37 @@ export const ResetPasswordSchema = z.object({
 export type ResetPasswordDto = z.infer<typeof ResetPasswordSchema>;
 
 // User Schemas
-export const CreateParentSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Phone is required'),
-  location: z.string().optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  kids: z
-    .array(
-      z.object({
-        name: z.string().min(1, 'Kid name is required'),
-        gender: z.string().min(1, 'Gender is required'),
-        birthDate: z.string().or(z.date()),
-        goal: z.string().optional(),
-        currentlyInSports: z.boolean(),
-        medicalConditions: z.array(z.string()).default([]),
-        sessionType: z.nativeEnum(SessionType),
-      })
-    )
-    .min(1, 'At least one kid is required'),
-});
+export const CreateParentSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email address'),
+    phone: z.string().min(1, 'Phone is required'),
+    location: z.string().optional(),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+    kids: z
+      .array(
+        z.object({
+          name: z.string().min(1, 'Kid name is required'),
+          gender: z.string().min(1, 'Gender is required'),
+          birthDate: z.string().or(z.date()),
+          goal: z.string().optional(),
+          currentlyInSports: z.boolean(),
+          medicalConditions: z.array(z.string()).default([]),
+          sessionType: z.nativeEnum(SessionType),
+        })
+      )
+      .min(1, 'At least one kid is required'),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Passwords don't match",
+        path: ['confirmPassword'],
+      });
+    }
+  });
 
 export type CreateParentDto = z.infer<typeof CreateParentSchema>;
 
