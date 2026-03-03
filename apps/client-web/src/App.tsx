@@ -11,6 +11,8 @@ import { AuthProvider } from "./contexts/AuthProvider";
 import { useAuth } from "./contexts/useAuth";
 import { Payments } from "./pages/Payments";
 import { SignUpPage } from "./pages/SignUpPage";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 // Dashboard wrapper (unchanged)
 function DashboardWrapper() {
@@ -37,6 +39,8 @@ function App() {
           <Route path="/login" element={<SignInPage />} />
           <Route path="/free-session" element={<BookAFreeSession />} />
           <Route path="/sign-up" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+           <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/* ---------- PROTECTED ROUTES WITH SIDENAV ---------- */}

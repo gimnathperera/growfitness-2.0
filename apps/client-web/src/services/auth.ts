@@ -73,6 +73,16 @@ export const authService = {
     }
   },
 
+  /* ---------- FORGOT PASSWORD ---------- */
+  forgotPassword: async (email: string): Promise<void> => {
+    await api.post('/auth/forgot-password', { email });
+  },
+
+  /* ---------- RESET PASSWORD ---------- */
+  resetPassword: async (token: string, newPassword: string): Promise<void> => {
+    await api.post('/auth/reset-password', { token, newPassword });
+  },
+
   /* ---------- HELPERS ---------- */
   getToken: (): string | null => {
     return localStorage.getItem(ACCESS_TOKEN_KEY);
