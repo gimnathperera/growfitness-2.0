@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Session, SessionDocument } from '../../infra/database/schemas/session.schema';
@@ -10,15 +10,19 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notifications/notifications.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { GoogleCalendarSyncService } from '../google-calendar/google-calendar-sync.service';
 
 @Injectable()
 export class SessionsService {
+  private logger = new Logger(SessionsService.name);
+
   constructor(
     @InjectModel(Session.name) private sessionModel: Model<SessionDocument>,
     @InjectModel(Kid.name) private kidModel: Model<KidDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private auditService: AuditService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private googleCalendarSync: GoogleCalendarSyncService
   ) {}
 
   private toObjectId(id: string, fieldName: string) {
@@ -257,6 +261,10 @@ export class SessionsService {
       });
     }
 
+    this.googleCalendarSync
+      .syncSessionCreated(sessionIdStr)
+      .catch(err => this.logger.warn(`Google Calendar sync failed for session ${sessionIdStr}`, err));
+
     return this.findById(sessionIdStr);
   }
 
@@ -398,6 +406,19 @@ export class SessionsService {
       }
     }
 
+    const calendarRelevantChanged = Boolean(
+      updateSessionDto.title ||
+        updateSessionDto.locationId ||
+        updateSessionDto.dateTime ||
+        updateSessionDto.duration ||
+        updateSessionDto.status
+    );
+    if (calendarRelevantChanged) {
+      this.googleCalendarSync
+        .syncSessionUpdated(id)
+        .catch(err => this.logger.warn(`Google Calendar sync failed for session ${id}`, err));
+    }
+
     return this.findById(id);
   }
 
@@ -478,6 +499,10 @@ export class SessionsService {
       entityType: 'Session',
       entityId: id,
     });
+
+    this.googleCalendarSync
+      .syncSessionDeleted(id, session.coachId.toString(), (session.kids ?? []) as Types.ObjectId[])
+      .catch(err => this.logger.warn(`Google Calendar sync failed for deleted session ${id}`, err));
 
     return { message: 'Session deleted successfully' };
   }

@@ -47,6 +47,13 @@ export class User {
   coachProfile?: {
     name: string;
   };
+
+  @Prop({ required: false, type: String })
+  @Exclude()
+  googleCalendarRefreshToken?: string;
+
+  @Prop({ required: false, type: Date })
+  googleCalendarConnectedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

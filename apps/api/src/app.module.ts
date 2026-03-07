@@ -25,6 +25,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { SupportChatModule } from './modules/support-chat/support-chat.module';
+import { GoogleCalendarModule } from './modules/google-calendar/google-calendar.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { SupportChatModule } from './modules/support-chat/support-chat.module';
     TestimonialsModule,
     RemindersModule,
     SupportChatModule,
+    GoogleCalendarModule,
   ],
   controllers: [AppController],
   providers: [

@@ -7,6 +7,7 @@ import { Kid, KidSchema } from '../../infra/database/schemas/kid.schema';
 import { User, UserSchema } from '../../infra/database/schemas/user.schema';
 import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { GoogleCalendarModule } from '../google-calendar/google-calendar.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     AuditModule,
     NotificationsModule,
+    GoogleCalendarModule,
   ],
   controllers: [SessionsController],
   providers: [SessionsService],

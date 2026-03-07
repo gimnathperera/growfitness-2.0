@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usersService } from '@/services/users.service';
-
+import { googleCalendarService } from '@/services/google-calendar.service';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import {
   User,
   Mail,
   Lock,
+  Calendar,
   Loader2,
   Save,
 } from 'lucide-react';
@@ -40,12 +41,19 @@ export default function ProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarBusy, setCalendarBusy] = useState(false);
+  const [calendarConnected, setCalendarConnected] = useState(false);
   const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
     phone: '',
     address: '',
   });
+
+  const isGmail = Boolean(
+    user?.email && /@(gmail|googlemail)\.com$/i.test(user.email)
+  );
 
   /**
    * Fetch profile (UPDATE ONLY)
@@ -87,6 +95,36 @@ export default function ProfilePage() {
     fetchProfile();
   }, [user]);
 
+  useEffect(() => {
+    if (!user?.id || !isGmail) return;
+
+    let active = true;
+    const load = async () => {
+      setCalendarLoading(true);
+      try {
+        const status = await googleCalendarService.getStatus();
+        if (active) setCalendarConnected(status.connected);
+      } catch {
+        if (active) setCalendarConnected(false);
+      } finally {
+        if (active) setCalendarLoading(false);
+      }
+    };
+
+    void load();
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('connected') || url.searchParams.has('error')) {
+      url.searchParams.delete('connected');
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, isGmail]);
+
   /**
    * Input handler
    */
@@ -123,6 +161,30 @@ export default function ProfilePage() {
       console.error('Error updating profile:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onConnectGoogleCalendar = async () => {
+    setCalendarBusy(true);
+    try {
+      const redirectUri = new URL(window.location.href);
+      redirectUri.searchParams.delete('connected');
+      redirectUri.searchParams.delete('error');
+      const { url } = await googleCalendarService.getAuthUrl(redirectUri.toString());
+      window.location.href = url;
+    } finally {
+      setCalendarBusy(false);
+    }
+  };
+
+  const onDisconnectGoogleCalendar = async () => {
+    setCalendarBusy(true);
+    try {
+      await googleCalendarService.disconnect();
+      const status = await googleCalendarService.getStatus();
+      setCalendarConnected(status.connected);
+    } finally {
+      setCalendarBusy(false);
     }
   };
 
@@ -246,6 +308,56 @@ export default function ProfilePage() {
             </Button>
           </CardContent>
         </Card>
+
+        {isGmail && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Google Calendar</CardTitle>
+              <CardDescription>Sync your sessions to Google Calendar</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-muted-foreground">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm">
+                    Status:{' '}
+                    <span className="font-medium">
+                      {calendarLoading
+                        ? 'Checking…'
+                        : calendarConnected
+                          ? 'Connected'
+                          : 'Not connected'}
+                    </span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    When connected, your scheduled sessions are pushed to your Google Calendar
+                    automatically.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={onConnectGoogleCalendar}
+                  disabled={calendarLoading || calendarBusy}
+                  className="sm:w-auto"
+                >
+                  {calendarConnected ? 'Reconnect Google Calendar' : 'Connect Google Calendar'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onDisconnectGoogleCalendar}
+                  disabled={!calendarConnected || calendarLoading || calendarBusy}
+                  className="sm:w-auto"
+                >
+                  Disconnect
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

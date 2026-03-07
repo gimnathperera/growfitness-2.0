@@ -31,6 +31,7 @@ import { useModalParams } from '@/hooks/useModalParams';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSearchParams } from 'react-router-dom';
 import { SessionsCalendar } from '@/components/sessions/SessionsCalendar';
+import { googleCalendarService } from '@/services/google-calendar.service';
 
 export function SessionsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
@@ -43,6 +44,10 @@ export function SessionsPage() {
   const { confirm, confirmState } = useConfirm();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('view') || 'list';
+
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarBusy, setCalendarBusy] = useState(false);
 
   const handleTabChange = (value: string) => {
     setSearchParams({ view: value });
@@ -65,6 +70,60 @@ export function SessionsPage() {
       setSelectedSession(null);
     }
   }, [entityId, modal, selectedSession, closeModal]);
+
+  useEffect(() => {
+    if (currentTab !== 'calendar') return;
+
+    let active = true;
+    const load = async () => {
+      setCalendarLoading(true);
+      try {
+        const status = await googleCalendarService.getStatus();
+        if (active) setCalendarConnected(status.connected);
+      } catch {
+        if (active) setCalendarConnected(false);
+      } finally {
+        if (active) setCalendarLoading(false);
+      }
+    };
+
+    void load();
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('connected') || url.searchParams.has('error')) {
+      url.searchParams.delete('connected');
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [currentTab]);
+
+  const handleSyncWithGoogleCalendar = async () => {
+    setCalendarBusy(true);
+    try {
+      const redirectUri = new URL(window.location.href);
+      redirectUri.searchParams.delete('connected');
+      redirectUri.searchParams.delete('error');
+      const { url } = await googleCalendarService.getAuthUrl(redirectUri.toString());
+      window.location.href = url;
+    } finally {
+      setCalendarBusy(false);
+    }
+  };
+
+  const handleDisconnectGoogleCalendar = async () => {
+    setCalendarBusy(true);
+    try {
+      await googleCalendarService.disconnect();
+      const status = await googleCalendarService.getStatus();
+      setCalendarConnected(status.connected);
+    } finally {
+      setCalendarBusy(false);
+    }
+  };
 
   const detailsDialogOpen = modal === 'details' && isOpen;
   const editDialogOpen = modal === 'edit' && isOpen;
@@ -312,6 +371,17 @@ export function SessionsPage() {
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-4">
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant={calendarConnected ? 'outline' : 'default'}
+              onClick={calendarConnected ? handleDisconnectGoogleCalendar : handleSyncWithGoogleCalendar}
+              disabled={calendarLoading || calendarBusy}
+              className="flex items-center gap-2"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {calendarConnected ? 'Disconnect Google Calendar' : 'Sync with Google Calendar'}
+            </Button>
+          </div>
           <SessionsCalendar
             coachId={coachFilter}
             locationId={locationFilter}
