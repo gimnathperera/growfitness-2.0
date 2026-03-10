@@ -10,7 +10,6 @@ coverage/
 # Production
 build/
 dist/
-!apps/api/dist/
 *.tsbuildinfo
 
 # Environment variables
