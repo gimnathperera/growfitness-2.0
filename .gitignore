@@ -8,8 +8,9 @@ coverage/
 *.log
 
 # Production
-dist/
 build/
+dist/
+!apps/api/dist/
 *.tsbuildinfo
 
 # Environment variables

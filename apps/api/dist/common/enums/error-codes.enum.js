@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ErrorCode = void 0;
+var ErrorCode;
+(function (ErrorCode) {
+    ErrorCode["UNAUTHORIZED"] = "UNAUTHORIZED";
+    ErrorCode["FORBIDDEN"] = "FORBIDDEN";
+    ErrorCode["INVALID_CREDENTIALS"] = "INVALID_CREDENTIALS";
+    ErrorCode["TOKEN_EXPIRED"] = "TOKEN_EXPIRED";
+    ErrorCode["TOKEN_INVALID"] = "TOKEN_INVALID";
+    ErrorCode["VALIDATION_ERROR"] = "VALIDATION_ERROR";
+    ErrorCode["INVALID_INPUT"] = "INVALID_INPUT";
+    ErrorCode["INVALID_ID"] = "INVALID_ID";
+    ErrorCode["NOT_FOUND"] = "NOT_FOUND";
+    ErrorCode["USER_NOT_FOUND"] = "USER_NOT_FOUND";
+    ErrorCode["KID_NOT_FOUND"] = "KID_NOT_FOUND";
+    ErrorCode["SESSION_NOT_FOUND"] = "SESSION_NOT_FOUND";
+    ErrorCode["INVOICE_NOT_FOUND"] = "INVOICE_NOT_FOUND";
+    ErrorCode["LOCATION_NOT_FOUND"] = "LOCATION_NOT_FOUND";
+    ErrorCode["BANNER_NOT_FOUND"] = "BANNER_NOT_FOUND";
+    ErrorCode["CODE_NOT_FOUND"] = "CODE_NOT_FOUND";
+    ErrorCode["QUIZ_NOT_FOUND"] = "QUIZ_NOT_FOUND";
+    ErrorCode["REPORT_NOT_FOUND"] = "REPORT_NOT_FOUND";
+    ErrorCode["DUPLICATE_EMAIL"] = "DUPLICATE_EMAIL";
+    ErrorCode["DUPLICATE_PHONE"] = "DUPLICATE_PHONE";
+    ErrorCode["INVALID_SESSION_CAPACITY"] = "INVALID_SESSION_CAPACITY";
+    ErrorCode["SESSION_FULL"] = "SESSION_FULL";
+    ErrorCode["INVALID_DATE_RANGE"] = "INVALID_DATE_RANGE";
+    ErrorCode["KID_REGISTRATION_INCOMPLETE"] = "KID_REGISTRATION_INCOMPLETE";
+    ErrorCode["INTERNAL_SERVER_ERROR"] = "INTERNAL_SERVER_ERROR";
+    ErrorCode["DATABASE_ERROR"] = "DATABASE_ERROR";
+})(ErrorCode || (exports.ErrorCode = ErrorCode = {}));
+//# sourceMappingURL=error-codes.enum.js.map
