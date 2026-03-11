@@ -38,7 +38,7 @@ The agent is responsible for:
 * Handling multiple registration flows
 * Session scheduling and approval workflows
 * Dashboard data orchestration per role
-* Notification triggers (WhatsApp / Email)
+* Notification triggers (Email)
 * Invoice and payment visibility
 
 ---
@@ -72,7 +72,7 @@ The agent is responsible for:
 * Does NOT create a parent or kid account
 * If slots are full, parent is added to the waiting list
 * Submission appears in Admin Portal under *Free Session Kids List*
-* Admin selects kids and sends session details via WhatsApp / Email
+* Admin selects kids and sends session details via Email
 * Kids not selected are auto-added to the next free session
 
 ---
@@ -279,7 +279,7 @@ The agent is responsible for:
 
 ## 10. Notifications
 
-* WhatsApp and Email notifications for:
+* Email notifications for:
 
   * Free session confirmations
   * Session changes

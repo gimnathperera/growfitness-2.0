@@ -4,12 +4,11 @@ import { Notification, NotificationSchema } from '../../infra/database/schemas/n
 import { NotificationService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { EmailProvider } from './providers/email.provider';
-import { WhatsAppProvider } from './providers/whatsapp.provider';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }])],
   controllers: [NotificationsController],
-  providers: [NotificationService, EmailProvider, WhatsAppProvider],
+  providers: [NotificationService, EmailProvider],
   exports: [NotificationService],
 })
 export class NotificationsModule {}

@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { EmailProvider } from './providers/email.provider';
-import { WhatsAppProvider } from './providers/whatsapp.provider';
 import { UserDocument } from '../../infra/database/schemas/user.schema';
 import {
   Notification,
@@ -70,40 +69,27 @@ export class NotificationService {
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
     private emailProvider: EmailProvider,
-    private whatsAppProvider: WhatsAppProvider,
     private configService: ConfigService
   ) {}
 
   async sendFreeSessionConfirmation(data: FreeSessionConfirmationData) {
     const message = `Hello ${data.parentName}, your free session request for ${data.kidName} has been confirmed!`;
 
-    await Promise.all([
-      this.emailProvider.send({
-        to: data.email,
-        subject: 'Free Session Confirmation',
-        body: message,
-      }),
-      this.whatsAppProvider.send({
-        to: data.phone,
-        message,
-      }),
-    ]);
+    await this.emailProvider.send({
+      to: data.email,
+      subject: 'Free Session Confirmation',
+      body: message,
+    });
   }
 
   async sendSessionChange(data: SessionChangeData) {
     const message = `Your session has been updated: ${data.changes}`;
 
-    await Promise.all([
-      this.emailProvider.send({
-        to: data.email,
-        subject: 'Session Update',
-        body: message,
-      }),
-      this.whatsAppProvider.send({
-        to: data.phone,
-        message,
-      }),
-    ]);
+    await this.emailProvider.send({
+      to: data.email,
+      subject: 'Session Update',
+      body: message,
+    });
   }
 
   async sendInvoiceUpdate(data: InvoiceUpdateData) {
@@ -113,12 +99,6 @@ export class NotificationService {
         to: data.email,
         subject: 'Invoice Update',
         body: message,
-      });
-    }
-    if (data.phone) {
-      await this.whatsAppProvider.send({
-        to: data.phone,
-        message,
       });
     }
   }
@@ -136,9 +116,6 @@ export class NotificationService {
         })
       );
     }
-    if (data.phone) {
-      promises.push(this.whatsAppProvider.send({ to: data.phone, message }));
-    }
     if (promises.length) await Promise.all(promises);
   }
 
@@ -154,9 +131,6 @@ export class NotificationService {
           body: message,
         })
       );
-    }
-    if (data.phone) {
-      promises.push(this.whatsAppProvider.send({ to: data.phone, message }));
     }
     if (promises.length) await Promise.all(promises);
   }
@@ -174,9 +148,6 @@ export class NotificationService {
         })
       );
     }
-    if (data.phone) {
-      promises.push(this.whatsAppProvider.send({ to: data.phone, message }));
-    }
     if (promises.length) await Promise.all(promises);
   }
 
@@ -192,9 +163,6 @@ export class NotificationService {
           body: message,
         })
       );
-    }
-    if (data.phone) {
-      promises.push(this.whatsAppProvider.send({ to: data.phone, message }));
     }
     if (promises.length) await Promise.all(promises);
   }

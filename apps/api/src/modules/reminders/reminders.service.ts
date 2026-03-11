@@ -104,11 +104,11 @@ export class RemindersService {
   }
 
   /**
-   * 25th of each month at 11:00 AM: month-end payment reminder (WhatsApp + email) to parents with PENDING invoices.
+   * 25th of each month at 11:00 AM: month-end payment reminder (email) to parents with PENDING invoices.
    */
   @Cron('0 11 25 * *', { name: 'month-end-payment-reminder' })
   async sendMonthEndPaymentReminder() {
-    this.logger.log('Running month-end payment reminder (parents WhatsApp/email)');
+    this.logger.log('Running month-end payment reminder (parents email)');
     try {
       const invoices = await this.invoiceModel
         .find({
