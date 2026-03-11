@@ -1,20 +1,21 @@
 # Grow Fitness Platform
 
-Monorepo for Grow Fitness Admin Portal and API.
+Monorepo for **Grow Fitness** – Admin Portal, Client Portal, and API.
 
 ## Structure
 
 ```
 /apps
-  /api              # NestJS backend
-  /admin-web        # React 19 + Vite admin portal
-  /client-web       # Stub (not implemented yet)
+  /api              # NestJS backend (deployed to GCP Cloud Run)
+  /admin-web        # React 19 + Vite admin portal (deployed to Vercel)
+  /client-web       # React 19 + Vite client portal (deployed to Vercel)
 /packages
-  /shared-types     # TypeScript types & enums
-  /shared-schemas   # Zod validation schemas
-/tooling
-  /eslint-config    # Shared ESLint config
-  /tsconfig         # Shared TypeScript configs
+  /shared-types     # TypeScript types & enums (dual CJS/ESM)
+  /shared-schemas   # Zod validation schemas (dual CJS/ESM)
+/scripts
+  deploy-api.sh     # One-command API deployment to GCP Cloud Run
+  gcp-enable-apis.sh # Enable required GCP APIs
+  get-api-url.sh    # Retrieve the live API URL
 ```
 
 ## Tech Stack
@@ -23,98 +24,169 @@ Monorepo for Grow Fitness Admin Portal and API.
 - **Frontend**: React 19 + Vite + Shadcn UI + TypeScript + React Router
 - **Validation**: Zod (shared schemas)
 - **Package Manager**: pnpm workspaces
+- **Deployment**: GCP Cloud Run (API) · Vercel (Frontends)
 
-## Setup
+---
 
-1. Install dependencies:
+## Local Development
+
+### 1. Install dependencies
+
 ```bash
 pnpm install
 ```
 
-2. Setup environment variables:
-- Copy `.env.example` to `.env` in `apps/api`
-- Configure MongoDB Atlas connection string
-- Set JWT secrets
+### 2. Set up environment variables
 
-3. Seed admin user:
 ```bash
-cd apps/api
-pnpm seed
+cp apps/api/.env.example apps/api/.env
+# Edit apps/api/.env with your MongoDB URI, JWT secrets, etc.
 ```
 
-4. Start development servers:
-```bash
-# Backend (port 3000)
-cd apps/api
-pnpm dev
+### 3. Seed admin user
 
-# Frontend (port 5173)
-cd apps/admin-web
-pnpm dev
+```bash
+cd apps/api && pnpm seed
 ```
 
-## Support Chat (client-web)
+### 4. Start dev servers
 
-The client app includes a floating support chat widget (bottom-right) that answers questions using repo-based knowledge. The backend calls OpenAI; the API key is never exposed to the frontend.
+```bash
+# API (port 3001)
+cd apps/api && pnpm dev
 
-- **Env**: Set `OPENAI_API_KEY` in `apps/api/.env` or `apps/api/.env.local`. See `apps/api/.env.example`. The frontend uses `VITE_API_BASE_URL` (no new vars).
-- **Knowledge**: Edit Markdown/JSON in `apps/api/src/knowledge/` (`business.json`, `procedures.md`, `faq.md`, `payments.md`). Restart the API to reload.
-- **Run locally**: Start the API (`cd apps/api && pnpm dev`), then start client-web (`cd apps/client-web && pnpm dev`). Open the app and use the chat button to test.
+# Admin Web (port 5173)
+cd apps/admin-web && pnpm dev
 
-## Deployment
+# Client Web (port 5174)
+cd apps/client-web && pnpm dev
+```
 
-See `deploy/README.md` for Docker Compose + Nginx instructions to run the API and admin web on an AWS host.
+---
 
-## Completed Features
+## API Deployment (GCP Cloud Run)
 
-### Backend
-- ✅ Monorepo structure with pnpm workspaces
-- ✅ NestJS API with MongoDB Atlas connection
-- ✅ All data models (User, Kid, Session, Requests, Invoices, Locations, Banners, AuditLog)
-- ✅ JWT authentication with refresh tokens
-- ✅ RBAC guards (Admin-only routes)
-- ✅ All API endpoints (auth, users, kids, sessions, requests, invoices, locations, banners, dashboard, audit)
-- ✅ Stub modules (codes, resources, quizzes, crm, reports)
-- ✅ Notification service (Email & WhatsApp - mocked in dev)
-- ✅ Audit logging
-- ✅ Error handling with consistent error codes
-- ✅ Seed script for admin user
-- ✅ Basic test setup
+The API is deployed as a Docker container to **Google Cloud Run**.
 
-### Frontend
-- ✅ React 19 + Vite setup
-- ✅ React Router configuration
-- ✅ TanStack Query setup
-- ✅ Auth context and protected routes
-- ✅ Layout with sidebar navigation
-- ✅ All route pages (stubs for future implementation)
-- ✅ API service layer
-- ✅ TypeScript strict mode
+### Live URLs
 
-## Next Steps
+| Resource | URL                                                           |
+| -------- | ------------------------------------------------------------- |
+| API Base | `https://grow-api-69985257687.us-central1.run.app/api`        |
+| Swagger  | `https://grow-api-69985257687.us-central1.run.app/api/docs`   |
+| Health   | `https://grow-api-69985257687.us-central1.run.app/api/health` |
 
-The foundation is complete. Remaining work:
+### Prerequisites
 
-1. **UI Components**: Install and configure Shadcn UI components
-2. **Data Tables**: Implement TanStack Table wrappers
-3. **Forms**: Build form components with React Hook Form + Zod
-4. **Pages**: Implement full functionality for each admin module
-5. **Charts**: Add charts for dashboard (using Recharts)
+- **Google Cloud SDK (gcloud)**: `brew install google-cloud-sdk` (macOS) or [install guide](https://cloud.google.com/sdk/docs/install)
+- **GCP project with billing enabled**
+- **APIs enabled**: Cloud Run, Cloud Build, Artifact Registry
+
+```bash
+# One-time: enable required APIs
+chmod +x scripts/gcp-enable-apis.sh
+./scripts/gcp-enable-apis.sh
+```
+
+### Deploy
+
+From the **repository root**:
+
+```bash
+sh scripts/deploy-api.sh
+```
+
+This will:
+
+1. Build the Docker image via Cloud Build
+2. Push it to Artifact Registry
+3. Read all environment variables from `apps/api/.env`
+4. Deploy to Cloud Run with those variables
+5. Print the service URL
+
+### Configuration
+
+| Variable         | Default         | Description                                |
+| ---------------- | --------------- | ------------------------------------------ |
+| `GCP_PROJECT_ID` | `gcloud config` | GCP project ID                             |
+| `GCP_REGION`     | `us-central1`   | Region for Artifact Registry and Cloud Run |
+| `SERVICE_NAME`   | `grow-api`      | Cloud Run service name                     |
+
+Example with overrides:
+
+```bash
+GCP_REGION=europe-west1 sh scripts/deploy-api.sh
+```
+
+### Environment Variables
+
+The deploy script automatically reads all variables from `apps/api/.env` and passes them to Cloud Run. It:
+
+- Filters out `PORT` (reserved by Cloud Run)
+- Uses a custom delimiter to safely handle commas in values like `CORS_ORIGIN`
+
+Required variables (see `apps/api/.env.example` for full list):
+
+| Variable             | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| `MONGODB_URI`        | MongoDB Atlas connection string                  |
+| `JWT_SECRET`         | JWT signing secret                               |
+| `JWT_REFRESH_SECRET` | JWT refresh token secret                         |
+| `OPENAI_API_KEY`     | OpenAI API key for support chat                  |
+| `CORS_ORIGIN`        | Comma-separated list of allowed frontend origins |
+
+### Retrieve the API URL
+
+```bash
+sh scripts/get-api-url.sh
+# or
+gcloud run services describe grow-api --region=us-central1 --format='value(status.url)'
+```
+
+### CI/CD (GitHub Actions)
+
+A GitHub Actions workflow (`.github/workflows/deploy-api-cloudrun.yml`) deploys the API on pushes to `main`.
+
+**Required GitHub Secrets:**
+
+- `GCP_PROJECT_ID` – your GCP project ID
+- `GCP_SA_KEY` – JSON key of a service account with:
+  - Cloud Build Editor
+  - Cloud Run Admin
+  - Service Account User
+
+---
+
+## Frontend Deployment (Vercel)
+
+Both `admin-web` and `client-web` are deployed to Vercel.
+
+| App        | URL                                     |
+| ---------- | --------------------------------------- |
+| Admin Web  | `https://admin-growfitness.vercel.app`  |
+| Client Web | `https://client-growfitness.vercel.app` |
+
+---
+
+## Support Chat
+
+The client app includes a floating support chat widget powered by OpenAI.
+
+- **Env**: Set `OPENAI_API_KEY` in `apps/api/.env`
+- **Knowledge**: Edit files in `apps/api/src/knowledge/` (`business.json`, `procedures.md`, `faq.md`, `payments.md`). Restart the API to reload.
+
+---
 
 ## API Endpoints
 
-All endpoints are prefixed with `/api`:
+All endpoints are prefixed with `/api`. Full Swagger documentation is available at `/api/docs`.
 
-- `POST /api/auth/login` - Admin login
-- `POST /api/auth/refresh` - Refresh token
-- `GET /api/users/parents` - List parents
-- `GET /api/users/coaches` - List coaches
-- `GET /api/dashboard/stats` - Dashboard statistics
-- ... (see plan for full list)
+Key endpoints:
 
-## Notes
-
-- WhatsApp provider is mocked in development (logs to console)
-- Email provider is mocked in development (logs to console)
-- First admin user created via seed script
-- All routes require admin authentication
+- `POST /api/auth/login` – Login
+- `POST /api/auth/refresh` – Refresh token
+- `GET /api/users/parents` – List parents
+- `GET /api/users/coaches` – List coaches
+- `GET /api/dashboard/stats` – Dashboard stats
+- `GET /api/sessions/free` – List free sessions (public)
+- `GET /api/health` – Health check
