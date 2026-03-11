@@ -105,7 +105,7 @@ Most endpoints require JWT Bearer token. Roles: ADMIN, PARENT, COACH (varies by 
   });
 
   const port = configService.get<number>('PORT', 3000);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: http://localhost:${port}/api`);
   console.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
 }

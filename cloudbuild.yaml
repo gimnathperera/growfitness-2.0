@@ -1,0 +1,42 @@
+# Build NestJS API image from monorepo root (context .) using apps/api/Dockerfile.
+# Substitutions: _REGION, _REPO, _IMAGE, _TAG (default latest; use SHORT_SHA when run from Cloud Build trigger).
+# CLI: gcloud builds submit --config=cloudbuild.yaml --substitutions=_REGION=...,_REPO=...,_IMAGE=...
+# CI:  pass _TAG=${{ github.sha }} for commit-specific tags.
+
+substitutions:
+  _REGION: us-central1
+  _REPO: grow-api
+  _IMAGE: api
+  _TAG: latest
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build
+    args:
+      - 'build'
+      - '-f'
+      - 'apps/api/Dockerfile'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push
+    waitFor: ['build']
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-latest
+    waitFor: ['build']
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:latest'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -14,16 +14,23 @@ COPY packages/shared-schemas/package.json packages/shared-schemas/package.json
 RUN pnpm install --frozen-lockfile --filter @grow-fitness/api...
 
 FROM deps AS build
+ENV NODE_OPTIONS="--max_old_space_size=4096"
 COPY . .
 RUN pnpm --filter @grow-fitness/api... build
 
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/apps/api/dist ./dist
-COPY --from=build /app/apps/api/package.json ./package.json
-COPY --from=build /app/apps/api/scripts ./scripts
+# Root node_modules (pnpm store) - required for apps/api symlinks to resolve
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+COPY --from=build /app/apps/api/scripts ./apps/api/scripts
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/packages ./packages
-EXPOSE 3000
+# Knowledge base files required by SupportChatService at runtime
+COPY --from=build /app/apps/api/src/knowledge ./apps/api/src/knowledge
+
+WORKDIR /app/apps/api
+EXPOSE 8080
 CMD ["node", "dist/main"]
