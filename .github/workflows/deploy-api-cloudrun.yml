@@ -50,23 +50,38 @@ jobs:
             .
 
       - name: Deploy to Cloud Run
-        run: |
-          IMAGE_URI="${{ env.REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image="$IMAGE_URI" \
-            --region=${{ env.REGION }} \
-            --platform=managed \
-            --allow-unauthenticated \
-            --port=8080 \
-            --min-instances=0 \
-            --max-instances=10 \
-            --memory=512Mi \
-            --cpu=1 \
-            --project="${{ steps.auth.outputs.project_id }}" \
-            --set-env-vars="MONGODB_URI=${{ secrets.MONGODB_URI }},JWT_SECRET=${{ secrets.JWT_SECRET }},JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }},JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }},JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }},PASSWORD_RESET_TOKEN_EXPIRY=${{ secrets.PASSWORD_RESET_TOKEN_EXPIRY }},CORS_ORIGIN=${{ secrets.CORS_ORIGIN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},GOOGLE_CALENDAR_REDIRECT_URI=${{ secrets.GOOGLE_CALENDAR_REDIRECT_URI }},GOOGLE_OAUTH_STATE_SECRET=${{ secrets.GOOGLE_OAUTH_STATE_SECRET }},EMAIL_ENABLED=${{ secrets.EMAIL_ENABLED }},SMTP_HOST=${{ secrets.SMTP_HOST }},SMTP_PORT=${{ secrets.SMTP_PORT }},SMTP_USER=${{ secrets.SMTP_USER }},SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }},SMTP_FROM=${{ secrets.SMTP_FROM }},WHATSAPP_DEFAULT_COUNTRY_CODE=${{ secrets.WHATSAPP_DEFAULT_COUNTRY_CODE }},TEXTLK_ENABLED=${{ secrets.TEXTLK_ENABLED }},TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }},TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}"
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/${{ env.REPO }}/${{ env.IMAGE }}:latest
+          region: ${{ env.REGION }}
+          flags: "--allow-unauthenticated --port=8080 --min-instances=0 --max-instances=10 --memory=512Mi --cpu=1"
+          env_vars: |
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
+            JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }}
+            PASSWORD_RESET_TOKEN_EXPIRY=${{ secrets.PASSWORD_RESET_TOKEN_EXPIRY }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_CALENDAR_REDIRECT_URI=${{ secrets.GOOGLE_CALENDAR_REDIRECT_URI }}
+            GOOGLE_OAUTH_STATE_SECRET=${{ secrets.GOOGLE_OAUTH_STATE_SECRET }}
+            EMAIL_ENABLED=${{ secrets.EMAIL_ENABLED }}
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+            SMTP_FROM=${{ secrets.SMTP_FROM }}
+            WHATSAPP_DEFAULT_COUNTRY_CODE=${{ secrets.WHATSAPP_DEFAULT_COUNTRY_CODE }}
+            TEXTLK_ENABLED=${{ secrets.TEXTLK_ENABLED }}
+            TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }}
+            TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}
 
       - name: Output service URL
         run: |
-          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --project=${{ steps.auth.outputs.project_id }} --format='value(status.url)')
-          echo "API URL: $URL"
-          echo "BASE_URL=$URL" >> $GITHUB_OUTPUT
+          echo "API URL: ${{ steps.deploy.outputs.url }}"
+          echo "BASE_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_OUTPUT
