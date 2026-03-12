@@ -62,7 +62,8 @@ jobs:
             --max-instances=10 \
             --memory=512Mi \
             --cpu=1 \
-            --project="${{ steps.auth.outputs.project_id }}"
+            --project="${{ steps.auth.outputs.project_id }}" \
+            --set-env-vars="MONGODB_URI=${{ secrets.MONGODB_URI }},JWT_SECRET=${{ secrets.JWT_SECRET }},JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }},JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }},JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }},PASSWORD_RESET_TOKEN_EXPIRY=${{ secrets.PASSWORD_RESET_TOKEN_EXPIRY }},CORS_ORIGIN=${{ secrets.CORS_ORIGIN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},GOOGLE_CALENDAR_REDIRECT_URI=${{ secrets.GOOGLE_CALENDAR_REDIRECT_URI }},GOOGLE_OAUTH_STATE_SECRET=${{ secrets.GOOGLE_OAUTH_STATE_SECRET }},EMAIL_ENABLED=${{ secrets.EMAIL_ENABLED }},SMTP_HOST=${{ secrets.SMTP_HOST }},SMTP_PORT=${{ secrets.SMTP_PORT }},SMTP_USER=${{ secrets.SMTP_USER }},SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }},SMTP_FROM=${{ secrets.SMTP_FROM }},WHATSAPP_DEFAULT_COUNTRY_CODE=${{ secrets.WHATSAPP_DEFAULT_COUNTRY_CODE }},TEXTLK_ENABLED=${{ secrets.TEXTLK_ENABLED }},TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }},TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}"
 
       - name: Output service URL
         run: |
