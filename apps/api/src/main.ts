@@ -21,10 +21,14 @@ async function bootstrap() {
   );
 
   // CORS - use CORS_ORIGIN from env, or allow all if unset (e.g. local dev)
+  // NOTE: Use pipe (|) as separator in CORS_ORIGIN env var.
+  // Commas cannot be used because the Cloud Run deployment action uses commas
+  // to separate multiple env vars, which would break comma-separated values.
+  // Example secret value: https://admin-growfitness.vercel.app|https://client-growfitness.vercel.app
   const corsOrigin = configService.get<string>('CORS_ORIGIN', '');
   const allowedOrigins = corsOrigin
     ? corsOrigin
-        .split(',')
+        .split('|')
         .map(o => o.trim())
         .filter(Boolean)
     : true;
