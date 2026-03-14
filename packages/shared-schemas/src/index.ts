@@ -6,6 +6,7 @@ import {
   BannerTargetAudience,
   QuestionType,
   ReportType,
+  EmploymentType,
 } from '@grow-fitness/shared-types';
 
 // Auth Schemas
@@ -74,11 +75,42 @@ export const UpdateParentSchema = z.object({
 
 export type UpdateParentDto = z.infer<typeof UpdateParentSchema>;
 
+const AvailableTimeSchema = z.object({
+  dayOfWeek: z.string().min(1),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+});
+
+function flattenNestedArray(value: unknown): unknown[] {
+  if (!Array.isArray(value)) {
+    return [value];
+  }
+
+  return value.flatMap(item => flattenNestedArray(item));
+}
+
+const AvailableTimesSchema = z
+  .preprocess(value => {
+    if (!Array.isArray(value)) {
+      return value;
+    }
+
+    return flattenNestedArray(value);
+  }, z.array(AvailableTimeSchema))
+  .optional();
+
 export const CreateCoachSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Phone is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  dateOfBirth: z.string().optional(),
+  photoUrl: z.union([z.string().url(), z.literal('')]).optional(),
+  homeAddress: z.string().optional(),
+  school: z.string().optional(),
+  availableTimes: AvailableTimesSchema,
+  employmentType: z.nativeEnum(EmploymentType).optional(),
+  cvUrl: z.union([z.string().url(), z.literal('')]).optional(),
 });
 
 export type CreateCoachDto = z.infer<typeof CreateCoachSchema>;
@@ -88,6 +120,13 @@ export const UpdateCoachSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().min(1).optional(),
   status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
+  dateOfBirth: z.string().optional(),
+  photoUrl: z.union([z.string().url(), z.literal('')]).optional(),
+  homeAddress: z.string().optional(),
+  school: z.string().optional(),
+  availableTimes: AvailableTimesSchema,
+  employmentType: z.nativeEnum(EmploymentType).optional(),
+  cvUrl: z.union([z.string().url(), z.literal('')]).optional(),
 });
 
 export type UpdateCoachDto = z.infer<typeof UpdateCoachSchema>;

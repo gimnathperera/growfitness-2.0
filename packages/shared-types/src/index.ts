@@ -69,6 +69,14 @@ export enum ReportStatus {
   FAILED = 'FAILED',
 }
 
+export enum EmploymentType {
+  FULL_TIME = 'FULL_TIME',
+  PART_TIME = 'PART_TIME',
+  CONTRACT = 'CONTRACT',
+  VOLUNTEER = 'VOLUNTEER',
+  OTHER = 'OTHER',
+}
+
 export enum NotificationType {
   FREE_SESSION_REQUEST = 'FREE_SESSION_REQUEST',
   RESCHEDULE_REQUEST = 'RESCHEDULE_REQUEST',
@@ -115,9 +123,22 @@ export interface ParentProfile {
   location?: string;
 }
 
+export interface CoachProfileAvailableTime {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface CoachProfile {
   name: string;
-  // Add more coach-specific fields as needed
+  dateOfBirth?: string;
+  photoUrl?: string;
+  contactPhone?: string;
+  homeAddress?: string;
+  school?: string;
+  availableTimes?: CoachProfileAvailableTime[];
+  employmentType?: EmploymentType;
+  cvUrl?: string;
 }
 
 export interface Kid {
@@ -355,3 +376,23 @@ export interface PaginatedResponse<T> {
   limit: number;
   totalPages: number;
 }
+
+/**
+ * Default export for bundler interop (e.g. Vite pre-bundle when resolving from source).
+ * Prefer named imports in app code.
+ */
+export default {
+  UserRole,
+  UserStatus,
+  SessionType,
+  SessionStatus,
+  RequestStatus,
+  InvoiceType,
+  InvoiceStatus,
+  BannerTargetAudience,
+  QuestionType,
+  ReportType,
+  ReportStatus,
+  EmploymentType,
+  NotificationType,
+};

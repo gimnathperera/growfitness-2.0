@@ -5,6 +5,7 @@ import { googleCalendarService } from '@/services/google-calendar.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
@@ -21,6 +22,12 @@ import {
   Calendar,
   Loader2,
   Save,
+  MapPin,
+  Building2,
+  Briefcase,
+  FileText,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 import type {
@@ -28,12 +35,16 @@ import type {
   UpdateCoachDto,
 } from '@grow-fitness/shared-schemas';
 import { useAuth } from '@/contexts/useAuth';
+import type { CoachProfileAvailableTime } from '@grow-fitness/shared-types';
 
 type FormState = {
   firstName: string;
   lastName: string;
   phone: string;
   address?: string;
+  homeAddress?: string;
+  photoUrl?: string;
+  availableTimes?: CoachProfileAvailableTime[];
 };
 
 export default function ProfilePage() {
@@ -50,6 +61,7 @@ export default function ProfilePage() {
     phone: '',
     address: '',
   });
+  const [coachData, setCoachData] = useState<Awaited<ReturnType<typeof usersService.getCoachById>> | null>(null);
 
   const isGmail = Boolean(
     user?.email && /@(gmail|googlemail)\.com$/i.test(user.email)
@@ -77,13 +89,24 @@ export default function ProfilePage() {
 
         if (user.role === 'COACH') {
           const data = await usersService.getCoachById(user.id);
+          setCoachData(data);
           const nameParts = data.coachProfile?.name?.split(' ') || [];
 
           setForm({
             firstName: nameParts[0] || '',
             lastName: nameParts.slice(1).join(' ') || '',
             phone: data.phone || '',
+            homeAddress: data.coachProfile?.homeAddress ?? '',
+            photoUrl: data.coachProfile?.photoUrl ?? '',
+            availableTimes:
+              data.coachProfile?.availableTimes?.map((t) => ({
+                dayOfWeek: t.dayOfWeek,
+                startTime: t.startTime,
+                endTime: t.endTime,
+              })) ?? [],
           });
+        } else {
+          setCoachData(null);
         }
       } catch (error) {
         console.error('Failed to load profile', error);
@@ -128,9 +151,34 @@ export default function ProfilePage() {
   /**
    * Input handler
    */
-  const onChange = (key: keyof FormState, value: string) => {
+  const onChange = (key: keyof FormState, value: string | CoachProfileAvailableTime[] | undefined) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const addAvailableSlot = () => {
+    setForm((prev) => ({
+      ...prev,
+      availableTimes: [...(prev.availableTimes ?? []), { dayOfWeek: 'Monday', startTime: '09:00', endTime: '17:00' }],
+    }));
+  };
+
+  const removeAvailableSlot = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      availableTimes: prev.availableTimes?.filter((_, i) => i !== index) ?? [],
+    }));
+  };
+
+  const updateAvailableSlot = (index: number, field: keyof CoachProfileAvailableTime, value: string) => {
+    setForm((prev) => {
+      const list = [...(prev.availableTimes ?? [])];
+      if (!list[index]) return prev;
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, availableTimes: list };
+    });
+  };
+
+  const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   /**
    * UPDATE ONLY
@@ -154,8 +202,15 @@ export default function ProfilePage() {
         const dto: UpdateCoachDto = {
           name: `${form.firstName} ${form.lastName}`.trim(),
           phone: form.phone,
+          homeAddress: form.homeAddress || undefined,
+          photoUrl: form.photoUrl || undefined,
+          availableTimes:
+            form.availableTimes && form.availableTimes.length > 0
+              ? form.availableTimes
+              : undefined,
         };
-        await usersService.updateCoach(user.id, dto);
+        const updated = await usersService.updateCoach(user.id, dto);
+        setCoachData(updated);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -287,7 +342,129 @@ export default function ProfilePage() {
                   />
                 </div>
               )}
+
+              {user.role === 'COACH' && (
+                <>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" /> Home address
+                    </Label>
+                    <Textarea
+                      rows={2}
+                      value={form.homeAddress ?? ''}
+                      onChange={(e) => onChange('homeAddress', e.target.value)}
+                      placeholder="Full address"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Photo URL</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://..."
+                      value={form.photoUrl ?? ''}
+                      onChange={(e) => onChange('photoUrl', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Available times</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={addAvailableSlot}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add slot
+                      </Button>
+                    </div>
+                    {(form.availableTimes ?? []).map((slot, index) => (
+                      <div key={index} className="flex gap-2 items-center flex-wrap">
+                        <select
+                          className="flex h-9 w-[130px] rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                          value={slot.dayOfWeek}
+                          onChange={(e) => updateAvailableSlot(index, 'dayOfWeek', e.target.value)}
+                        >
+                          {DAYS_OF_WEEK.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                        <Input
+                          type="time"
+                          className="w-28"
+                          value={slot.startTime}
+                          onChange={(e) => updateAvailableSlot(index, 'startTime', e.target.value)}
+                        />
+                        <Input
+                          type="time"
+                          className="w-28"
+                          value={slot.endTime}
+                          onChange={(e) => updateAvailableSlot(index, 'endTime', e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeAvailableSlot(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
+
+            {user.role === 'COACH' && coachData?.coachProfile && (
+              <div className="border-t pt-6 grid gap-4 md:grid-cols-2">
+                <h4 className="text-sm font-medium col-span-2">Read-only (set by admin)</h4>
+                {coachData.coachProfile.dateOfBirth && (
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">Date of birth</Label>
+                    <Input
+                      disabled
+                      value={
+                        typeof coachData.coachProfile.dateOfBirth === 'string'
+                          ? new Date(coachData.coachProfile.dateOfBirth).toLocaleDateString()
+                          : (coachData.coachProfile.dateOfBirth as Date).toLocaleDateString()
+                      }
+                    />
+                  </div>
+                )}
+                {coachData.coachProfile.school && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-muted-foreground">
+                      <Building2 className="h-4 w-4" /> School
+                    </Label>
+                    <Input disabled value={coachData.coachProfile.school} />
+                  </div>
+                )}
+                {coachData.coachProfile.employmentType && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-muted-foreground">
+                      <Briefcase className="h-4 w-4" /> Employment type
+                    </Label>
+                    <Input
+                      disabled
+                      value={coachData.coachProfile.employmentType.replace(/_/g, ' ')}
+                    />
+                  </div>
+                )}
+                {coachData.coachProfile.cvUrl && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-muted-foreground">
+                      <FileText className="h-4 w-4" /> CV
+                    </Label>
+                    <a
+                      href={coachData.coachProfile.cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline text-sm"
+                    >
+                      View CV
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
 
             <Button
               onClick={onSubmit}

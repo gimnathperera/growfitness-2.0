@@ -7,8 +7,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@shared/types': path.resolve(__dirname, '../../packages/shared-types/src'),
-      '@shared/schemas': path.resolve(__dirname, '../../packages/shared-schemas/src'),
+      '@shared/types': path.resolve(__dirname, '../../packages/shared-types/src/index.ts'),
+      '@shared/schemas': path.resolve(__dirname, '../../packages/shared-schemas/src/index.ts'),
+      // Resolve workspace packages to the TS entrypoint to avoid stale generated JS in src/.
+      '@grow-fitness/shared-types': path.resolve(__dirname, '../../packages/shared-types/src/index.ts'),
+      '@grow-fitness/shared-schemas': path.resolve(__dirname, '../../packages/shared-schemas/src/index.ts'),
     },
   },
   optimizeDeps: {
@@ -24,4 +27,3 @@ export default defineConfig({
     },
   },
 });
-

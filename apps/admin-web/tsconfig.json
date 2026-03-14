@@ -19,10 +19,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/types": ["../../packages/shared-types/src"],
-      "@shared/schemas": ["../../packages/shared-schemas/src"],
-      "@grow-fitness/shared-types": ["../../packages/shared-types/src"],
-      "@grow-fitness/shared-schemas": ["../../packages/shared-schemas/src"]
+      "@shared/types": ["../../packages/shared-types/src/index.ts"],
+      "@shared/schemas": ["../../packages/shared-schemas/src/index.ts"],
+      "@grow-fitness/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@grow-fitness/shared-schemas": ["../../packages/shared-schemas/src/index.ts"]
     }
   },
   "include": ["src"],
