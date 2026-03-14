@@ -7,12 +7,12 @@ export const CALENDAR_STYLES = `
   --fc-button-border-color: #dadce0;
   --fc-button-hover-bg-color: #f1f3f4;
   --fc-button-hover-border-color: #dadce0;
-  --fc-button-active-bg-color: #e8f0fe;
+  --fc-button-active-bg-color: #e6f7f2;
   --fc-button-active-border-color: #dadce0;
   --fc-button-text-color: #3c4043;
   --fc-border-color: #e8eaed;
   --fc-today-bg-color: transparent;
-  --fc-now-indicator-color: #ea4335;
+  --fc-now-indicator-color: #23B685;
   font-family: 'Google Sans', Roboto, Arial, sans-serif;
 }
 .fc .fc-toolbar-title {
@@ -31,8 +31,8 @@ export const CALENDAR_STYLES = `
 }
 .fc .fc-button-primary:not(:disabled):active, 
 .fc .fc-button-primary:not(:disabled).fc-button-active {
-  color: #1a73e8;
-  background-color: #e8f0fe;
+  color: #23B685;
+  background-color: #e6f7f2;
 }
 .fc-theme-standard td, .fc-theme-standard th {
   border-color: #e8eaed;
@@ -50,8 +50,10 @@ export const CALENDAR_STYLES = `
   font-weight: 500;
   text-decoration: none !important;
 }
-.fc-day-today .fc-col-header-cell-cushion {
-  color: #1a73e8;
+.fc .fc-day-today .fc-col-header-cell-cushion,
+.fc th.fc-day-today .fc-col-header-cell-cushion,
+.fc .fc-day-today a.fc-col-header-cell-cushion {
+  color: #23B685 !important;
 }
 .day-name {
   text-transform: uppercase;
@@ -66,9 +68,10 @@ export const CALENDAR_STYLES = `
   justify-content: center;
   border-radius: 50%;
 }
+.fc .fc-day-today .day-number,
 .fc-day-today .day-number {
-  background-color: #1a73e8;
-  color: white;
+  background-color: #23B685 !important;
+  color: white !important;
 }
 .fc-timegrid-slot {
   height: 48px !important;

@@ -237,7 +237,8 @@ export default function SessionDetailsDialog({
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <h2 className="text-lg sm:text-2xl font-semibold truncate">
-                {formatSessionType(displaySession.type)} Session
+                {displaySession.title?.trim() ||
+                  `${formatSessionType(displaySession.type)} Session`}
               </h2>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">

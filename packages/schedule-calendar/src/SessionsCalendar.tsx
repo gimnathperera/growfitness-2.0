@@ -72,7 +72,7 @@ export function SessionsCalendar({
               width: 32,
               height: 32,
               border: '2px solid #e8eaed',
-              borderTopColor: '#1a73e8',
+              borderTopColor: '#23B685',
               borderRadius: '50%',
               animation: 'schedule-calendar-spin 0.8s linear infinite',
             }}

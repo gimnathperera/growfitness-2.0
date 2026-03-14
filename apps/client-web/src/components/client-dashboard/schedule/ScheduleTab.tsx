@@ -1,14 +1,19 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { addDays, endOfDay, startOfDay, startOfWeek, endOfWeek } from 'date-fns';
 import type { PaginatedResponse, Session } from '@grow-fitness/shared-types';
 import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar as CalendarIcon, Plus, List, CalendarDays } from 'lucide-react';
 import { sessionsService } from '@/services/sessions.service';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useKid } from '@/contexts/kid/useKid';
 import BookSessionModal from './BookSessionModal';
+import { formatDateTime } from '@/lib/formatters';
+
+type ScheduleView = 'list' | 'calendar';
 
 const getSessionLabel = (session: Session): string => {
   switch (session.type) {
@@ -21,14 +26,44 @@ const getSessionLabel = (session: Session): string => {
   }
 };
 
+const LIST_VIEW_DAYS = 90;
+
 export default function ScheduleTab() {
   const { selectedKid } = useKid();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [view, setView] = useState<ScheduleView>('list');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [openBooking, setOpenBooking] = useState(false);
 
+  const listRange = useMemo(() => {
+    const start = startOfDay(new Date());
+    const end = endOfDay(addDays(new Date(), LIST_VIEW_DAYS));
+    return { start: start.toISOString(), end: end.toISOString() };
+  }, []);
+
+  const calendarInitialRange = useMemo(() => {
+    const start = startOfWeek(new Date(), { weekStartsOn: 0 });
+    const end = endOfWeek(new Date(), { weekStartsOn: 0 });
+    return { start: start.toISOString(), end: end.toISOString() };
+  }, []);
+
+  useEffect(() => {
+    if (view === 'calendar' && !dateRange) {
+      setDateRange(calendarInitialRange);
+    }
+  }, [view, dateRange, calendarInitialRange]);
+
+  const effectiveRange =
+    view === 'list' ? listRange : dateRange ?? calendarInitialRange;
+
   const { data: sessionsData, isLoading } = useApiQuery<PaginatedResponse<Session>>(
-    ['sessions', selectedKid?.id ?? '', dateRange?.start ?? '', dateRange?.end ?? ''],
+    [
+      'sessions',
+      selectedKid?.id ?? '',
+      view,
+      effectiveRange.start,
+      effectiveRange.end,
+    ],
     () => {
       if (!selectedKid?.id) {
         return Promise.resolve({
@@ -41,19 +76,29 @@ export default function ScheduleTab() {
       }
       return sessionsService.getSessions(1, 100, {
         kidId: selectedKid.id,
-        startDate: dateRange!.start,
-        endDate: dateRange!.end,
+        startDate: effectiveRange.start,
+        endDate: effectiveRange.end,
       });
     },
-    { enabled: Boolean(selectedKid?.id && dateRange) }
+    { enabled: Boolean(selectedKid?.id) }
   );
 
+  const sessions = sessionsData?.data ?? [];
+
   const events = useMemo(() => {
-    const sessions = sessionsData?.data ?? [];
     return sessions.map((session) =>
-      sessionToCalendarEvent(session, { formatTitle: getSessionLabel })
+      sessionToCalendarEvent(session, {
+        formatTitle: (s) => s.title?.trim() || getSessionLabel(s),
+      })
     );
-  }, [sessionsData]);
+  }, [sessions]);
+
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort(
+      (a, b) =>
+        new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+    );
+  }, [sessions]);
 
   return (
     <>
@@ -71,12 +116,61 @@ export default function ScheduleTab() {
           )}
         </CardHeader>
         <CardContent>
-          <SessionsCalendar
-            events={events}
-            onSessionClick={setSelectedSession}
-            onDatesSet={(start, end) => setDateRange({ start, end })}
-            loading={isLoading}
-          />
+          <Tabs value={view} onValueChange={(v) => setView(v as ScheduleView)}>
+            <TabsList className="mb-4 grid w-full max-w-[240px] grid-cols-2">
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List className="h-4 w-4" />
+                List
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Calendar
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="list" className="mt-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                  Loading sessions…
+                </div>
+              ) : sortedSessions.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-muted-foreground/25 bg-muted/30 py-12 text-center text-muted-foreground text-sm">
+                  No upcoming sessions in the next {LIST_VIEW_DAYS} days.
+                </div>
+              ) : (
+                <ul className="divide-y divide-border rounded-lg border border-border">
+                  {sortedSessions.map((session) => (
+                    <li key={session.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSession(session)}
+                        className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none"
+                      >
+                        <span className="min-w-[140px] text-sm text-muted-foreground">
+                          {formatDateTime(session.dateTime)}
+                        </span>
+                        <span className="flex-1 font-medium text-foreground">
+                          {session.title?.trim() || getSessionLabel(session)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {session.duration} min
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </TabsContent>
+
+            <TabsContent value="calendar" className="mt-0">
+              <SessionsCalendar
+                events={events}
+                onSessionClick={setSelectedSession}
+                onDatesSet={(start, end) => setDateRange({ start, end })}
+                loading={isLoading}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
