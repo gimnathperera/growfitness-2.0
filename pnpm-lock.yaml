@@ -44,6 +44,9 @@ importers:
       '@fullcalendar/timegrid':
         specifier: ^6.1.20
         version: 6.1.20(@fullcalendar/core@6.1.20)
+      '@grow-fitness/schedule-calendar':
+        specifier: workspace:*
+        version: link:../../packages/schedule-calendar
       '@grow-fitness/shared-schemas':
         specifier: workspace:*
         version: link:../../packages/shared-schemas
@@ -334,6 +337,9 @@ importers:
 
   apps/client-web:
     dependencies:
+      '@grow-fitness/schedule-calendar':
+        specifier: workspace:*
+        version: link:../../packages/schedule-calendar
       '@grow-fitness/shared-schemas':
         specifier: workspace:*
         version: link:../../packages/shared-schemas
@@ -491,6 +497,43 @@ importers:
       vite:
         specifier: ^7.2.4
         version: 7.3.1(@types/node@24.10.9)
+
+  packages/schedule-calendar:
+    dependencies:
+      '@fullcalendar/core':
+        specifier: ^6.1.20
+        version: 6.1.20
+      '@fullcalendar/daygrid':
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
+      '@fullcalendar/interaction':
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
+      '@fullcalendar/react':
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)(react-dom@19.2.3)(react@19.2.3)
+      '@fullcalendar/timegrid':
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
+      '@grow-fitness/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      react:
+        specifier: ^18.0.0 || ^19.0.0
+        version: 19.2.3
+      react-dom:
+        specifier: ^18.0.0 || ^19.0.0
+        version: 19.2.3(react@19.2.3)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.8)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
 
   packages/shared-schemas:
     dependencies:

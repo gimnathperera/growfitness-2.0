@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@grow-fitness/schedule-calendar": "workspace:*",
     "@grow-fitness/shared-schemas": "workspace:*",
     "@grow-fitness/shared-types": "workspace:*",
     "@hookform/resolvers": "^3.10.0",

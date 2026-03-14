@@ -1,19 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { PaginatedResponse, Session } from '@grow-fitness/shared-types';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { sessionsService } from '@/services/sessions.service';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useKid } from '@/contexts/kid/useKid';
 import BookSessionModal from './BookSessionModal';
-import {
-  ScheduleCalendar,
-  type ScheduleCalendarEvent,
-  type ScheduleView,
-} from '@/components/schedule/ScheduleCalendar';
 
 const getSessionLabel = (session: Session): string => {
   switch (session.type) {
@@ -28,32 +23,12 @@ const getSessionLabel = (session: Session): string => {
 
 export default function ScheduleTab() {
   const { selectedKid } = useKid();
-
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<ScheduleView>('month');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [openBooking, setOpenBooking] = useState(false);
 
-  /* ---------------- Date range (month or week) ---------------- */
-
-  const [startDate, endDate] = useMemo(() => {
-    if (view === 'week') {
-      const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-      const end = endOfWeek(currentDate, { weekStartsOn: 0 });
-      return [start.toISOString(), end.toISOString()] as const;
-    }
-    const y = currentDate.getFullYear();
-    const m = currentDate.getMonth();
-    return [
-      new Date(y, m, 1).toISOString(),
-      new Date(y, m + 1, 0, 23, 59, 59, 999).toISOString(),
-    ] as const;
-  }, [currentDate, view]);
-
-  /* ---------------- Fetch Sessions ---------------- */
-
-  const { data: sessionsData } = useApiQuery<PaginatedResponse<Session>>(
-    ['sessions', selectedKid?.id || '', startDate, endDate],
+  const { data: sessionsData, isLoading } = useApiQuery<PaginatedResponse<Session>>(
+    ['sessions', selectedKid?.id ?? '', dateRange?.start ?? '', dateRange?.end ?? ''],
     () => {
       if (!selectedKid?.id) {
         return Promise.resolve({
@@ -64,60 +39,57 @@ export default function ScheduleTab() {
           totalPages: 0,
         });
       }
-
-      return sessionsService.getSessions(1, 50, {
+      return sessionsService.getSessions(1, 100, {
         kidId: selectedKid.id,
-        startDate,
-        endDate,
+        startDate: dateRange!.start,
+        endDate: dateRange!.end,
       });
     },
-    { enabled: Boolean(selectedKid?.id) }
+    { enabled: Boolean(selectedKid?.id && dateRange) }
   );
 
-  /* ---------------- Map Events ---------------- */
-
-  const events: ScheduleCalendarEvent[] = useMemo(() => {
-    const sessions: Session[] = sessionsData?.data ?? [];
-    return sessions.map(session => ({
-      _id: session.id,
-      title: getSessionLabel(session),
-      date: new Date(session.dateTime),
-      session,
-    }));
+  const events = useMemo(() => {
+    const sessions = sessionsData?.data ?? [];
+    return sessions.map((session) =>
+      sessionToCalendarEvent(session, { formatTitle: getSessionLabel })
+    );
   }, [sessionsData]);
 
   return (
     <>
-      <ScheduleCalendar
-        view={view}
-        currentDate={currentDate}
-        events={events}
-        onDateChange={setCurrentDate}
-        onViewChange={setView}
-        onEventClick={setSelectedSession}
-        actions={
-          selectedKid?.sessionType === 'INDIVIDUAL' ? (
+      <Card className="border-[#23B685]/20 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center text-base font-semibold">
+            <CalendarIcon className="mr-2 h-5 w-5 text-[#23B685]" />
+            Schedule
+          </CardTitle>
+          {selectedKid?.sessionType === 'INDIVIDUAL' && (
             <Button size="sm" onClick={() => setOpenBooking(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Book Extra Session
             </Button>
-          ) : undefined
-        }
-      />
+          )}
+        </CardHeader>
+        <CardContent>
+          <SessionsCalendar
+            events={events}
+            onSessionClick={setSelectedSession}
+            onDatesSet={(start, end) => setDateRange({ start, end })}
+            loading={isLoading}
+          />
+        </CardContent>
+      </Card>
 
       <SessionDetailsModal
         open={Boolean(selectedSession)}
-        session={selectedSession || undefined}
+        session={selectedSession ?? undefined}
         onClose={() => setSelectedSession(null)}
         kidId={selectedKid?.id}
         onReschedule={() => {}}
       />
 
       {selectedKid?.sessionType === 'INDIVIDUAL' && (
-        <BookSessionModal
-          open={openBooking}
-          onClose={() => setOpenBooking(false)}
-        />
+        <BookSessionModal open={openBooking} onClose={() => setOpenBooking(false)} />
       )}
     </>
   );
