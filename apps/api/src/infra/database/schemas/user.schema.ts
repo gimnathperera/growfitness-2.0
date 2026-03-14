@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { Exclude } from 'class-transformer';
-import { UserRole, UserStatus } from '@grow-fitness/shared-types';
+import { UserRole, UserStatus, EmploymentType } from '@grow-fitness/shared-types';
 
 export type UserDocument = User & Document;
 
@@ -41,11 +41,29 @@ export class User {
   @Prop({
     type: {
       name: { type: String, required: false },
+      dateOfBirth: { type: Date, required: false },
+      photoUrl: { type: String, required: false },
+      homeAddress: { type: String, required: false },
+      school: { type: String, required: false },
+      availableTimes: [{
+        dayOfWeek: { type: String },
+        startTime: { type: String },
+        endTime: { type: String },
+      }],
+      employmentType: { type: String, enum: Object.values(EmploymentType), required: false },
+      cvUrl: { type: String, required: false },
     },
     required: false,
   })
   coachProfile?: {
     name: string;
+    dateOfBirth?: Date;
+    photoUrl?: string;
+    homeAddress?: string;
+    school?: string;
+    availableTimes?: Array<{ dayOfWeek: string; startTime: string; endTime: string }>;
+    employmentType?: EmploymentType;
+    cvUrl?: string;
   };
 
   @Prop({ required: false, type: String })

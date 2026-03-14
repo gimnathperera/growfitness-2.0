@@ -10,7 +10,7 @@
     "build:fix-output": "node -e \"const fs = require('fs'); const path = require('path'); if (fs.existsSync('dist/apps/api/src')) { const src = 'dist/apps/api/src'; const files = fs.readdirSync(src); files.forEach(f => { fs.renameSync(path.join(src, f), path.join('dist', f)); }); fs.rmSync('dist/apps', { recursive: true, force: true }); if (fs.existsSync('dist/packages')) fs.rmSync('dist/packages', { recursive: true, force: true }); }\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/main.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --watch src,../../packages/shared-schemas/src,../../packages/shared-types/src -r tsconfig-paths/register src/main.ts",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -23,7 +23,8 @@
     "create-admin": "ts-node -r tsconfig-paths/register scripts/create-admin.ts",
     "seed": "ts-node -r tsconfig-paths/register scripts/seed-database.ts",
     "approve-all": "ts-node --transpile-only -r tsconfig-paths/register scripts/approve-all-users.ts",
-    "backfill-place-urls": "ts-node -r tsconfig-paths/register scripts/backfill-location-place-urls.ts"
+    "backfill-place-urls": "ts-node -r tsconfig-paths/register scripts/backfill-location-place-urls.ts",
+    "migrate:coach-profiles": "ts-node -r tsconfig-paths/register scripts/migrate-coach-profiles.ts"
   },
   "dependencies": {
     "@grow-fitness/shared-schemas": "workspace:*",

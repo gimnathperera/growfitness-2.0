@@ -40,6 +40,7 @@ import {
   InvoiceStatus,
   RequestStatus,
   BannerTargetAudience,
+  EmploymentType,
 } from '@grow-fitness/shared-types';
 import { CodeType, CodeStatus } from '../src/infra/database/schemas/code.schema';
 import { QuestionType } from '../src/infra/database/schemas/quiz.schema';
@@ -120,7 +121,17 @@ async function seedDatabase() {
         phone: '+14155551001',
         passwordHash,
         status: UserStatus.ACTIVE,
-        coachProfile: { name: 'John Smith' },
+        coachProfile: {
+          name: 'John Smith',
+          dateOfBirth: new Date('1990-05-15'),
+          homeAddress: '123 Main St, San Francisco, CA',
+          school: 'Bay Area Sports Academy',
+          availableTimes: [
+            { dayOfWeek: 'Monday', startTime: '09:00', endTime: '17:00' },
+            { dayOfWeek: 'Wednesday', startTime: '09:00', endTime: '17:00' },
+          ],
+          employmentType: EmploymentType.FULL_TIME,
+        },
       },
       {
         role: UserRole.COACH,
@@ -128,7 +139,10 @@ async function seedDatabase() {
         phone: '+14155551002',
         passwordHash,
         status: UserStatus.ACTIVE,
-        coachProfile: { name: 'Sarah Johnson' },
+        coachProfile: {
+          name: 'Sarah Johnson',
+          availableTimes: [],
+        },
       },
       {
         role: UserRole.COACH,
@@ -136,7 +150,11 @@ async function seedDatabase() {
         phone: '+14155551003',
         passwordHash,
         status: UserStatus.ACTIVE,
-        coachProfile: { name: 'Mike Davis' },
+        coachProfile: {
+          name: 'Mike Davis',
+          employmentType: EmploymentType.PART_TIME,
+          availableTimes: [],
+        },
       },
     ]);
     console.log(`   ✓ Created ${coaches.length} coaches`);

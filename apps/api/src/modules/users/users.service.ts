@@ -26,6 +26,50 @@ import { NotificationService } from '../notifications/notifications.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 
+type CoachAvailableTime = {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+};
+
+function flattenNestedArray(value: unknown): unknown[] {
+  if (!Array.isArray(value)) {
+    return [value];
+  }
+
+  return value.flatMap(item => flattenNestedArray(item));
+}
+
+function normalizeCoachAvailableTimes(value: unknown): CoachAvailableTime[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return flattenNestedArray(value).flatMap(item => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return [];
+    }
+
+    const candidate = item as Partial<CoachAvailableTime>;
+
+    if (
+      typeof candidate.dayOfWeek !== 'string' ||
+      typeof candidate.startTime !== 'string' ||
+      typeof candidate.endTime !== 'string'
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        dayOfWeek: candidate.dayOfWeek,
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+      },
+    ];
+  });
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -373,6 +417,8 @@ export class UsersService {
 
     const passwordHash = await this.authService.hashPassword(createCoachDto.password);
 
+    const availableTimes = normalizeCoachAvailableTimes(createCoachDto.availableTimes);
+
     const coach = new this.userModel({
       role: UserRole.COACH,
       email: createCoachDto.email.toLowerCase(),
@@ -382,6 +428,13 @@ export class UsersService {
       isApproved: true, // Coaches created by admins are automatically approved
       coachProfile: {
         name: createCoachDto.name,
+        dateOfBirth: createCoachDto.dateOfBirth ? new Date(createCoachDto.dateOfBirth) : null,
+        photoUrl: createCoachDto.photoUrl || null,
+        homeAddress: createCoachDto.homeAddress || null,
+        school: createCoachDto.school || null,
+        availableTimes,
+        employmentType: createCoachDto.employmentType || null,
+        cvUrl: createCoachDto.cvUrl || null,
       },
     });
 
@@ -421,17 +474,31 @@ export class UsersService {
       }
     }
 
+    const normalizedAvailableTimes =
+      updateCoachDto.availableTimes !== undefined
+        ? normalizeCoachAvailableTimes(updateCoachDto.availableTimes)
+        : undefined;
+
     Object.assign(coach, {
       ...(updateCoachDto.email && { email: updateCoachDto.email.toLowerCase() }),
       ...(updateCoachDto.phone && { phone: updateCoachDto.phone }),
       ...(updateCoachDto.status && { status: updateCoachDto.status }),
-      ...(updateCoachDto.name && {
-        coachProfile: {
-          ...coach.coachProfile,
-          name: updateCoachDto.name,
-        },
-      }),
     });
+
+    const existingProfile = coach.coachProfile || { name: '' };
+    coach.coachProfile = {
+      ...existingProfile,
+      ...(updateCoachDto.name !== undefined && { name: updateCoachDto.name }),
+      ...(updateCoachDto.dateOfBirth !== undefined && {
+        dateOfBirth: updateCoachDto.dateOfBirth ? new Date(updateCoachDto.dateOfBirth) : undefined,
+      }),
+      ...(updateCoachDto.photoUrl !== undefined && { photoUrl: updateCoachDto.photoUrl || undefined }),
+      ...(updateCoachDto.homeAddress !== undefined && { homeAddress: updateCoachDto.homeAddress }),
+      ...(updateCoachDto.school !== undefined && { school: updateCoachDto.school }),
+      ...(normalizedAvailableTimes !== undefined && { availableTimes: normalizedAvailableTimes }),
+      ...(updateCoachDto.employmentType !== undefined && { employmentType: updateCoachDto.employmentType }),
+      ...(updateCoachDto.cvUrl !== undefined && { cvUrl: updateCoachDto.cvUrl || undefined }),
+    };
 
     await coach.save();
 

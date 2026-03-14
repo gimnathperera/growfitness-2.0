@@ -30,11 +30,16 @@ import {
   UpdateParentDto,
   CreateCoachDto,
   UpdateCoachDto,
+  CreateCoachSchema,
+  UpdateCoachSchema,
 } from '@grow-fitness/shared-schemas';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 
 import { GetParentsQueryDto } from './dto/get-parents-query.dto';
+import { CreateCoachBodyDto } from './dto/create-coach-body.dto';
+import { UpdateCoachBodyDto } from './dto/update-coach-body.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -205,6 +210,24 @@ export class UsersController {
           description: 'Password (minimum 6 characters)',
           example: 'password123',
         },
+        dateOfBirth: { type: 'string', format: 'date', description: 'Date of birth (ISO)' },
+        photoUrl: { type: 'string', format: 'uri', description: 'Profile photo URL' },
+        homeAddress: { type: 'string', description: 'Home address' },
+        school: { type: 'string', description: 'School' },
+        availableTimes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              dayOfWeek: { type: 'string' },
+              startTime: { type: 'string' },
+              endTime: { type: 'string' },
+            },
+          },
+          description: 'Available time slots',
+        },
+        employmentType: { type: 'string', enum: ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'VOLUNTEER', 'OTHER'] },
+        cvUrl: { type: 'string', format: 'uri', description: 'CV document URL' },
       },
       required: ['name', 'email', 'phone', 'password'],
     },
@@ -212,8 +235,11 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'Coach created successfully' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
   @ApiResponse({ status: 400, description: 'Validation error' })
-  createCoach(@Body() createCoachDto: CreateCoachDto, @CurrentUser('sub') actorId: string) {
-    return this.usersService.createCoach(createCoachDto, actorId);
+  createCoach(
+    @Body(new ZodValidationPipe(CreateCoachSchema)) createCoachDto: CreateCoachBodyDto,
+    @CurrentUser('sub') actorId: string
+  ) {
+    return this.usersService.createCoach(createCoachDto as CreateCoachDto, actorId);
   }
 
   @Patch('coaches/:id')
@@ -226,6 +252,23 @@ export class UsersController {
         email: { type: 'string', format: 'email', description: 'Coach email address' },
         phone: { type: 'string', description: 'Coach phone number' },
         status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], description: 'Coach status' },
+        dateOfBirth: { type: 'string', format: 'date', description: 'Date of birth (ISO)' },
+        photoUrl: { type: 'string', format: 'uri', description: 'Profile photo URL' },
+        homeAddress: { type: 'string', description: 'Home address' },
+        school: { type: 'string', description: 'School' },
+        availableTimes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              dayOfWeek: { type: 'string' },
+              startTime: { type: 'string' },
+              endTime: { type: 'string' },
+            },
+          },
+        },
+        employmentType: { type: 'string', enum: ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'VOLUNTEER', 'OTHER'] },
+        cvUrl: { type: 'string', format: 'uri', description: 'CV document URL' },
       },
     },
   })
@@ -234,7 +277,7 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
   updateCoach(
     @Param('id', ObjectIdValidationPipe) id: string,
-    @Body() updateCoachDto: UpdateCoachDto,
+    @Body(new ZodValidationPipe(UpdateCoachSchema)) updateCoachDto: UpdateCoachBodyDto,
     @CurrentUser('sub') actorId: string
   ) {
     return this.usersService.updateCoach(id, updateCoachDto, actorId);
