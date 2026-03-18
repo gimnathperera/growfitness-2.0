@@ -33,10 +33,11 @@ export class GoogleCalendarOAuthService {
       });
     }
 
+    // Use pipe (|) separator to match main.ts CORS config
     const corsOrigin = this.configService.get<string>('CORS_ORIGIN', '').trim();
     if (corsOrigin) {
       const allowedOrigins = corsOrigin
-        .split(',')
+        .split('|')
         .map(o => o.trim())
         .filter(Boolean);
       if (!allowedOrigins.includes(url.origin)) {

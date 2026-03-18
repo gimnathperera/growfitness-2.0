@@ -92,7 +92,14 @@ export class GoogleCalendarSyncService {
       const connectedStakeholders = await this.getConnectedUserIds(stakeholderIds);
 
       for (const userId of connectedStakeholders) {
-        await this.googleCalendarApi.upsertSessionEvent(userId, session as any);
+        try {
+          await this.googleCalendarApi.upsertSessionEvent(userId, session as any);
+        } catch (e) {
+          this.logger.warn(
+            `Google Calendar sync (create) failed for user ${userId}, session ${sessionId}`,
+            e
+          );
+        }
       }
     } catch (e) {
       this.logger.warn(`Google Calendar sync (create) failed for session ${sessionId}`, e);
@@ -108,7 +115,14 @@ export class GoogleCalendarSyncService {
       const connectedStakeholders = await this.getConnectedUserIds(stakeholderIds);
 
       for (const userId of connectedStakeholders) {
-        await this.googleCalendarApi.upsertSessionEvent(userId, session as any);
+        try {
+          await this.googleCalendarApi.upsertSessionEvent(userId, session as any);
+        } catch (e) {
+          this.logger.warn(
+            `Google Calendar sync (update) failed for user ${userId}, session ${sessionId}`,
+            e
+          );
+        }
       }
     } catch (e) {
       this.logger.warn(`Google Calendar sync (update) failed for session ${sessionId}`, e);
@@ -126,7 +140,14 @@ export class GoogleCalendarSyncService {
 
       const sessionObjectId = new Types.ObjectId(sessionId);
       for (const userId of connectedStakeholders) {
-        await this.googleCalendarApi.deleteSessionEvent(userId, sessionObjectId);
+        try {
+          await this.googleCalendarApi.deleteSessionEvent(userId, sessionObjectId);
+        } catch (e) {
+          this.logger.warn(
+            `Google Calendar sync (delete) failed for user ${userId}, session ${sessionId}`,
+            e
+          );
+        }
       }
     } catch (e) {
       this.logger.warn(`Google Calendar sync (delete) failed for session ${sessionId}`, e);

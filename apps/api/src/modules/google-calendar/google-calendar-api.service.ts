@@ -100,6 +100,25 @@ export class GoogleCalendarApiService {
       .exec();
   }
 
+  /** Returns true if the error indicates the refresh token is invalid/revoked (invalid_grant) */
+  private isInvalidGrantError(e: unknown): boolean {
+    const msg = String((e as { message?: string })?.message ?? '').toLowerCase();
+    const dataError = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+    return msg.includes('invalid_grant') || dataError === 'invalid_grant';
+  }
+
+  /** Clear the user's Google Calendar token so they can reconnect. Prevents repeated invalid_grant failures. */
+  private async clearUserRefreshToken(userId: string) {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        $unset: { googleCalendarRefreshToken: 1, googleCalendarConnectedAt: 1 },
+      })
+      .exec();
+    this.logger.warn(
+      `Cleared Google Calendar token for user ${userId} due to invalid_grant. User must reconnect.`
+    );
+  }
+
   async upsertSessionEvent(userId: string, session: SessionLike) {
     const refreshToken = await this.getUserRefreshToken(userId);
     if (!refreshToken) return;
@@ -111,28 +130,8 @@ export class GoogleCalendarApiService {
     const mapping = await this.getMapping(userId, sessionObjectId);
     const event = this.buildEvent(session);
 
-    if (!mapping?.googleEventId) {
-      const created = await calendar.events.insert({
-        calendarId: 'primary',
-        requestBody: event,
-      });
-      const googleEventId = created.data.id;
-      if (googleEventId) {
-        await this.setMapping(userId, sessionObjectId, googleEventId);
-      }
-      return;
-    }
-
     try {
-      await calendar.events.patch({
-        calendarId: 'primary',
-        eventId: mapping.googleEventId,
-        requestBody: event,
-      });
-    } catch (e: any) {
-      const status = e?.code ?? e?.response?.status;
-      if (status === 404) {
-        // Event missing in Google Calendar; recreate and overwrite mapping.
+      if (!mapping?.googleEventId) {
         const created = await calendar.events.insert({
           calendarId: 'primary',
           requestBody: event,
@@ -143,7 +142,41 @@ export class GoogleCalendarApiService {
         }
         return;
       }
-      this.logger.warn(`Failed to update Google Calendar event for user ${userId}`, e);
+
+      await calendar.events.patch({
+        calendarId: 'primary',
+        eventId: mapping.googleEventId,
+        requestBody: event,
+      });
+    } catch (e: unknown) {
+      if (this.isInvalidGrantError(e)) {
+        await this.clearUserRefreshToken(userId);
+        throw e;
+      }
+      const err = e as { code?: number; response?: { status?: number } };
+      const status = err?.code ?? err?.response?.status;
+      if (status === 404 && mapping?.googleEventId) {
+        // Event missing in Google Calendar; recreate and overwrite mapping.
+        try {
+          const created = await calendar.events.insert({
+            calendarId: 'primary',
+            requestBody: event,
+          });
+          const googleEventId = created.data.id;
+          if (googleEventId) {
+            await this.setMapping(userId, sessionObjectId, googleEventId);
+          }
+          return;
+        } catch (retryErr: unknown) {
+          if (this.isInvalidGrantError(retryErr)) {
+            await this.clearUserRefreshToken(userId);
+          }
+          this.logger.warn(`Failed to recreate Google Calendar event for user ${userId}`, retryErr);
+          throw retryErr;
+        }
+      }
+      this.logger.warn(`Failed to upsert Google Calendar event for user ${userId}`, e);
+      throw e;
     }
   }
 
@@ -165,8 +198,11 @@ export class GoogleCalendarApiService {
         calendarId: 'primary',
         eventId: mapping.googleEventId,
       });
-    } catch (e: any) {
-      const status = e?.code ?? e?.response?.status;
+    } catch (e: unknown) {
+      if (this.isInvalidGrantError(e)) {
+        await this.clearUserRefreshToken(userId);
+      }
+      const status = (e as { code?: number; response?: { status?: number } })?.code ?? (e as { response?: { status?: number } })?.response?.status;
       if (status !== 404) {
         this.logger.warn(`Failed to delete Google Calendar event for user ${userId}`, e);
       }
