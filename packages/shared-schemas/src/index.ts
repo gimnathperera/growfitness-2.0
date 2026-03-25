@@ -241,6 +241,8 @@ export const CreateInvoiceSchema = z.object({
   type: z.nativeEnum(InvoiceType),
   parentId: z.string().optional(),
   coachId: z.string().optional(),
+  /** Stored on the invoice as `exportFields.kidName` for PDFs (parent invoices). */
+  kidName: z.string().max(200).optional(),
   items: z.array(
     z.object({
       description: z.string().min(1),

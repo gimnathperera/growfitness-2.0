@@ -7,13 +7,16 @@ import {
   ApiBearerAuth,
   ApiQuery,
   ApiBody,
+  ApiProduces,
 } from '@nestjs/swagger';
 import { Response } from 'express';
 import { InvoicesService } from './invoices.service';
+import { InvoicePdfService } from './invoice-pdf.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../auth/auth.service';
 import { UserRole, InvoiceType, InvoiceStatus } from '@grow-fitness/shared-types';
 import { CreateInvoiceDto, UpdateInvoicePaymentStatusDto } from '@grow-fitness/shared-schemas';
 import { GetInvoicesQueryDto } from './dto/get-invoices-query.dto';
@@ -24,11 +27,14 @@ import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.p
 @ApiBearerAuth('JWT-auth')
 @Controller('invoices')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
 export class InvoicesController {
-  constructor(private readonly invoicesService: InvoicesService) {}
+  constructor(
+    private readonly invoicesService: InvoicesService,
+    private readonly invoicePdfService: InvoicePdfService
+  ) {}
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.PARENT, UserRole.COACH)
   @ApiOperation({ summary: 'Get all invoices' })
   @ApiOkResponse({
     description:
@@ -36,12 +42,70 @@ export class InvoicesController {
     type: PaginatedInvoiceResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
-  findAll(@Query() query: GetInvoicesQueryDto) {
+  findAll(@Query() query: GetInvoicesQueryDto, @CurrentUser() user: JwtPayload) {
     const { page, limit, type, parentId, coachId, status } = query;
-    return this.invoicesService.findAll({ page, limit }, { type, parentId, coachId, status });
+    return this.invoicesService.findAllForActor(
+      { page, limit },
+      { type, parentId, coachId, status },
+      user
+    );
+  }
+
+  /** Static path before `:id` so `export` is not captured as an ObjectId. */
+  @Get('export/csv')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Export invoices as CSV' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['PARENT_INVOICE', 'COACH_PAYOUT'],
+    description: 'Filter by invoice type',
+  })
+  @ApiQuery({ name: 'parentId', required: false, type: String, description: 'Filter by parent ID' })
+  @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'PAID', 'OVERDUE'],
+    description: 'Filter by invoice status',
+  })
+  @ApiResponse({ status: 200, description: 'CSV file download' })
+  async exportCSV(
+    @Res() res: Response,
+    @Query('type') type?: InvoiceType,
+    @Query('parentId') parentId?: string,
+    @Query('coachId') coachId?: string,
+    @Query('status') status?: InvoiceStatus
+  ) {
+    const csv = await this.invoicesService.exportCSV({ type, parentId, coachId, status });
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=invoices.csv');
+    res.send(csv);
+  }
+
+  @Get(':id/pdf')
+  @Roles(UserRole.ADMIN, UserRole.PARENT, UserRole.COACH)
+  @ApiOperation({ summary: 'Download invoice PDF (HTML template rendered with Puppeteer)' })
+  @ApiProduces('application/pdf')
+  @ApiResponse({ status: 200, description: 'PDF binary' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  async downloadPdf(
+    @Param('id', ObjectIdValidationPipe) id: string,
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: false }) res: Response
+  ) {
+    const buffer = await this.invoicePdfService.generatePdfBuffer(id, user);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${id}.pdf"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(buffer);
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.PARENT, UserRole.COACH)
   @ApiOperation({ summary: 'Get invoice by ID' })
   @ApiOkResponse({
     description: 'Invoice details with optional parent/coach populated.',
@@ -49,11 +113,12 @@ export class InvoicesController {
   })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
-  findById(@Param('id', ObjectIdValidationPipe) id: string) {
-    return this.invoicesService.findById(id);
+  findById(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.invoicesService.findByIdForActor(id, user);
   }
 
   @Post()
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new invoice' })
   @ApiBody({
     schema: {
@@ -123,6 +188,7 @@ export class InvoicesController {
   }
 
   @Patch(':id/payment-status')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update invoice payment status' })
   @ApiBody({
     schema: {
@@ -156,35 +222,5 @@ export class InvoicesController {
     @CurrentUser('sub') actorId: string
   ) {
     return this.invoicesService.updatePaymentStatus(id, updateDto, actorId);
-  }
-
-  @Get('export/csv')
-  @ApiOperation({ summary: 'Export invoices as CSV' })
-  @ApiQuery({
-    name: 'type',
-    required: false,
-    enum: ['PARENT_INVOICE', 'COACH_PAYOUT'],
-    description: 'Filter by invoice type',
-  })
-  @ApiQuery({ name: 'parentId', required: false, type: String, description: 'Filter by parent ID' })
-  @ApiQuery({ name: 'coachId', required: false, type: String, description: 'Filter by coach ID' })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: ['PENDING', 'PAID', 'OVERDUE'],
-    description: 'Filter by invoice status',
-  })
-  @ApiResponse({ status: 200, description: 'CSV file download' })
-  async exportCSV(
-    @Res() res: Response,
-    @Query('type') type?: InvoiceType,
-    @Query('parentId') parentId?: string,
-    @Query('coachId') coachId?: string,
-    @Query('status') status?: InvoiceStatus
-  ) {
-    const csv = await this.invoicesService.exportCSV({ type, parentId, coachId, status });
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=invoices.csv');
-    res.send(csv);
   }
 }

@@ -6,11 +6,11 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "build": "nest build && pnpm run build:fix-output",
+    "build": "pnpm --filter @grow-fitness/invoice-print run build && nest build && pnpm run build:fix-output",
     "build:fix-output": "node -e \"const fs = require('fs'); const path = require('path'); if (fs.existsSync('dist/apps/api/src')) { const src = 'dist/apps/api/src'; const files = fs.readdirSync(src); files.forEach(f => { fs.renameSync(path.join(src, f), path.join('dist', f)); }); fs.rmSync('dist/apps', { recursive: true, force: true }); if (fs.existsSync('dist/packages')) fs.rmSync('dist/packages', { recursive: true, force: true }); }\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "dev": "ts-node-dev --respawn --transpile-only --watch src,../../packages/shared-schemas/src,../../packages/shared-types/src -r tsconfig-paths/register src/main.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --watch src,../../packages/shared-schemas/src,../../packages/shared-types/src,../../packages/invoice-print/dist -r tsconfig-paths/register src/main.ts",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -27,6 +27,7 @@
     "migrate:coach-profiles": "ts-node -r tsconfig-paths/register scripts/migrate-coach-profiles.ts"
   },
   "dependencies": {
+    "@grow-fitness/invoice-print": "workspace:^",
     "@grow-fitness/shared-schemas": "workspace:*",
     "@grow-fitness/shared-types": "workspace:*",
     "@nestjs/common": "^10.3.0",
@@ -47,6 +48,7 @@
     "openai": "^6.25.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "puppeteer": "^24.40.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "zod": "^3.22.4",

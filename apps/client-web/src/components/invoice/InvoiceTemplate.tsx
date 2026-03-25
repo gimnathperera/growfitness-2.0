@@ -26,7 +26,15 @@ interface InvoiceTemplateProps {
   };
 }
 
+function kidNameFromInvoice(
+  invoice: InvoiceTemplateProps['invoice']
+): string | undefined {
+  const raw = invoice.exportFields?.kidName;
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : invoice.kidName;
+}
+
 export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
+  const displayKidName = kidNameFromInvoice(invoice);
   return (
     <div
       id="invoice-template"
@@ -87,9 +95,9 @@ export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
               <p className="text-[15px] font-semibold text-gray-900">
                 {invoice.parent?.parentProfile?.name || 'Unknown Parent'}
               </p>
-              {invoice.kidName && (
+              {displayKidName && (
                 <p className="text-sm text-gray-700 mt-1">
-                  For: {invoice.kidName}
+                  For: {displayKidName}
                 </p>
               )}
               {invoice.parent?.email && (
@@ -140,26 +148,20 @@ export function InvoiceTemplate({ invoice }: InvoiceTemplateProps) {
         </h3>
 
         <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50/50">
-          {/* Table header */}
           <div className="grid grid-cols-12 px-5 py-3.5 text-xs font-semibold text-gray-500 bg-gray-100/80 uppercase tracking-wide">
-            <span className="col-span-7">Description</span>
-            <span className="col-span-2 text-center">Qty</span>
-            <span className="col-span-3 text-right end-0">Amount</span>
+            <span className="col-span-8">Description</span>
+            <span className="col-span-4 text-right">Subtotal</span>
           </div>
 
-          {/* Rows */}
           {invoice.items?.map((item, i) => (
             <div
               key={i}
               className="grid grid-cols-12 px-5 py-4 border-t border-gray-200 text-sm bg-white"
             >
-              <span className="col-span-7 text-gray-900">
+              <span className="col-span-8 text-gray-900">
                 {item.description}
               </span>
-              <span className="col-span-2 text-center text-gray-700">
-                {item.amount ?? 1}
-              </span>
-              <span className="col-span-3 text-right font-semibold text-gray-900 end-0">
+              <span className="col-span-4 text-right font-semibold text-gray-900">
                 {formatCurrency(item.amount)}
               </span>
             </div>

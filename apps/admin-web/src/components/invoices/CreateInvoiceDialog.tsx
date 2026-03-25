@@ -58,6 +58,7 @@ export function CreateInvoiceDialog({ open, onOpenChange }: CreateInvoiceDialogP
     type: InvoiceType.PARENT_INVOICE,
     items: [{ description: '', amount: 0 }],
     dueDate: '',
+    kidName: undefined as string | undefined,
   };
 
   const form = useForm<CreateInvoiceDto>({
@@ -97,12 +98,15 @@ export function CreateInvoiceDialog({ open, onOpenChange }: CreateInvoiceDialogP
   );
 
   const onSubmit = (data: CreateInvoiceDto) => {
-    const formattedData = {
-      ...data,
+    const { kidName, ...rest } = data;
+    const trimmedKid = kidName?.trim();
+    const formattedData: CreateInvoiceDto = {
+      ...rest,
       dueDate:
         typeof data.dueDate === 'string'
           ? data.dueDate
           : format(data.dueDate as Date, 'yyyy-MM-dd'),
+      ...(trimmedKid ? { kidName: trimmedKid } : {}),
     };
     createMutation.mutate(formattedData);
   };
@@ -131,6 +135,7 @@ export function CreateInvoiceDialog({ open, onOpenChange }: CreateInvoiceDialogP
                 form.setValue('type', value as InvoiceType);
                 form.setValue('parentId', undefined);
                 form.setValue('coachId', undefined);
+                form.setValue('kidName', undefined);
               }}
             >
               <SelectTrigger>
@@ -164,6 +169,18 @@ export function CreateInvoiceDialog({ open, onOpenChange }: CreateInvoiceDialogP
                   ))}
                 </SelectContent>
               </Select>
+            </CustomFormField>
+          )}
+
+          {invoiceType === InvoiceType.PARENT_INVOICE && (
+            <CustomFormField
+              label="Kid name"
+              error={form.formState.errors.kidName?.message}
+            >
+              <Input
+                placeholder="Optional — shown on invoice PDF"
+                {...form.register('kidName')}
+              />
             </CustomFormField>
           )}
 

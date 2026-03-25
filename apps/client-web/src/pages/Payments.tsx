@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { invoicesService } from '@/services/invoices.service';
 import { type Invoice, InvoiceStatus } from '@grow-fitness/shared-types';
@@ -23,10 +23,6 @@ import { useModalParams } from '@/hooks/useModalParams';
 import { useAuth } from '@/contexts/useAuth';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { InvoiceDetailsDialog } from '@/components/invoice/InvoiceDetailsDialog';
-import { InvoiceTemplate } from '@/components/invoice/InvoiceTemplate';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { createPortal } from 'react-dom';
 
 export function Payments() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
@@ -36,9 +32,6 @@ export function Payments() {
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const loadedInvoiceId = useRef<string | null>(null);
-
-  const [downloadInvoice, setDownloadInvoice] = useState<Invoice | null>(null);
-  const [downloadType] = useState<'pdf' | 'image'>('pdf');
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -95,58 +88,24 @@ export function Payments() {
       })
   );
 
-  // 🔽 Download AFTER portal + styles are mounted
-  useEffect(() => {
-    if (!downloadInvoice) return;
-
-    const runDownload = async () => {
-      const element = document.getElementById('invoice-template');
-
-      if (!element) {
-        toast.error('Invoice template not found');
-        setDownloadInvoice(null);
-        return;
-      }
-
+  const handleDownloadPdf = useCallback(
+    async (invoice: Invoice) => {
       try {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          useCORS: true,
-        });
-
-        if (downloadType === 'pdf') {
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF('p', 'pt', 'a4');
-
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight =
-            (canvas.height * pageWidth) / canvas.width;
-
-          pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
-          pdf.save(`invoice-${downloadInvoice.id}.pdf`);
-        } else {
-          const imgURL = canvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = imgURL;
-          a.download = `invoice-${downloadInvoice.id}.png`;
-          a.click();
-        }
-
+        const blob = await invoicesService.downloadInvoicePdf(invoice.id);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoice-${invoice.id}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
         toast.success('Invoice downloaded');
       } catch (err) {
         console.error(err);
         toast.error('Download failed');
-      } finally {
-        setDownloadInvoice(null);
       }
-    };
-
-    // ✅ wait TWO frames (portal + tailwind paint)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(runDownload);
-    });
-  }, [downloadInvoice, downloadType, toast]);
+    },
+    [toast]
+  );
 
   const columns: ColumnDef<Invoice>[] = [
     {
@@ -195,7 +154,7 @@ export function Payments() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setDownloadInvoice(invoice)}
+              onClick={() => void handleDownloadPdf(invoice)}
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -267,22 +226,6 @@ export function Payments() {
         />
       )}
 
-      {/* 🔽 Hidden portal render for download */}
-      {downloadInvoice &&
-        createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              top: '-10000px',
-              left: 0,
-              width: '800px',
-              background: 'white',
-            }}
-          >
-            <InvoiceTemplate invoice={downloadInvoice} />
-          </div>,
-          document.body
-        )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, fetchAuthorizedBlob } from './api';
 import { Invoice, PaginatedResponse, InvoiceType, InvoiceStatus } from '@grow-fitness/shared-types';
 import { CreateInvoiceDto, UpdateInvoicePaymentStatusDto } from '@grow-fitness/shared-schemas';
 
@@ -44,4 +44,6 @@ export const invoicesService = {
       },
     }).then(res => res.blob());
   },
+  /** Server-generated PDF (Puppeteer + shared HTML template). */
+  downloadInvoicePdf: (id: string) => fetchAuthorizedBlob(`/invoices/${id}/pdf`),
 };
