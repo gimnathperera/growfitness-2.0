@@ -22,8 +22,8 @@ export default defineConfig({
     include: [
       '@grow-fitness/shared-types',
       '@grow-fitness/shared-schemas',
-      '@grow-fitness/invoice-print',
     ],
+    exclude: ['@grow-fitness/invoice-print'],
   },
   server: {
     port: 5173,

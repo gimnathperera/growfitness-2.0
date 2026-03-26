@@ -21,7 +21,11 @@ interface InvoiceDetailsDialogProps {
   invoice?: Invoice;
 }
 
-export function InvoiceDetailsDialog({ open, onOpenChange, invoice: invoiceProp }: InvoiceDetailsDialogProps) {
+export function InvoiceDetailsDialog({
+  open,
+  onOpenChange,
+  invoice: invoiceProp,
+}: InvoiceDetailsDialogProps) {
   const { entityId, closeModal } = useModalParams('invoiceId');
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -79,7 +83,6 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice: invoiceProp 
         <div className="flex flex-col gap-3 border-b pl-6 pr-14 py-4 sm:flex-row sm:items-center sm:gap-4 sm:justify-start shrink-0">
           <DialogHeader className="space-y-1 text-left m-0 p-0 flex-1 min-w-0">
             <DialogTitle>Invoice</DialogTitle>
-            <DialogDescription>Preview matches server PDF (Puppeteer + HTML template)</DialogDescription>
           </DialogHeader>
           <Button
             type="button"

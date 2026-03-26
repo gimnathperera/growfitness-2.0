@@ -15,6 +15,11 @@ export interface InvoiceTemplatePrintProps {
    * When omitted (browser preview), `/images/invoice-mascot.png` is used.
    */
   mascotSrc?: string;
+  /**
+   * Header logo URL or data URI. PDF embeds `packages/invoice-print/assets/grow-invoice-wordmark-white.svg`.
+   * When omitted (browser), `/images/grow-invoice-wordmark-white.svg` (admin `public/`) is used.
+   */
+  logoSrc?: string;
 }
 
 function resolveMascotSrc(mascotSrc: string | undefined): string | undefined {
@@ -27,6 +32,19 @@ function resolveMascotSrc(mascotSrc: string | undefined): string | undefined {
   return mascotSrc;
 }
 
+/** Bumped when the default public invoice logo asset changes (cache bust for dev). */
+const LOGO_PUBLIC_CACHE_BUST = '5';
+
+function resolveLogoSrc(logoSrc: string | undefined): string | undefined {
+  if (logoSrc === undefined) {
+    return `/images/grow-invoice-wordmark-white.svg?v=${LOGO_PUBLIC_CACHE_BUST}`;
+  }
+  if (logoSrc === '') {
+    return undefined;
+  }
+  return logoSrc;
+}
+
 /**
  * Print-safe HTML invoice matching the Grow Fitness branded template.
  * Same markup is server-rendered for Puppeteer PDF generation.
@@ -35,8 +53,10 @@ export function InvoiceTemplatePrint({
   data,
   includeStyles = true,
   mascotSrc,
+  logoSrc,
 }: InvoiceTemplatePrintProps) {
   const mascotUrl = resolveMascotSrc(mascotSrc);
+  const logoUrl = resolveLogoSrc(logoSrc);
 
   return (
     <>
@@ -53,31 +73,7 @@ export function InvoiceTemplatePrint({
               <div className="inv-sketch-oval">INVOICE</div>
             </div>
             <div className="inv-logo">
-              <svg
-                className="inv-logo-svg"
-                viewBox="0 0 64 72"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden
-              >
-                <path
-                  d="M32 8 L56 64 H8 Z"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-                <circle cx="24" cy="40" r="3.2" fill="currentColor" />
-                <circle cx="40" cy="40" r="3.2" fill="currentColor" />
-                <path
-                  d="M25 50 Q32 57 39 50"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </svg>
-              <div className="inv-logo-text">GROW</div>
+              {logoUrl ? <img className="inv-logo-img" src={logoUrl} alt="" /> : null}
             </div>
           </header>
 

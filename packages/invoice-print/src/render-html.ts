@@ -27,6 +27,25 @@ function readMascotDataUri(): string | undefined {
   return undefined;
 }
 
+/** Invoice logo for generated HTML/PDF output. */
+function readInvoiceLogoDataUri(): string | undefined {
+  const svgCandidates = [
+    path.join(__dirname, '..', 'assets', 'grow-invoice-wordmark-white.svg'),
+    path.join(__dirname, 'assets', 'grow-invoice-wordmark-white.svg'),
+  ];
+  for (const filePath of svgCandidates) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const buf = fs.readFileSync(filePath);
+        return `data:image/svg+xml;base64,${buf.toString('base64')}`;
+      }
+    } catch {
+      /* optional asset */
+    }
+  }
+  return undefined;
+}
+
 /**
  * Full HTML document for Puppeteer `page.setContent` / print preview.
  * Styles are in &lt;head&gt;; body matches {@link InvoiceTemplatePrint} without duplicate &lt;style&gt;.
@@ -37,6 +56,7 @@ export function renderInvoicePrintToFullHtml(data: InvoicePdfViewModel): string 
       data,
       includeStyles: false,
       mascotSrc: readMascotDataUri() ?? '',
+      logoSrc: readInvoiceLogoDataUri() ?? '',
     })
   );
 

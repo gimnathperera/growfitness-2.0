@@ -9,22 +9,23 @@
 const INVOICE_TAIL = `
 .inv-white-curve {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 56%;
-  height: 48%;
+  right: -9%;
+  bottom: -7%;
+  width: 38%;
+  height: 34%;
   background: #fff;
-  border-top-left-radius: 78% 62%;
+  border-radius: 58% 0 0 42% / 36% 0 0 64%;
+  transform: rotate(6deg);
   z-index: 0;
   pointer-events: none;
   opacity: 0.97;
 }
 .inv-mascot {
   position: absolute;
-  bottom: 7mm;
-  right: 4%;
-  width: min(32vw, 190px);
-  max-width: 38%;
+  bottom: 4mm;
+  right: 2.5%;
+  width: min(22vw, 140px);
+  max-width: 24%;
   height: auto;
   z-index: 1;
   pointer-events: none;
@@ -40,42 +41,70 @@ const INVOICE_TAIL = `
 .inv-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 28px;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
 }
 .inv-title-wrap {
   flex: 0 0 auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 310px;
+  margin-left: -10px;
 }
 .inv-sketch-oval {
   display: inline-block;
-  font-size: clamp(1.75rem, 4.2vw, 2.35rem);
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  font-family: 'Insanibc', 'Now-Regular', system-ui, sans-serif;
   color: #fff;
-  padding: 12px 36px 14px;
-  border: 3px solid #000;
-  border-radius: 42% 38% 44% 40% / 48% 52% 46% 50%;
-  transform: rotate(-2.5deg);
+  padding: 16px 34px 18px;
+  transform: rotate(-3deg);
   line-height: 1;
   text-transform: uppercase;
+  position: relative;
+  z-index: 2;
 }
+.inv-title-wrap::before,
+.inv-title-wrap::after {
+  content: '';
+  position: absolute;
+  border: 4px solid #111;
+  pointer-events: none;
+  border-radius: 50%;
+}
+.inv-title-wrap::before {
+  inset: -8px -16px -6px -14px;
+  transform: rotate(-4deg);
+  z-index: 0;
+}
+
+.inv-title-wrap::after {
+  inset: -1px -4px -1px -4px;
+  transform: rotate(-2deg);
+  z-index: 1;
+}
+
 .inv-logo {
   flex: 0 0 auto;
   text-align: center;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: -6px;
 }
-.inv-logo-svg {
+.inv-logo-img {
   display: block;
-  width: 56px;
-  height: auto;
-  margin: 0 auto 6px;
-}
-.inv-logo-text {
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  width: auto;
+  height: 156px;
+  max-width: min(560px, 90vw);
+  margin: 0 auto;
+  object-fit: contain;
 }
 .inv-parties-dates {
   display: flex;
