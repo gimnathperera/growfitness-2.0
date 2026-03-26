@@ -66,6 +66,36 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
   return handleResponse<T>(response);
 }
 
+/** Binary GET (e.g. PDF) with same auth + 401 handling as JSON requests. */
+export async function fetchAuthorizedBlob(endpoint: string): Promise<Blob> {
+  const token = localStorage.getItem('accessToken');
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    cache: 'no-store',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    const message = await response.text();
+    throw {
+      statusCode: response.status,
+      errorCode: 'UNKNOWN_ERROR',
+      message: message || response.statusText,
+      timestamp: new Date().toISOString(),
+      path: response.url,
+    } satisfies ApiError;
+  }
+
+  return response.blob();
+}
+
 export const api = {
   get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'GET' }),
   post: <T>(endpoint: string, data?: unknown) =>

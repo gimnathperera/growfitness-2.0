@@ -19,10 +19,12 @@ import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import {
   formatDate,
+  formatDateTime,
   formatCurrency,
   formatInvoiceType,
 } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { Badge } from '@/components/ui/badge';
 import { CreateInvoiceDialog } from '@/components/invoices/CreateInvoiceDialog';
 import { UpdatePaymentStatusDialog } from '@/components/invoices/UpdatePaymentStatusDialog';
 import { InvoiceDetailsDialog } from '@/components/invoices/InvoiceDetailsDialog';
@@ -95,6 +97,34 @@ export function InvoicesPage() {
       cell: ({ row }) => formatInvoiceType(row.original.type),
     },
     {
+      id: 'recipient',
+      header: 'Name & email',
+      cell: ({ row }) => {
+        const inv = row.original;
+        if (inv.type === InvoiceType.PARENT_INVOICE) {
+          const name = inv.parent?.parentProfile?.name;
+          const email = inv.parent?.email;
+          return (
+            <div className="min-w-[10rem] text-sm">
+              <div className="font-medium">{name?.trim() || '—'}</div>
+              <div className="text-muted-foreground break-all">{email || '—'}</div>
+            </div>
+          );
+        }
+        if (inv.type === InvoiceType.COACH_PAYOUT) {
+          const name = inv.coach?.coachProfile?.name;
+          const email = inv.coach?.email;
+          return (
+            <div className="min-w-[10rem] text-sm">
+              <div className="font-medium">{name?.trim() || '—'}</div>
+              <div className="text-muted-foreground break-all">{email || '—'}</div>
+            </div>
+          );
+        }
+        return <span className="text-sm text-muted-foreground">—</span>;
+      },
+    },
+    {
       accessorKey: 'totalAmount',
       header: 'Amount',
       cell: ({ row }) => formatCurrency(row.original.totalAmount),
@@ -103,6 +133,20 @@ export function InvoicesPage() {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    },
+    {
+      accessorKey: 'pdfEmailedAt',
+      header: 'PDF emailed',
+      cell: ({ row }) => {
+        const at = row.original.pdfEmailedAt;
+        return at ? (
+          <span className="text-sm text-muted-foreground">{formatDateTime(at)}</span>
+        ) : (
+          <Badge variant="outline" className="font-normal">
+            Not sent
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: 'dueDate',
@@ -237,6 +281,11 @@ export function InvoicesPage() {
             open={detailsDialogOpen}
             onOpenChange={closeModal}
             invoice={selectedInvoice || undefined}
+            onPdfEmailed={(invoiceId, pdfEmailedAt) => {
+              setSelectedInvoice(prev =>
+                prev?.id === invoiceId ? { ...prev, pdfEmailedAt } : prev
+              );
+            }}
           />
         </>
       )}

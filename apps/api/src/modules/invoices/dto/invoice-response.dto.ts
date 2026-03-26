@@ -49,10 +49,23 @@ export class InvoiceResponseDto {
   dueDate: Date;
   @ApiPropertyOptional()
   paidAt?: Date;
+  @ApiPropertyOptional({
+    description: 'When the invoice PDF was last sent by email',
+    example: '2025-03-26T12:00:00.000Z',
+  })
+  pdfEmailedAt?: Date;
   @ApiPropertyOptional()
   exportFields?: Record<string, unknown>;
   @ApiProperty() createdAt: Date;
   @ApiProperty() updatedAt: Date;
+}
+
+export class SendInvoicePdfEmailResponseDto {
+  @ApiProperty({
+    description: 'Timestamp when the PDF was emailed (persisted on the invoice)',
+    example: '2025-03-26T12:00:00.000Z',
+  })
+  pdfEmailedAt: Date;
 }
 
 export class PaginatedInvoiceResponseDto {

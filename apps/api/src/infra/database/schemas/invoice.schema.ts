@@ -41,6 +41,10 @@ export class Invoice {
   @Prop({ required: false })
   paidAt?: Date;
 
+  /** Set when the invoice PDF is successfully sent by email from the admin/API flow. */
+  @Prop({ required: false })
+  pdfEmailedAt?: Date;
+
   @Prop({ type: Object, required: false })
   exportFields?: Record<string, unknown>;
 }

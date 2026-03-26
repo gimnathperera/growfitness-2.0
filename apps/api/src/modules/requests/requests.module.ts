@@ -23,6 +23,7 @@ import { Kid, KidSchema } from '../../infra/database/schemas/kid.schema';
 import { Session, SessionSchema } from '../../infra/database/schemas/session.schema';
 import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { SessionsModule } from '../sessions/sessions.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     AuditModule,
     NotificationsModule,
+    SessionsModule,
   ],
   controllers: [RequestsController],
   providers: [RequestsService],

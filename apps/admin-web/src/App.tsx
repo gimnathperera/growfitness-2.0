@@ -16,12 +16,21 @@ import { QuizzesPage } from './pages/QuizzesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { TestimonialsPage } from './pages/TestimonialsPage';
 import { Layout } from './components/layout/Layout';
+import { PrintInvoicePage } from './pages/PrintInvoicePage';
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/print/invoice/:invoiceId"
+          element={
+            <ProtectedRoute>
+              <PrintInvoicePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/"
           element={

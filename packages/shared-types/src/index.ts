@@ -269,6 +269,8 @@ export interface Invoice {
   status: InvoiceStatus;
   dueDate: Date;
   paidAt?: Date;
+  /** Present when the invoice PDF was sent by email (admin send flow). */
+  pdfEmailedAt?: Date;
   exportFields?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;

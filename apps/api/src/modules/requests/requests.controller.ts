@@ -174,12 +174,14 @@ export class RequestsController {
   @ApiResponse({ status: 201, description: 'Reschedule request created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - valid JWT required' })
   @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 403, description: 'Not allowed to reschedule this session' })
   createRescheduleRequest(
     @Body(new ZodValidationPipe(CreateRescheduleRequestSchema))
     createDto: CreateRescheduleRequestDto,
-    @CurrentUser('sub') requestedById: string
+    @CurrentUser('sub') requestedById: string,
+    @CurrentUser('role') actorRole: UserRole
   ) {
-    return this.requestsService.createRescheduleRequest(createDto, requestedById);
+    return this.requestsService.createRescheduleRequest(createDto, requestedById, actorRole);
   }
 
   @Post('extra-sessions')

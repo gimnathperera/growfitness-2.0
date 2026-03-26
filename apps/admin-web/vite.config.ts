@@ -12,10 +12,18 @@ export default defineConfig({
       // Resolve workspace packages to the TS entrypoint to avoid stale generated JS in src/.
       '@grow-fitness/shared-types': path.resolve(__dirname, '../../packages/shared-types/src/index.ts'),
       '@grow-fitness/shared-schemas': path.resolve(__dirname, '../../packages/shared-schemas/src/index.ts'),
+      '@grow-fitness/invoice-print': path.resolve(
+        __dirname,
+        '../../packages/invoice-print/src/index.ts'
+      ),
     },
   },
   optimizeDeps: {
-    include: ['@grow-fitness/shared-types', '@grow-fitness/shared-schemas'],
+    include: [
+      '@grow-fitness/shared-types',
+      '@grow-fitness/shared-schemas',
+    ],
+    exclude: ['@grow-fitness/invoice-print'],
   },
   server: {
     port: 5173,

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { InvoicesController } from './invoices.controller';
+import { InvoicePdfService } from './invoice-pdf.service';
 import { InvoicesService } from './invoices.service';
 import { Invoice, InvoiceSchema } from '../../infra/database/schemas/invoice.schema';
 import { User, UserSchema } from '../../infra/database/schemas/user.schema';
@@ -17,7 +18,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [InvoicesController],
-  providers: [InvoicesService],
+  providers: [InvoicesService, InvoicePdfService],
   exports: [InvoicesService],
 })
 export class InvoicesModule {}

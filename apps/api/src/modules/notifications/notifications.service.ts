@@ -64,6 +64,13 @@ export interface NewInvoiceData {
   recipientName?: string;
 }
 
+export interface SendInvoicePdfEmailParams {
+  to: string;
+  recipientName?: string;
+  pdfBuffer: Buffer;
+  filename: string;
+}
+
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
@@ -193,6 +200,23 @@ export class NotificationService {
       );
     }
     if (tasks.length) await Promise.all(tasks);
+  }
+
+  async sendInvoicePdfEmail(params: SendInvoicePdfEmailParams): Promise<void> {
+    const name = params.recipientName?.trim() || 'there';
+    const body = `Hello ${name}, please find your Grow Fitness invoice attached as a PDF.`;
+    await this.emailProvider.send({
+      to: params.to,
+      subject: 'Your Grow Fitness invoice',
+      body,
+      attachments: [
+        {
+          filename: params.filename,
+          content: params.pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
   }
 
   async sendNewInvoiceToParent(data: NewInvoiceData) {

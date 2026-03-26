@@ -2,10 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+}
+
 export interface EmailData {
   to: string;
   subject: string;
   body: string;
+  attachments?: EmailAttachment[];
 }
 
 @Injectable()
@@ -69,6 +76,13 @@ export class EmailProvider {
         to: data.to,
         subject: data.subject,
         body: data.body,
+        attachmentCount: data.attachments?.length ?? 0,
+        attachments:
+          data.attachments?.map(a => ({
+            filename: a.filename,
+            contentType: a.contentType,
+            byteLength: a.content.length,
+          })) ?? [],
         timestamp: new Date().toISOString(),
       });
       return;
@@ -85,8 +99,15 @@ export class EmailProvider {
         to: data.to,
         subject: data.subject,
         text: data.body,
-        // Optionally add HTML version if needed in the future
-        // html: data.html,
+        ...(data.attachments?.length
+          ? {
+              attachments: data.attachments.map(a => ({
+                filename: a.filename,
+                content: a.content,
+                contentType: a.contentType ?? 'application/octet-stream',
+              })),
+            }
+          : {}),
       };
 
       const info = await this.transporter.sendMail(mailOptions);

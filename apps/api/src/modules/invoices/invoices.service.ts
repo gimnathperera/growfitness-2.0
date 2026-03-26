@@ -1,15 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Invoice, InvoiceDocument } from '../../infra/database/schemas/invoice.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
-import { InvoiceType, InvoiceStatus } from '@grow-fitness/shared-types';
+import { InvoiceType, InvoiceStatus, UserRole } from '@grow-fitness/shared-types';
 import { NotificationType } from '@grow-fitness/shared-types';
 import { CreateInvoiceDto, UpdateInvoicePaymentStatusDto } from '@grow-fitness/shared-schemas';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notifications/notifications.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import type { JwtPayload } from '../auth/auth.service';
 
 @Injectable()
 export class InvoicesService {
@@ -19,6 +20,32 @@ export class InvoicesService {
     private auditService: AuditService,
     private notificationService: NotificationService
   ) {}
+
+  /**
+   * List invoices. Parents/coaches are scoped to their own records (ignores spoofed query params).
+   */
+  async findAllForActor(
+    pagination: PaginationDto,
+    filters:
+      | {
+          type?: InvoiceType;
+          parentId?: string;
+          coachId?: string;
+          status?: InvoiceStatus;
+        }
+      | undefined,
+    actor: JwtPayload
+  ) {
+    const scoped = { ...(filters ?? {}) };
+    if (actor.role === UserRole.PARENT) {
+      scoped.parentId = actor.sub;
+      scoped.type = InvoiceType.PARENT_INVOICE;
+    } else if (actor.role === UserRole.COACH) {
+      scoped.coachId = actor.sub;
+      scoped.type = InvoiceType.COACH_PAYOUT;
+    }
+    return this.findAll(pagination, scoped);
+  }
 
   async findAll(
     pagination: PaginationDto,
@@ -83,6 +110,43 @@ export class InvoicesService {
     return this.toInvoiceResponse(invoice as any);
   }
 
+  async findByIdForActor(id: string, actor: JwtPayload) {
+    const invoice = await this.findById(id);
+    this.assertActorCanAccessInvoice(invoice, actor);
+    return invoice;
+  }
+
+  private assertActorCanAccessInvoice(
+    invoice: { type: InvoiceType; parentId?: string; coachId?: string },
+    actor: JwtPayload
+  ): void {
+    if (actor.role === UserRole.ADMIN) {
+      return;
+    }
+    if (actor.role === UserRole.PARENT) {
+      if (invoice.type !== InvoiceType.PARENT_INVOICE || invoice.parentId !== actor.sub) {
+        throw new ForbiddenException({
+          errorCode: ErrorCode.FORBIDDEN,
+          message: 'You cannot access this invoice',
+        });
+      }
+      return;
+    }
+    if (actor.role === UserRole.COACH) {
+      if (invoice.type !== InvoiceType.COACH_PAYOUT || invoice.coachId !== actor.sub) {
+        throw new ForbiddenException({
+          errorCode: ErrorCode.FORBIDDEN,
+          message: 'You cannot access this invoice',
+        });
+      }
+      return;
+    }
+    throw new ForbiddenException({
+      errorCode: ErrorCode.FORBIDDEN,
+      message: 'You cannot access this invoice',
+    });
+  }
+
   /**
    * Normalize invoice document: keep parentId/coachId as string IDs and expose
    * populated refs as parent and coach.
@@ -118,17 +182,37 @@ export class InvoicesService {
       status: inv.status,
       dueDate: inv.dueDate,
       paidAt: inv.paidAt,
+      pdfEmailedAt: inv.pdfEmailedAt,
       exportFields: inv.exportFields,
       createdAt: inv.createdAt,
       updatedAt: inv.updatedAt,
     };
   }
 
+  /**
+   * Records that the invoice PDF was emailed (updates timestamp on each successful send).
+   */
+  async markInvoicePdfEmailed(invoiceId: string): Promise<Date> {
+    const at = new Date();
+    const updated = await this.invoiceModel
+      .findByIdAndUpdate(invoiceId, { $set: { pdfEmailedAt: at } }, { new: true })
+      .exec();
+    if (!updated) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.INVOICE_NOT_FOUND,
+        message: 'Invoice not found',
+      });
+    }
+    return at;
+  }
+
   async create(createInvoiceDto: CreateInvoiceDto, actorId: string) {
-    const totalAmount = createInvoiceDto.items.reduce((sum, item) => sum + item.amount, 0);
+    const { kidName, ...invoicePayload } = createInvoiceDto;
+    const totalAmount = invoicePayload.items.reduce((sum, item) => sum + item.amount, 0);
 
     const invoice = new this.invoiceModel({
-      ...createInvoiceDto,
+      ...invoicePayload,
+      ...(kidName ? { exportFields: { kidName } } : {}),
       totalAmount,
       dueDate: new Date(createInvoiceDto.dueDate),
       status: InvoiceStatus.PENDING,
@@ -332,7 +416,16 @@ export class InvoicesService {
       .exec();
 
     // Simple CSV generation
-    const headers = ['ID', 'Type', 'Parent/Coach', 'Total Amount', 'Status', 'Due Date', 'Paid At'];
+    const headers = [
+      'ID',
+      'Type',
+      'Parent/Coach',
+      'Total Amount',
+      'Status',
+      'Due Date',
+      'Paid At',
+      'PDF Emailed At',
+    ];
     const rows = invoices.map(invoice => [
       invoice._id.toString(),
       invoice.type,
@@ -343,6 +436,7 @@ export class InvoicesService {
       invoice.status,
       invoice.dueDate.toISOString(),
       invoice.paidAt?.toISOString() || 'N/A',
+      invoice.pdfEmailedAt?.toISOString() || 'N/A',
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');

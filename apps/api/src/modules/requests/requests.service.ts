@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -28,6 +34,7 @@ import { Session, SessionDocument } from '../../infra/database/schemas/session.s
 import { RequestStatus, UserStatus, UserRole, NotificationType } from '@grow-fitness/shared-types';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notifications/notifications.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { Types } from 'mongoose';
@@ -47,7 +54,8 @@ export class RequestsService {
     @InjectModel(Kid.name) private kidModel: Model<KidDocument>,
     @InjectModel(Session.name) private sessionModel: Model<SessionDocument>,
     private auditService: AuditService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private sessionsService: SessionsService
   ) {}
 
   private async notifyAdmins(
@@ -168,13 +176,57 @@ export class RequestsService {
   }
 
   // Reschedule Requests
-  async createRescheduleRequest(dto: CreateRescheduleRequestDto, requestedById: string) {
+  async createRescheduleRequest(
+    dto: CreateRescheduleRequestDto,
+    requestedById: string,
+    actorRole: UserRole
+  ) {
     const session = await this.sessionModel.findById(dto.sessionId).exec();
     if (!session) {
       throw new NotFoundException({
         errorCode: ErrorCode.NOT_FOUND,
         message: 'Session not found',
       });
+    }
+
+    if (actorRole === UserRole.PARENT) {
+      const kidIds = (session.kids ?? []).map(k =>
+        k instanceof Types.ObjectId ? k : new Types.ObjectId(String(k))
+      );
+      if (!kidIds.length) {
+        throw new ForbiddenException({
+          errorCode: ErrorCode.FORBIDDEN,
+          message:
+            'This session has no enrolled participants. Contact support if you believe this is an error.',
+        });
+      }
+      if (!Types.ObjectId.isValid(requestedById)) {
+        throw new ForbiddenException({
+          errorCode: ErrorCode.FORBIDDEN,
+          message: 'Invalid account context for this action.',
+        });
+      }
+      const parentOid = new Types.ObjectId(requestedById);
+      const owned = await this.kidModel
+        .countDocuments({
+          _id: { $in: kidIds },
+          parentId: parentOid,
+        })
+        .exec();
+      if (owned === 0) {
+        throw new ForbiddenException({
+          errorCode: ErrorCode.FORBIDDEN,
+          message: 'You can only request a reschedule for sessions that include your child.',
+        });
+      }
+    } else if (actorRole === UserRole.COACH) {
+      const coachIdStr = session.coachId?.toString?.() ?? String(session.coachId);
+      if (coachIdStr !== requestedById) {
+        throw new ForbiddenException({
+          errorCode: ErrorCode.FORBIDDEN,
+          message: 'You can only request a reschedule for sessions you coach.',
+        });
+      }
     }
 
     const request = new this.rescheduleRequestModel({
@@ -259,6 +311,37 @@ export class RequestsService {
         message: 'Reschedule request not found',
       });
     }
+
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException({
+        errorCode: ErrorCode.INVALID_INPUT,
+        message: 'This reschedule request has already been processed.',
+      });
+    }
+
+    const sessionRef = request.sessionId as Types.ObjectId | { _id: Types.ObjectId } | null;
+    if (sessionRef == null) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Session for this reschedule request no longer exists.',
+      });
+    }
+    const sessionId =
+      sessionRef instanceof Types.ObjectId
+        ? sessionRef.toString()
+        : sessionRef._id?.toString?.();
+    if (!sessionId) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Session for this reschedule request no longer exists.',
+      });
+    }
+
+    await this.sessionsService.update(
+      sessionId,
+      { dateTime: new Date(request.newDateTime).toISOString() },
+      actorId
+    );
 
     request.status = RequestStatus.APPROVED;
     request.processedAt = new Date();
@@ -345,9 +428,20 @@ export class RequestsService {
       });
     }
 
-    // Validate kid belongs to parent when PARENT creates
+    // Validate kid belongs to parent when PARENT creates (ObjectId-safe match)
     if (actorRole === UserRole.PARENT) {
-      const kid = await this.kidModel.findOne({ _id: dto.kidId, parentId }).exec();
+      if (!Types.ObjectId.isValid(dto.kidId) || !Types.ObjectId.isValid(parentId)) {
+        throw new NotFoundException({
+          errorCode: ErrorCode.NOT_FOUND,
+          message: 'Kid not found or does not belong to you',
+        });
+      }
+      const kid = await this.kidModel
+        .findOne({
+          _id: new Types.ObjectId(dto.kidId),
+          parentId: new Types.ObjectId(parentId),
+        })
+        .exec();
       if (!kid) {
         throw new NotFoundException({
           errorCode: ErrorCode.NOT_FOUND,
