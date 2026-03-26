@@ -45,25 +45,34 @@ export function DashboardHeader() {
 
         const res = await kidsService.getKids(1, 50, user.id);
 
-      const mappedKids = res.data.map((kid: Kid) => ({
-        id: kid.id,
-        parentId: kid.parentId,
-        name: kid.name,
-        gender: kid.gender,
-        birthDate: new Date(kid.birthDate),
-        currentlyInSports: kid.currentlyInSports,
-        medicalConditions: kid.medicalConditions || [],
-        sessionType: kid.sessionType,
-        createdAt: kid.createdAt ? new Date(kid.createdAt) : new Date(),
-        updatedAt: kid.updatedAt ? new Date(kid.updatedAt) : new Date(),
-      }));
+        const mappedKids = res.data
+          .map((kid: Kid & { _id?: string }) => {
+            const id = kid.id || kid._id;
+            if (!id) return null;
+            return {
+              id,
+              parentId: kid.parentId,
+              name: kid.name,
+              gender: kid.gender,
+              birthDate: new Date(kid.birthDate),
+              currentlyInSports: kid.currentlyInSports,
+              medicalConditions: kid.medicalConditions || [],
+              sessionType: kid.sessionType,
+              createdAt: kid.createdAt ? new Date(kid.createdAt) : new Date(),
+              updatedAt: kid.updatedAt ? new Date(kid.updatedAt) : new Date(),
+            };
+          })
+          .filter((k): k is NonNullable<typeof k> => k != null);
 
         setKids(mappedKids);
 
-        // ✅ auto-select ONLY once
-        if (selectedKid || mappedKids.length === 0) return;
-
-        setSelectedKid(mappedKids[0]);
+        // Drop stale selection (e.g. localStorage kid from a previous account) and pick a valid kid.
+        setSelectedKid((prev) => {
+          if (prev && mappedKids.some((k) => k.id === prev.id)) {
+            return prev;
+          }
+          return mappedKids[0] ?? null;
+        });
       } catch (error) {
         console.error("❌ Failed to fetch kids", error);
       } finally {
@@ -72,7 +81,7 @@ export function DashboardHeader() {
     };
 
     fetchKids();
-  }, [role, user?.id, setKids, setSelectedKid, setIsKidLoading, selectedKid]);
+  }, [role, user?.id, setKids, setSelectedKid, setIsKidLoading]);
 
   /* ---------- LOADING STATE ---------- */
   if (isLoading || !user) {

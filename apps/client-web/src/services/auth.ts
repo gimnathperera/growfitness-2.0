@@ -136,5 +136,7 @@ export const authService = {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    // Prevent the next user inheriting another parent's selected child (extra session / schedule).
+    localStorage.removeItem('selectedKid');
   },
 };

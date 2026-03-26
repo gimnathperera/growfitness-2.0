@@ -428,26 +428,46 @@ export class RequestsService {
       });
     }
 
-    // Validate kid belongs to parent when PARENT creates (ObjectId-safe match)
-    if (actorRole === UserRole.PARENT) {
-      if (!Types.ObjectId.isValid(dto.kidId) || !Types.ObjectId.isValid(parentId)) {
-        throw new NotFoundException({
-          errorCode: ErrorCode.NOT_FOUND,
-          message: 'Kid not found or does not belong to you',
-        });
-      }
-      const kid = await this.kidModel
-        .findOne({
-          _id: new Types.ObjectId(dto.kidId),
-          parentId: new Types.ObjectId(parentId),
-        })
-        .exec();
-      if (!kid) {
-        throw new NotFoundException({
-          errorCode: ErrorCode.NOT_FOUND,
-          message: 'Kid not found or does not belong to you',
-        });
-      }
+    if (!Types.ObjectId.isValid(dto.kidId)) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Kid not found or does not belong to you',
+      });
+    }
+    if (!Types.ObjectId.isValid(parentId)) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.INVALID_INPUT,
+        message: 'Parent ID is required (required in body when creating as admin)',
+      });
+    }
+
+    const kid = await this.kidModel.findById(dto.kidId).exec();
+    if (!kid) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Kid not found or does not belong to you',
+      });
+    }
+
+    const expectedParentId = String(parentId);
+    const kidParentId =
+      kid.parentId instanceof Types.ObjectId
+        ? kid.parentId.toString()
+        : kid.parentId != null
+          ? String(kid.parentId)
+          : '';
+    if (!kidParentId || kidParentId !== expectedParentId) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Kid not found or does not belong to you',
+      });
+    }
+
+    if (actorRole === UserRole.PARENT && kid.isApproved !== true) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Kid not found or does not belong to you',
+      });
     }
 
     const request = new this.extraSessionRequestModel({
