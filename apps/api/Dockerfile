@@ -22,6 +22,18 @@ RUN pnpm --filter @grow-fitness/api... build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Puppeteer: slim Node images lack the shared libraries bundled Chromium needs.
+# Use Debian's Chromium so PDF generation works on Cloud Run.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    chromium \
+    fontconfig \
+    fonts-liberation \
+    fonts-noto-core \
+  && rm -rf /var/lib/apt/lists/*
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Root node_modules (pnpm store) - required for apps/api symlinks to resolve
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/api/dist ./apps/api/dist
