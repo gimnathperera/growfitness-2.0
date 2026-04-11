@@ -1,10 +1,11 @@
 import { ArrowRight } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
+import { Container } from '../layout/Container';
 
 export const CTASection = () => {
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-24">
+      <Container>
         <div className="relative bg-gradient-to-br from-brand-green to-brand-dark rounded-[4rem] p-12 md:p-20 text-center overflow-hidden shadow-2xl">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
@@ -51,7 +52,7 @@ export const CTASection = () => {
              </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

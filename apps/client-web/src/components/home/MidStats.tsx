@@ -1,4 +1,5 @@
 import { Users, Trophy, Star, Heart } from 'lucide-react';
+import { Container } from '../layout/Container';
 
 export const MidStats = () => {
   const stats = [
@@ -9,14 +10,14 @@ export const MidStats = () => {
   ];
 
   return (
-    <section className="bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <section className="bg-brand-dark py-24 relative overflow-hidden">
       {/* Background patterns */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-64 h-64 border-4 border-white rounded-full"></div>
         <div className="absolute bottom-10 right-10 w-48 h-48 border-4 border-white rounded-full"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto text-center relative z-10">
+      <Container className="text-center relative z-10">
         <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 uppercase tracking-wider font-insanibc leading-tight">
           THE ONLY BAD WORKOUT <br />
           IS THE ONE THAT <span className="text-brand-green">DIDN'T HAPPEN.</span>
@@ -42,7 +43,7 @@ export const MidStats = () => {
             </div>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

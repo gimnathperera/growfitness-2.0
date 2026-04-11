@@ -1,5 +1,6 @@
 import { Facebook, Instagram, Twitter, Youtube, Mail, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Container } from './Container';
 
 const logo = "/Grow Logo Versions-01.svg";
 
@@ -39,8 +40,8 @@ export function Footer() {
   ];
 
   return (
-    <footer className="bg-brand-dark text-white py-20 px-4 sm:px-6 lg:px-8 border-t border-white/5">
-      <div className="max-w-7xl mx-auto">
+    <footer className="bg-brand-dark text-white py-20 border-t border-white/5">
+      <Container>
         <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
           {/* Brand Column */}
           <div className="lg:col-span-4">
@@ -103,7 +104,7 @@ export function Footer() {
             <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
           </div>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 }

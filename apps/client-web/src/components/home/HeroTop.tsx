@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, Star } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
 import type { Banner } from '@grow-fitness/shared-types';
+import { Container } from '../layout/Container';
 
 interface HeroTopProps {
   banners: Banner[];
@@ -23,12 +24,12 @@ export const HeroTop: React.FC<HeroTopProps> = ({ banners, loading }) => {
   const displayBanners = banners.length > 0 ? banners : [{ id: 'default', imageUrl: defaultImage }];
 
   return (
-    <section className="relative bg-white pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section className="relative bg-white pt-32 pb-20 overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-20 left-10 w-24 h-24 bg-brand-light rounded-full opacity-50 -z-10 animate-pulse"></div>
       <div className="absolute bottom-10 right-1/2 w-16 h-16 bg-brand-light rounded-full opacity-30 -z-10 animate-bounce"></div>
 
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+      <Container className="flex flex-col lg:flex-row items-center gap-12">
         {/* Left Content */}
         <div className="flex-1 text-left">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-light text-brand-green text-sm font-bold mb-6">
@@ -123,7 +124,7 @@ export const HeroTop: React.FC<HeroTopProps> = ({ banners, loading }) => {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

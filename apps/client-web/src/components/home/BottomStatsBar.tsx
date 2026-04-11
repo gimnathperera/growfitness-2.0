@@ -1,4 +1,5 @@
 import { Star, Users, Heart, Award } from 'lucide-react';
+import { Container } from '../layout/Container';
 
 export const BottomStatsBar = () => {
   const trustStats = [
@@ -26,7 +27,7 @@ export const BottomStatsBar = () => {
 
   return (
     <section className="py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container>
         <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden p-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-gray-100">
             {trustStats.map((stat, index) => (
@@ -41,7 +42,7 @@ export const BottomStatsBar = () => {
             ))}
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

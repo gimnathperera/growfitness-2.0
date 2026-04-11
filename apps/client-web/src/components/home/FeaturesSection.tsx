@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { MascotCharacter as CircleImage } from '@/components/ui/mascot-character';
+import { Container } from '../layout/Container';
 
 export function FeaturesSection() {
   const features = [
@@ -38,7 +39,7 @@ export function FeaturesSection() {
 
   return (
     <section className="py-24 bg-white relative" id="programs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container>
         <div className="text-center mb-20">
           <div className="w-12 h-1 bg-brand-green mx-auto mb-6 rounded-full"></div>
           <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed italic text-lg">
@@ -65,7 +66,7 @@ export function FeaturesSection() {
             </div>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Heart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { testimonialsService } from '@/services/testimonials.service';
 import type { Testimonial } from '@grow-fitness/shared-types';
+import { Container } from '../layout/Container';
 
 export function TestimonialsSection() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -39,7 +40,7 @@ export function TestimonialsSection() {
 
   return (
     <section className="relative py-24 overflow-hidden bg-brand-light/20">
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container className="relative">
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 font-insanibc">
@@ -149,7 +150,7 @@ export function TestimonialsSection() {
             </div>
           )}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

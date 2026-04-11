@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { Container } from '../layout/Container';
 
 export function BenefitsSection() {
   const benefits = [
@@ -14,7 +15,7 @@ export function BenefitsSection() {
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-green/5 rounded-full"></div>
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-green/5 rounded-full"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container>
         <div className="bg-white rounded-[3rem] p-12 md:p-16 shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 font-insanibc leading-tight">
@@ -50,7 +51,7 @@ export function BenefitsSection() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }
