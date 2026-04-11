@@ -81,25 +81,15 @@ export default function Header({ forceSolid = false }: HeaderProps) {
   return (
     <>
       <nav
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          isSolid
-            ? "bg-background/95 backdrop-blur-md shadow-card border-b border-border"
-            : "bg-transparent"
-        )}
+        className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 transition-all duration-300"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <img src={logo} alt="Grow Fitness" className="h-10 md:h-12 w-auto" />
-              <span
-                className={cn(
-                  "font-display font-bold text-lg md:text-xl",
-                  isSolid ? "text-primary" : "text-white"
-                )}
-              >
+            <Link to="/" className="flex items-center gap-2 group">
+              <img src={logo} alt="Grow Fitness" className="h-10 md:h-12 w-auto transition-transform group-hover:scale-110" />
+              <span className="font-display font-bold text-xl md:text-2xl text-brand-green">
                 GrowFitness
               </span>
             </Link>
@@ -110,12 +100,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
                 <a
                   key={link.label}
                   href={link.href}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isSolid
-                      ? "text-foreground hover:text-primary hover:bg-accent"
-                      : "text-white/90 hover:text-white hover:bg-white/10"
-                  )}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-brand-green hover:bg-brand-light transition-all duration-200"
                 >
                   {link.label}
                 </a>
@@ -124,14 +109,9 @@ export default function Header({ forceSolid = false }: HeaderProps) {
               {!isAuthenticated && (
                 <>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className={cn(
-                      "ml-3 font-semibold",
-                      isSolid
-                        ? "border-primary text-primary"
-                        : "border-white/40 text-white bg-white/10 hover:bg-white/20"
-                    )}
+                    className="ml-3 font-semibold text-brand-green border-2 border-brand-green hover:bg-brand-green hover:text-white transition-all rounded-full px-6"
                     onClick={() => navigate("/login")}
                   >
                     Sign In
@@ -139,7 +119,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
 
                   <Button
                     size="sm"
-                    className="ml-2 font-semibold shadow-md"
+                    className="ml-3 font-semibold shadow-lg bg-brand-green hover:bg-brand-dark text-white rounded-full px-6 transition-all"
                     onClick={() => navigate("/free-session")}
                   >
                     Book Free Session

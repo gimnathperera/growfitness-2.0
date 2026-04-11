@@ -36,7 +36,7 @@ export function SessionsCalendar({
       dateRange?.end || 'all',
     ],
     () => {
-      if (!dateRange) return Promise.resolve({ data: [], total: 0 });
+      if (!dateRange) return Promise.resolve({ data: [], total: 0, page: 1, limit: 100, totalPages: 0 });
       const start = new Date(dateRange.start);
       start.setDate(start.getDate() - 1);
       const end = new Date(dateRange.end);

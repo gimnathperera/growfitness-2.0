@@ -64,7 +64,7 @@ export function TodaysSessions() {
           />
         ) : (
           <div className="space-y-2">
-            {sessions.slice(0, 5).map((session: any) => {
+            {sessions.slice(0, 5).map((session: Session) => {
               const locationName = session.location?.name || 'Unknown Location';
               const kidNames = Array.isArray(session.kids)
                 ? session.kids

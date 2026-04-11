@@ -54,6 +54,12 @@
   --grow-900: #14532d;
   --grow-950: #052e16;
 
+  /* Brand Colors from Reference */
+  --brand-green: #22c55e;
+  --brand-dark: #0b3b2c;
+  --brand-light-green: #e9f9ef;
+  --brand-accent: #facc15; /* Yellow/Gold for stars */
+
   /* Sidebar colors */
   --sidebar: #f8fafc;
   --sidebar-foreground: #1f2937;

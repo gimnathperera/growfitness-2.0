@@ -10,6 +10,7 @@ export interface DashboardStats {
   totalParents: number;
   totalCoaches: number;
   totalKids: number;
+  totalStudents?: number; // Alias for compatibility
   todaysSessionsList?: any[];
 }
 

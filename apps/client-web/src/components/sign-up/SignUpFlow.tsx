@@ -14,7 +14,7 @@ import {
   kidAttributeQuestions,
 } from './SignUpQuestions';
 import QuestionRenderer from '../common/QuestionRenderer';
-import ProgressBar from '../common/ProgressBar';
+// import ProgressBar from '../common/ProgressBar';
 import ConfettiCelebration from './ConfettiCelebration';
 import type { SessionType } from '@grow-fitness/shared-types';
 
@@ -90,7 +90,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
   ];
 
   const totalSteps = steps.length;
-  const progress = ((currentStep + 1) / totalSteps) * 100;
+  // const progress = ((currentStep + 1) / totalSteps) * 100;
   const currentStepConfig = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
@@ -280,8 +280,11 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
                         setKidHasMedicalConditions(prev => ({ ...prev, [index]: false }));
                         // Clear medical conditions if "No" is selected
                         const kidValues = getValues(`kids.${index}`);
-                        if (kidValues) {
-                          control._fields[`kids.${index}.medicalConditions` as any]?._f.ref?.focus();
+                        if (kidValues && control) {
+                          const field = (control as any)._fields?.[`kids.${index}.medicalConditions`];
+                          if (field && field._f && field._f.ref) {
+                            field._f.ref.focus();
+                          }
                         }
                       }}
                       className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${

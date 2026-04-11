@@ -93,6 +93,7 @@ export function formatSessionType(type: SessionType): string {
   const typeMap: Record<SessionType, string> = {
     INDIVIDUAL: 'Individual',
     GROUP: 'Group',
+    BOTH: 'Both',
   };
   return typeMap[type] || type;
 }

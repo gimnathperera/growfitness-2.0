@@ -59,6 +59,12 @@ export default {
   				800: '#166534',
   				900: '#14532d',
   				950: '#052e16'
+  			},
+  			brand: {
+  				green: 'var(--brand-green)',
+  				dark: 'var(--brand-dark)',
+  				light: 'var(--brand-light-green)',
+  				accent: 'var(--brand-accent)'
   			}
   		},
   		borderRadius: {
