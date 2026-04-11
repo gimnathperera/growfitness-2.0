@@ -59,18 +59,20 @@ export default function ParentDashboard() {
 
   if (isAuthLoading || isKidLoading || isKidDataLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader />
-        <div className="flex justify-center py-20 text-gray-500">Loading dashboard...</div>
+      <div className="bg-gray-50 flex items-center justify-center py-20 rounded-2xl border border-dashed border-gray-200">
+        <div className="flex flex-col items-center gap-4">
+          <DashboardHeader />
+          <p className="text-gray-500 animate-pulse">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (!user || user.role !== UserRole.PARENT || !kidData) {
     return (
-      <div className="min-h-screen bg-white mt-24">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-4">
         <DashboardHeader />
-        <div className="flex justify-center py-20 text-gray-500">
+        <div className="text-gray-500">
           Please select a child to continue.
         </div>
       </div>
@@ -87,7 +89,7 @@ export default function ParentDashboard() {
 
   /* ------------------ RENDER ------------------ */
   return (
-    <div className="min-h-screen bg-white mt-24">
+    <div className="space-y-6">
       <DashboardHeader />
 
       <DesktopTabs

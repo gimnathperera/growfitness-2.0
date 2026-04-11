@@ -119,3 +119,14 @@ export function Footer() {
     </footer>
   );
 }
+
+export function DashboardFooter() {
+  return (
+    <footer className="border-t border-border/60 bg-background px-6 py-4">
+      <div className="flex flex-col gap-2 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <p>&copy; {new Date().getFullYear()} GrowFitness</p>
+        <p>Dashboard for coaches and parents</p>
+      </div>
+    </footer>
+  );
+}
