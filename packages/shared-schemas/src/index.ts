@@ -35,7 +35,13 @@ export const CreateParentSchema = z
   .object({
     name: z.string().min(1, 'Enter your name.'),
     email: z.string().email('Enter a valid email address.'),
-    phone: z.string().min(1, 'Enter your phone number.'),
+    phone: z
+      .string()
+      .min(1, 'Enter your phone number.')
+      .regex(
+        /^(\+?\d{1,3}[- ]?)?\d{10,12}$/,
+        'Enter a valid mobile number (e.g., +94771234567 or 0771234567).'
+      ),
     location: z.string().optional(),
     password: z.string().min(6, 'Use at least 6 characters for your password.'),
     confirmPassword: z.string().min(6, 'Use at least 6 characters for your password.'),

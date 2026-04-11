@@ -136,12 +136,18 @@ export const kidAttributeQuestions: KidQuestion[] = [
   {
     id: 'goal',
     section: 'kid',
-    type: 'text',
+    type: 'select',
     title: "What are {name}'s fitness goals?",
-    subtitle: 'e.g., Build strength, improve coordination, make friends',
+    subtitle: 'Select the primary goal',
     perChildLabel: "{name}'s fitness goals",
-    placeholder: 'Describe their goals',
-    required: false,
+    placeholder: 'Select a goal',
+    required: true,
+    options: [
+      { value: 'Build strength', label: 'Build strength' },
+      { value: 'Improve coordination', label: 'Improve coordination' },
+      { value: 'Make friends', label: 'Make friends' },
+      { value: 'I don’t know / Basic fitness', label: 'I don’t know / Basic fitness' },
+    ],
   },
   {
     id: 'currentlyInSports',
@@ -179,6 +185,7 @@ export const kidAttributeQuestions: KidQuestion[] = [
     options: [
       { value: SessionType.INDIVIDUAL, label: 'Individual (One-on-one training)' },
       { value: SessionType.GROUP, label: 'Group (Train with others)' },
+      { value: SessionType.BOTH, label: 'Both (Individual & Group)' },
     ],
   },
 ];

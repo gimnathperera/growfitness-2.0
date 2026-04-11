@@ -54,6 +54,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [kidHasMedicalConditions, setKidHasMedicalConditions] = useState<Record<number, boolean>>({});
   const {
     control,
     trigger,
@@ -245,18 +246,96 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
                 <h3 className="text-lg font-semibold text-gray-800">{label}</h3>
               </div>
 
-              <QuestionRenderer
-                question={{
-                  id: `kids.${index}.${attribute.id}` as const, 
-                  type: attribute.type,
-                  placeholder: attribute.placeholder,
-                  options: attribute.options,
-                  required: attribute.required,
-                }}
-                control={control}
-                error={errors.kids?.[index]?.[attribute.id] as FieldError | undefined}
-                shouldAutoFocus={index === 0}
-              />
+              {attribute.id === 'medicalConditions' ? (
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:gap-4 w-full">
+                    <motion.button
+                      type="button"
+                      onClick={() => setKidHasMedicalConditions(prev => ({ ...prev, [index]: true }))}
+                      className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
+                        kidHasMedicalConditions[index] === true
+                          ? '!border-emerald-500 !bg-emerald-50 shadow-md'
+                          : '!border-amber-200 !bg-amber-50 hover:border-amber-300 hover:!bg-amber-100'
+                      }`}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <span className="text-base sm:text-lg font-medium text-gray-900">
+                            Yes
+                          </span>
+                        </div>
+                        {kidHasMedicalConditions[index] === true && (
+                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                          </div>
+                        )}
+                      </div>
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        setKidHasMedicalConditions(prev => ({ ...prev, [index]: false }));
+                        // Clear medical conditions if "No" is selected
+                        const kidValues = getValues(`kids.${index}`);
+                        if (kidValues) {
+                          control._fields[`kids.${index}.medicalConditions` as any]?._f.ref?.focus();
+                        }
+                      }}
+                      className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
+                        kidHasMedicalConditions[index] === false
+                          ? '!border-emerald-500 !bg-emerald-50 shadow-md'
+                          : '!border-amber-200 !bg-amber-50 hover:border-amber-300 hover:!bg-amber-100'
+                      }`}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <span className="text-base sm:text-lg font-medium text-gray-900">
+                            No
+                          </span>
+                        </div>
+                        {kidHasMedicalConditions[index] === false && (
+                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                          </div>
+                        )}
+                      </div>
+                    </motion.button>
+                  </div>
+
+                  {kidHasMedicalConditions[index] === true && (
+                    <QuestionRenderer
+                      question={{
+                        id: `kids.${index}.${attribute.id}` as const,
+                        type: attribute.type,
+                        placeholder: attribute.placeholder,
+                        options: attribute.options,
+                        required: attribute.required,
+                      }}
+                      control={control}
+                      error={errors.kids?.[index]?.[attribute.id] as FieldError | undefined}
+                      shouldAutoFocus={index === 0}
+                    />
+                  )}
+                </div>
+              ) : (
+                <QuestionRenderer
+                  question={{
+                    id: `kids.${index}.${attribute.id}` as const,
+                    type: attribute.type,
+                    placeholder: attribute.placeholder,
+                    options: attribute.options,
+                    required: attribute.required,
+                  }}
+                  control={control}
+                  error={errors.kids?.[index]?.[attribute.id] as FieldError | undefined}
+                  shouldAutoFocus={index === 0}
+                />
+              )}
             </motion.div>
           );
         })}
@@ -286,17 +365,19 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
 
   const renderForm = () => (
     <>
-      <ProgressBar
+      {/* <ProgressBar
         progress={progress}
         currentStep={currentStep + 1}
         totalSteps={totalSteps}
-      />
+      /> */}
 
       <div className="flex-1 flex flex-col px-4">
-        <motion.div
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            goToNext();
+          }}
           className="flex-1 flex flex-col w-full max-w-2xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
         >
           <div className="flex-1 flex flex-col justify-center py-6">
             <AnimatePresence mode="wait">
@@ -348,8 +429,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
             </div>
 
             <Button
-              type="button"
-              onClick={goToNext}
+              type="submit"
               disabled={isLoading || isSubmitting}
               className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 !bg-emerald-500 !text-white hover:!bg-emerald-600 !border-0"
             >
@@ -371,7 +451,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
               )}
             </Button>
           </div>
-        </motion.div>
+        </form>
       </div>
 
       {onCancel && (

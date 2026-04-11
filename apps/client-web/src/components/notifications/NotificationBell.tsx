@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, X } from 'lucide-react';
 import {
   DropdownMenu,
@@ -63,6 +64,7 @@ function playNotificationSound() {
 }
 
 export function NotificationBell() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [bubbleVisible, setBubbleVisible] = useState(false);
   const [bubbleMessage, setBubbleMessage] = useState('');
@@ -143,6 +145,29 @@ export function NotificationBell() {
   const handleMarkAsRead = (n: Notification) => {
     if (!n.read) {
       markReadMutation.mutate(n.id);
+    }
+
+    // Redirect to schedule tab if it's a session notification
+    const sessionNotificationTypes = [
+      'FREE_SESSION_REQUEST',
+      'RESCHEDULE_REQUEST',
+      'EXTRA_SESSION_REQUEST',
+      'FREE_SESSION_SELECTED',
+      'RESCHEDULE_APPROVED',
+      'RESCHEDULE_DENIED',
+      'EXTRA_SESSION_APPROVED',
+      'EXTRA_SESSION_DENIED',
+      'SESSION_CREATED',
+      'SESSION_UPDATED',
+      'SESSION_CANCELLED',
+      'SESSION_COMPLETED',
+      'SESSION_DELETED',
+      'UPCOMING_SESSION_REMINDER',
+    ];
+
+    if (sessionNotificationTypes.includes(n.type) || n.entityType === 'SESSION') {
+      navigate('/dashboard');
+      setOpen(false); // Close dropdown
     }
   };
 

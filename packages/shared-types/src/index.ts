@@ -14,6 +14,7 @@ export enum UserStatus {
 export enum SessionType {
   INDIVIDUAL = 'INDIVIDUAL',
   GROUP = 'GROUP',
+  BOTH = 'BOTH',
 }
 
 export enum SessionStatus {
