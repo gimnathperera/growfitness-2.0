@@ -29,10 +29,10 @@ export function DashboardStatsCards({ stats }: DashboardStatsCardsProps) {
       onClick: () => navigate('/users?tab=coaches'),
     },
     {
-      title: 'Total Kids',
-      value: stats.totalKids ?? 0,
+      title: 'Total Students',
+      value: stats.totalStudents ?? stats.totalKids ?? 0,
       icon: Baby,
-      description: 'Registered kids',
+      description: 'Registered students',
       onClick: () => navigate('/kids'),
     },
     {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { usersService } from '@/services/users.service';
-import { User } from '@grow-fitness/shared-types';
+import { User, UserRole } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -18,8 +18,10 @@ import { UserDetailsDialog } from './UserDetailsDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useModalParams } from '@/hooks/useModalParams';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function CoachesTable() {
+  const { user: currentUser } = useAuth();
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [search, setSearch] = useState('');
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('userId');
@@ -108,6 +110,9 @@ export function CoachesTable() {
       header: 'Actions',
       cell: ({ row }) => {
         const user = row.original;
+        const isSelf = currentUser?.id === user.id;
+        const isCoach = currentUser?.role === UserRole.COACH;
+
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -123,14 +128,22 @@ export function CoachesTable() {
             <Button
               variant="ghost"
               size="icon"
+              disabled={isSelf && isCoach}
               onClick={() => {
                 setSelectedUser(user);
                 openModal(user.id, 'edit');
               }}
+              title={isSelf && isCoach ? 'You cannot edit your own profile here' : 'Edit coach'}
             >
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleDelete(user)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={isSelf && isCoach}
+              onClick={() => handleDelete(user)}
+              title={isSelf && isCoach ? 'You cannot delete your own profile' : 'Delete coach'}
+            >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>

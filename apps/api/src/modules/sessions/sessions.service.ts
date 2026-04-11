@@ -165,9 +165,16 @@ export class SessionsService {
           }
         : undefined;
     const kids = Array.isArray(s.kids)
-      ? s.kids.map((k: any) =>
-          k && typeof k === 'object' && k._id ? k._id.toString() : (k?.toString?.() ?? k)
-        )
+      ? s.kids.map((k: any) => {
+          if (k && typeof k === 'object' && k._id) {
+            return {
+              id: k._id.toString(),
+              name: k.name,
+              gender: k.gender,
+            };
+          }
+          return k?.toString?.() ?? k;
+        })
       : undefined;
     return {
       id: s._id?.toString(),
@@ -442,8 +449,29 @@ export class SessionsService {
   async getWeeklySummary(startDate: Date, endDate: Date) {
     const sessions = await this.findByDateRange(startDate, endDate);
 
-    const summary = {
+    // Group by day for the chart
+    const days: Record<string, number> = {};
+    const curr = new Date(startDate);
+    while (curr < endDate) {
+      days[curr.toISOString().split('T')[0]] = 0;
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    sessions.forEach(s => {
+      const day = s.dateTime.toISOString().split('T')[0];
+      if (days[day] !== undefined) {
+        days[day]++;
+      }
+    });
+
+    const chartData = Object.entries(days).map(([date, count]) => ({
+      date,
+      count,
+    }));
+
+    return {
       total: sessions.length,
+      chartData,
       byType: {
         INDIVIDUAL: sessions.filter(s => s.type === SessionType.INDIVIDUAL).length,
         GROUP: sessions.filter(s => s.type === SessionType.GROUP).length,
@@ -455,8 +483,6 @@ export class SessionsService {
         COMPLETED: sessions.filter(s => s.status === SessionStatus.COMPLETED).length,
       },
     };
-
-    return summary;
   }
 
   async delete(id: string, actorId: string) {

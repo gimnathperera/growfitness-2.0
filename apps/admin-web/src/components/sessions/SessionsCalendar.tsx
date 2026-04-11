@@ -35,14 +35,20 @@ export function SessionsCalendar({
       dateRange?.start || 'all',
       dateRange?.end || 'all',
     ],
-    () =>
-      sessionsService.getSessions(1, 100, {
+    () => {
+      if (!dateRange) return Promise.resolve({ data: [], total: 0 });
+      const start = new Date(dateRange.start);
+      start.setDate(start.getDate() - 1);
+      const end = new Date(dateRange.end);
+      end.setDate(end.getDate() + 1);
+      return sessionsService.getSessions(1, 100, {
         coachId: coachId || undefined,
         locationId: locationId || undefined,
         status: (status as SessionStatus) || undefined,
-        startDate: dateRange?.start,
-        endDate: dateRange?.end,
-      }),
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      });
+    },
     {
       enabled: !!dateRange,
       refetchOnWindowFocus: false,

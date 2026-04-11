@@ -1,0 +1,8 @@
+1. in coach-portal Fix total students count (Shows incorrect stats (0 total but +2 weekly))
+2. Fix notification button (Notification button not working)
+3. Add session context info(Show client name or group location in session info)
+4. Simplify dashboard (Merge overview + kids into one essential page)
+5. Prioritize upcoming sessions(Make upcoming sessions more prominent)
+6. Fix calendar mismatch (Sessions appear today but not in calendar)
+7. Add coach chat system (Enable relevant communication/chat feature)
+8. Restrict profile editing (Coaches should not edit their own personal info)

@@ -52,6 +52,7 @@ export class DashboardService {
       totalParents,
       totalCoaches,
       totalKids,
+      totalStudents: totalKids, // Alias for total kids
       todaysSessionsList: todaysSessions,
     };
   }
@@ -64,7 +65,8 @@ export class DashboardService {
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 7);
 
-    return this.sessionsService.getWeeklySummary(startOfWeek, endOfWeek);
+    const summary = await this.sessionsService.getWeeklySummary(startOfWeek, endOfWeek);
+    return summary.chartData;
   }
 
   async getFinanceSummary() {

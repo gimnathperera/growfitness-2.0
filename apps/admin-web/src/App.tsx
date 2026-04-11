@@ -17,6 +17,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { TestimonialsPage } from './pages/TestimonialsPage';
 import { Layout } from './components/layout/Layout';
 import { PrintInvoicePage } from './pages/PrintInvoicePage';
+import { SupportChatPage } from './pages/SupportChatPage';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
           <Route path="quizzes" element={<QuizzesPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="testimonials" element={<TestimonialsPage />} />
+          <Route path="chat" element={<SupportChatPage />} />
         </Route>
       </Routes>
     </AuthProvider>

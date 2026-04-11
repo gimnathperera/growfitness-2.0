@@ -30,6 +30,7 @@ const menuItems = [
   { path: '/codes', label: 'Codes', icon: Code },
   { path: '/quizzes', label: 'Quizzes', icon: HelpCircle },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
+  { path: '/chat', label: 'Support Chat', icon: MessageCircle },
 ];
 
 export function Sidebar() {
