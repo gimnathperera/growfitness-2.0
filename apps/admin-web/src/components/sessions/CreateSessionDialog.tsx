@@ -95,6 +95,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
   const form = useForm<CreateSessionDto>({
     resolver: zodResolver(CreateSessionSchema),
     defaultValues,
+    shouldUnregister: true,
   });
 
   useEffect(() => {
@@ -224,6 +225,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
               onSubmit={form.handleSubmit(onSubmit)}
               id="create-session-form"
               className="space-y-4"
+              noValidate
             >
               {/* Title */}
               <CustomFormField label="Title" required error={form.formState.errors.title?.message}>
@@ -244,6 +246,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
                       if (value === SessionType.GROUP) {
                         form.setValue('kidId', undefined);
                         form.setValue('kids', []);
+                        form.clearErrors('kidId');
                       } else {
                         form.setValue('kids', undefined);
                         form.setValue('kidId', '');
@@ -353,31 +356,6 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
                   </CustomFormField>
                 )}
               </div>
-
-              {/* Kids */}
-              {sessionType === SessionType.GROUP && (
-                <CustomFormField label="Kids" required error={form.formState.errors.kids?.message}>
-                  <div className="max-h-36 overflow-y-auto border rounded-md p-2 space-y-1.5">
-                    {(kidsData?.data || []).map(kid => (
-                      <div key={kid.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={form.watch('kids')?.includes(kid.id) || false}
-                          onCheckedChange={checked => {
-                            const current = form.watch('kids') || [];
-                            form.setValue(
-                              'kids',
-                              checked
-                                ? [...current, kid.id]
-                                : current.filter(id => id !== kid.id)
-                            );
-                          }}
-                        />
-                        <label className="text-sm">{kid.name}</label>
-                      </div>
-                    ))}
-                  </div>
-                </CustomFormField>
-              )}
 
               {sessionType === SessionType.INDIVIDUAL && (
                 <CustomFormField

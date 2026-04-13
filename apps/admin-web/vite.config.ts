@@ -19,11 +19,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: [
-      '@grow-fitness/shared-types',
-      '@grow-fitness/shared-schemas',
-    ],
-    exclude: ['@grow-fitness/invoice-print'],
+    include: ['@grow-fitness/shared-types'],
+    // Workspace schema changes often; pre-bundling can serve stale validation until cache clear.
+    exclude: ['@grow-fitness/shared-schemas', '@grow-fitness/invoice-print'],
   },
   server: {
     port: 5173,

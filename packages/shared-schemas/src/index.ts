@@ -179,14 +179,12 @@ export const CreateSessionSchema = z
   })
   .refine(
     data => {
-      if (data.type === SessionType.GROUP) {
-        return data.kids && data.kids.length > 0;
-      } else {
-        return !!data.kidId;
-      }
+      if (data.type === SessionType.GROUP) return true;
+      return !!data.kidId;
     },
     {
-      message: 'Group sessions require kids array, individual sessions require kidId',
+      message: 'Individual sessions require kidId',
+      path: ['kidId'],
     }
   );
 
@@ -238,14 +236,12 @@ export const CreateRecurringSessionSchema = z
   })
   .refine(
     data => {
-      if (data.type === SessionType.GROUP) {
-        return data.kids && data.kids.length > 0;
-      } else {
-        return !!data.kidId;
-      }
+      if (data.type === SessionType.GROUP) return true;
+      return !!data.kidId;
     },
     {
-      message: 'Group sessions require kids array, individual sessions require kidId',
+      message: 'Individual sessions require kidId',
+      path: ['kidId'],
     }
   );
 

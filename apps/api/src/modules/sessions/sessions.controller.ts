@@ -227,7 +227,8 @@ export class SessionsController {
         kids: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of kid IDs (exactly one for individual sessions)',
+          description:
+            'Optional array of kid IDs for enrollment. Group sessions can be created without kids; individual sessions require exactly one kid ID.',
         },
         isFreeSession: {
           type: 'boolean',
@@ -235,7 +236,7 @@ export class SessionsController {
           default: false,
         },
       },
-      required: ['title', 'type', 'coachId', 'locationId', 'dateTime', 'duration', 'kids'],
+      required: ['title', 'type', 'coachId', 'locationId', 'dateTime', 'duration'],
     },
   })
   @ApiResponse({

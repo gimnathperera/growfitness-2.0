@@ -84,6 +84,7 @@ export function DateTimePicker({
       <Popover>
         <PopoverTrigger asChild>
           <Button
+            type="button"
             variant="outline"
             className={cn(
               'flex-1 justify-start text-left font-normal',

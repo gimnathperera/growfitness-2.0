@@ -313,14 +313,9 @@ export class SessionsService {
   }
 
   async create(createSessionDto: CreateSessionDto, actorId: string) {
-    if (!createSessionDto.kids?.length) {
-      throw new BadRequestException({
-        errorCode: ErrorCode.INVALID_INPUT,
-        message: 'At least one kid ID is required',
-      });
-    }
+    const kids = createSessionDto.kids ?? [];
 
-    if (createSessionDto.type === SessionType.INDIVIDUAL && createSessionDto.kids.length !== 1) {
+    if (createSessionDto.type === SessionType.INDIVIDUAL && kids.length !== 1) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
         message: 'Individual sessions require exactly one kid ID',
@@ -330,7 +325,7 @@ export class SessionsService {
     const capacity =
       createSessionDto.capacity ?? (createSessionDto.type === SessionType.GROUP ? 10 : 1);
 
-    if (createSessionDto.type === SessionType.GROUP && createSessionDto.kids.length > capacity) {
+    if (createSessionDto.type === SessionType.GROUP && kids.length > capacity) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_SESSION_CAPACITY,
         message: 'Number of kids exceeds session capacity',
@@ -339,7 +334,7 @@ export class SessionsService {
 
     const coachObjectId = this.toObjectId(createSessionDto.coachId, 'coachId');
     const locationObjectId = this.toObjectId(createSessionDto.locationId, 'locationId');
-    const kidObjectIds = this.toObjectIdArray(createSessionDto.kids, 'kids');
+    const kidObjectIds = this.toObjectIdArray(kids, 'kids');
 
     const session = new this.sessionModel({
       ...createSessionDto,
@@ -399,13 +394,6 @@ export class SessionsService {
       createRecurringSessionDto.type === SessionType.INDIVIDUAL && createRecurringSessionDto.kidId
         ? [createRecurringSessionDto.kidId]
         : createRecurringSessionDto.kids ?? [];
-
-    if (!kids.length) {
-      throw new BadRequestException({
-        errorCode: ErrorCode.INVALID_INPUT,
-        message: 'At least one kid ID is required',
-      });
-    }
 
     if (createRecurringSessionDto.type === SessionType.INDIVIDUAL && kids.length !== 1) {
       throw new BadRequestException({
