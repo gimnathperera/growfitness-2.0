@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SessionType, type Kid } from "@grow-fitness/shared-types";
+import { SessionType } from "@grow-fitness/shared-types";
 import type { UpdateKidDto } from "@grow-fitness/shared-schemas";
 
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,6 @@ export function KidProfileTab() {
   const { selectedKid, isLoading: isKidLoading } = useKid();
   const kidId = selectedKid?.id;
 
-  const [kid, setKid] = useState<Kid | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState<Partial<UpdateKidDto>>({
@@ -59,7 +58,6 @@ export function KidProfileTab() {
         const fullKidData = await kidsService.getKidById(kidId);
         if (!fullKidData) throw new Error("No kid data received from API");
 
-        setKid(fullKidData);
         setFormData({
           name: fullKidData.name || "",
           gender: fullKidData.gender || "",
@@ -70,7 +68,6 @@ export function KidProfileTab() {
           sessionType: fullKidData.sessionType || "INDIVIDUAL",
         });
       } catch (error: unknown) {
-        setKid(selectedKid as Kid);
         setFormData((prev) => ({
           ...prev,
           name: selectedKid.name || "",
@@ -132,7 +129,6 @@ export function KidProfileTab() {
       };
 
       const updatedKid = await kidsService.updateKid(kidId, payload);
-      setKid(updatedKid);
       setFormData({
         name: updatedKid.name || "",
         gender: updatedKid.gender || "",

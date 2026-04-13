@@ -62,14 +62,14 @@ export const UpcomingSessions = ({ kidId, coachId }: UpcomingSessionsProps) => {
     }
   };
 
-  const formatDate = (dateTime: string) =>
+  const formatDate = (dateTime: string | Date) =>
     new Date(dateTime).toLocaleDateString(undefined, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
     });
 
-  const formatTime = (dateTime: string) =>
+  const formatTime = (dateTime: string | Date) =>
     new Date(dateTime).toLocaleTimeString(undefined, {
       hour: 'numeric',
       minute: '2-digit',

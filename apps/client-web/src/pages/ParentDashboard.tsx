@@ -60,7 +60,10 @@ export default function ParentDashboard() {
   const isDashboardLoading = isAuthLoading || isKidLoading || isKidDataLoading;
   const showDashboard = Boolean(user && user.role === UserRole.PARENT && kidData);
   const tabs = showDashboard
-    ? getTabsForUser(user.role as 'COACH' | 'PARENT', kidData.sessionType as 'GROUP' | 'INDIVIDUAL')
+    ? getTabsForUser(
+        user!.role as 'COACH' | 'PARENT',
+        kidData!.sessionType as 'GROUP' | 'INDIVIDUAL'
+      )
     : [];
 
   return (
