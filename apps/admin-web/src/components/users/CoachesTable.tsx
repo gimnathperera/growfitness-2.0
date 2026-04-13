@@ -29,6 +29,13 @@ export function CoachesTable() {
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
 
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync selectedUser with URL params
   useEffect(() => {
     if (entityId && modal) {

@@ -38,6 +38,13 @@ export function ParentsTable() {
   const { toast } = useToast();
   const { confirm, confirmState } = useConfirm();
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [search, locationFilter, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync selectedUser with URL params
   useEffect(() => {
     if (entityId && modal) {
