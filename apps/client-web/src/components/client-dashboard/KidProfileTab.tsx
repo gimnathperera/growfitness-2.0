@@ -30,6 +30,7 @@ import { User, Calendar, Award, Heart, Loader2, Save } from "lucide-react";
 export function KidProfileTab() {
   const { toast } = useToast();
   const { selectedKid, isLoading: isKidLoading } = useKid();
+  const kidId = selectedKid?.id;
 
   const [kid, setKid] = useState<Kid | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,11 +52,11 @@ export function KidProfileTab() {
   };
 
   useEffect(() => {
-    if (!selectedKid?.id) return;
+    if (!kidId) return;
 
     const fetchKidDetails = async () => {
       try {
-        const fullKidData = await kidsService.getKidById(selectedKid.id);
+        const fullKidData = await kidsService.getKidById(kidId);
         if (!fullKidData) throw new Error("No kid data received from API");
 
         setKid(fullKidData);
@@ -88,7 +89,7 @@ export function KidProfileTab() {
     };
 
     fetchKidDetails();
-  }, [selectedKid?.id, toast]);
+  }, [kidId, selectedKid, toast]);
 
   const handleInputChange = (field: keyof UpdateKidDto, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -107,7 +108,7 @@ export function KidProfileTab() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!kid) return;
+    if (!kidId) return;
 
     if (!formData.name?.trim() || !formData.gender || !formData.birthDate) {
       toast({
@@ -124,20 +125,23 @@ export function KidProfileTab() {
         name: formData.name,
         gender: formData.gender,
         birthDate: formData.birthDate,
-        goal: formData.goal || undefined,
+        goal: formData.goal ?? "",
         currentlyInSports: formData.currentlyInSports || false,
-        medicalConditions: formData.medicalConditions || [],
+        medicalConditions: formData.medicalConditions ?? [],
         sessionType: formData.sessionType as SessionType,
       };
 
-      interface ApiResponse<T> {
-        data: T;
-        // Add other response metadata if needed (e.g., status, message, etc.)
-      }
-
-      // Then in your handleSubmit function:
-      const res = await kidsService.updateKid(kid.id, payload) as unknown as ApiResponse<Kid>;
-      setKid(res.data);
+      const updatedKid = await kidsService.updateKid(kidId, payload);
+      setKid(updatedKid);
+      setFormData({
+        name: updatedKid.name || "",
+        gender: updatedKid.gender || "",
+        birthDate: formatDateForInput(updatedKid.birthDate),
+        goal: updatedKid.goal ?? "",
+        currentlyInSports: updatedKid.currentlyInSports || false,
+        medicalConditions: updatedKid.medicalConditions ?? [],
+        sessionType: updatedKid.sessionType || SessionType.INDIVIDUAL,
+      });
 
       toast({
         title: "Success",

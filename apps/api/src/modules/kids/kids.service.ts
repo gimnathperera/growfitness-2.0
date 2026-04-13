@@ -146,15 +146,17 @@ export class KidsService {
     }
 
     Object.assign(kid, {
-      ...(updateKidDto.name && { name: updateKidDto.name }),
-      ...(updateKidDto.gender && { gender: updateKidDto.gender }),
-      ...(updateKidDto.birthDate && { birthDate: new Date(updateKidDto.birthDate) }),
+      ...(updateKidDto.name !== undefined && { name: updateKidDto.name }),
+      ...(updateKidDto.gender !== undefined && { gender: updateKidDto.gender }),
+      ...(updateKidDto.birthDate !== undefined && { birthDate: new Date(updateKidDto.birthDate) }),
       ...(updateKidDto.goal !== undefined && { goal: updateKidDto.goal }),
       ...(updateKidDto.currentlyInSports !== undefined && {
         currentlyInSports: updateKidDto.currentlyInSports,
       }),
-      ...(updateKidDto.medicalConditions && { medicalConditions: updateKidDto.medicalConditions }),
-      ...(updateKidDto.sessionType && { sessionType: updateKidDto.sessionType }),
+      ...(updateKidDto.medicalConditions !== undefined && {
+        medicalConditions: updateKidDto.medicalConditions,
+      }),
+      ...(updateKidDto.sessionType !== undefined && { sessionType: updateKidDto.sessionType }),
     });
 
     await kid.save();
