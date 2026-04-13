@@ -315,15 +315,15 @@ export class SessionsService {
   async create(createSessionDto: CreateSessionDto, actorId: string) {
     const kids = createSessionDto.kids ?? [];
 
-    if (createSessionDto.type === SessionType.INDIVIDUAL && kids.length !== 1) {
+    if (createSessionDto.type === SessionType.INDIVIDUAL && kids.length < 1) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
-        message: 'Individual sessions require exactly one kid ID',
+        message: 'Individual sessions require at least one kid ID',
       });
     }
 
     const capacity =
-      createSessionDto.capacity ?? (createSessionDto.type === SessionType.GROUP ? 10 : 1);
+      createSessionDto.capacity ?? (createSessionDto.type === SessionType.GROUP ? 10 : kids.length);
 
     if (createSessionDto.type === SessionType.GROUP && kids.length > capacity) {
       throw new BadRequestException({
@@ -390,21 +390,18 @@ export class SessionsService {
   }
 
   async createRecurring(createRecurringSessionDto: CreateRecurringSessionDto, actorId: string) {
-    const kids =
-      createRecurringSessionDto.type === SessionType.INDIVIDUAL && createRecurringSessionDto.kidId
-        ? [createRecurringSessionDto.kidId]
-        : createRecurringSessionDto.kids ?? [];
+    const kids = createRecurringSessionDto.kids ?? [];
 
-    if (createRecurringSessionDto.type === SessionType.INDIVIDUAL && kids.length !== 1) {
+    if (createRecurringSessionDto.type === SessionType.INDIVIDUAL && kids.length < 1) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
-        message: 'Individual sessions require exactly one kid ID',
+        message: 'Individual sessions require at least one kid ID',
       });
     }
 
     const capacity =
       createRecurringSessionDto.capacity ??
-      (createRecurringSessionDto.type === SessionType.GROUP ? 10 : 1);
+      (createRecurringSessionDto.type === SessionType.GROUP ? 10 : kids.length);
 
     if (createRecurringSessionDto.type === SessionType.GROUP && kids.length > capacity) {
       throw new BadRequestException({

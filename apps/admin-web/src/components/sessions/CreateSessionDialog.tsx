@@ -143,8 +143,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
     const submitData: CreateSessionDto = {
       ...data,
       title: formValues.title || data.title,
-      kids:
-        data.type === SessionType.INDIVIDUAL && data.kidId ? [data.kidId] : data.kids || [],
+      kids: data.kids || [],
       kidId: undefined,
     };
 
@@ -189,7 +188,6 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
       duration: submitData.duration,
       capacity: submitData.capacity,
       kids: submitData.kids,
-      kidId: data.kidId,
       isFreeSession: submitData.isFreeSession ?? false,
       recurrence: {
         frequency: repeatMode as RecurrenceFrequency,
@@ -246,10 +244,10 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
                       if (value === SessionType.GROUP) {
                         form.setValue('kidId', undefined);
                         form.setValue('kids', []);
-                        form.clearErrors('kidId');
+                        form.clearErrors(['kidId', 'kids']);
                       } else {
-                        form.setValue('kids', undefined);
-                        form.setValue('kidId', '');
+                        form.setValue('kidId', undefined);
+                        form.setValue('kids', []);
                       }
                     }}
                   >
@@ -359,25 +357,29 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
 
               {sessionType === SessionType.INDIVIDUAL && (
                 <CustomFormField
-                  label="Kid"
+                  label="Kids"
                   required
-                  error={form.formState.errors.kidId?.message}
+                  error={form.formState.errors.kids?.message}
                 >
-                  <Select
-                    value={form.watch('kidId') || ''}
-                    onValueChange={value => form.setValue('kidId', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select kid" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(kidsData?.data || []).map(kid => (
-                        <SelectItem key={kid.id} value={kid.id}>
-                          {kid.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="max-h-40 overflow-y-auto space-y-1 rounded-md border p-2">
+                    {(kidsData?.data || []).map(kid => (
+                      <div key={kid.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={form.watch('kids')?.includes(kid.id) || false}
+                          onCheckedChange={checked => {
+                            const currentKids = form.watch('kids') || [];
+                            form.setValue(
+                              'kids',
+                              checked
+                                ? [...currentKids, kid.id]
+                                : currentKids.filter(id => id !== kid.id)
+                            );
+                          }}
+                        />
+                        <label className="text-sm">{kid.name}</label>
+                      </div>
+                    ))}
+                  </div>
                 </CustomFormField>
               )}
 

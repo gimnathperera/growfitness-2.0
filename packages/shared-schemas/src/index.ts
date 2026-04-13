@@ -180,11 +180,11 @@ export const CreateSessionSchema = z
   .refine(
     data => {
       if (data.type === SessionType.GROUP) return true;
-      return !!data.kidId;
+      return Array.isArray(data.kids) && data.kids.length >= 1;
     },
     {
-      message: 'Individual sessions require kidId',
-      path: ['kidId'],
+      message: 'Individual sessions require at least one kid',
+      path: ['kids'],
     }
   );
 
@@ -237,11 +237,11 @@ export const CreateRecurringSessionSchema = z
   .refine(
     data => {
       if (data.type === SessionType.GROUP) return true;
-      return !!data.kidId;
+      return Array.isArray(data.kids) && data.kids.length >= 1;
     },
     {
-      message: 'Individual sessions require kidId',
-      path: ['kidId'],
+      message: 'Individual sessions require at least one kid',
+      path: ['kids'],
     }
   );
 
