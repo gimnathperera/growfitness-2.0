@@ -182,7 +182,7 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
+                <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                 <SelectItem value={SessionType.GROUP}>Group</SelectItem>
               </SelectContent>
             </Select>

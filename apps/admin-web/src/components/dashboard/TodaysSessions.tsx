@@ -4,7 +4,7 @@ import { sessionsService } from '@/services/sessions.service';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorState } from '@/components/common/ErrorState';
 import { EmptyState } from '@/components/common/EmptyState';
-import { formatDateTime } from '@/lib/formatters';
+import { formatDateTime, formatSessionType } from '@/lib/formatters';
 import { Calendar } from 'lucide-react';
 import { Session } from '@grow-fitness/shared-types';
 
@@ -86,7 +86,8 @@ export function TodaysSessions() {
                       {locationName} • {kidNames}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {session.title ? formatDateTime(session.dateTime) : ''} {session.type} •{' '}
+                      {session.title ? formatDateTime(session.dateTime) : ''}{' '}
+                      {formatSessionType(session.type)} •{' '}
                       {session.duration} min
                     </p>
                   </div>

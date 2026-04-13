@@ -279,7 +279,7 @@ export function GenerateReportDialog({ open, onOpenChange }: GenerateReportDialo
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All session types</SelectItem>
-                      <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
+                      <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                       <SelectItem value={SessionType.GROUP}>Group</SelectItem>
                     </SelectContent>
                   </Select>

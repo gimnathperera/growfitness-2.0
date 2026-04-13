@@ -339,7 +339,7 @@ export function UserRequestsTable() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Individual Sessions</span>
+                        <span className="text-muted-foreground">Private Sessions</span>
                         <span className="text-muted-foreground">
                           {kids.filter(k => k.sessionType === 'INDIVIDUAL').length}
                         </span>

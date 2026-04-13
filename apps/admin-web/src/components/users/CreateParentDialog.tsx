@@ -304,7 +304,7 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
+                          <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                           <SelectItem value={SessionType.GROUP}>Group</SelectItem>
                         </SelectContent>
                       </Select>

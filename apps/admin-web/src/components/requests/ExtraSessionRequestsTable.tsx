@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
-import { formatDate, formatDateTime } from '@/lib/formatters';
+import { formatDate, formatDateTime, formatSessionType } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState } from '@/components/common/ErrorState';
 
@@ -81,6 +81,7 @@ export function ExtraSessionRequestsTable() {
     {
       accessorKey: 'sessionType',
       header: 'Session Type',
+      cell: ({ row }) => formatSessionType(row.original.sessionType),
     },
     {
       accessorKey: 'status',

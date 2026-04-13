@@ -193,7 +193,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
+                  <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                   <SelectItem value={SessionType.GROUP}>Group</SelectItem>
                 </SelectContent>
               </Select>

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
-import { formatDate } from '@/lib/formatters';
+import { formatDate, formatSessionType } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateParentDialog } from './CreateParentDialog';
 import { EditUserDialog } from './EditUserDialog';
@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserStatus } from '@grow-fitness/shared-types';
+import { SessionType, UserStatus } from '@grow-fitness/shared-types';
 
 export function ParentsTable() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
@@ -141,7 +141,7 @@ export function ParentsTable() {
             {types.length > 0 ? (
               types.map(type => (
                 <Badge key={type} variant="secondary" className="text-xs">
-                  {type}
+                  {formatSessionType(type as SessionType)}
                 </Badge>
               ))
             ) : (

@@ -239,7 +239,7 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                         <span className="text-muted-foreground">{kidsInSports}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Individual Sessions</span>
+                        <span className="text-muted-foreground">Private Sessions</span>
                         <span className="text-muted-foreground">{individualSessions}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">

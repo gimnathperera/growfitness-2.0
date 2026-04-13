@@ -5,6 +5,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Baby, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Kid } from '@grow-fitness/shared-types';
+import { formatSessionType } from '@/lib/formatters';
 
 export function RecentStudents() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export function RecentStudents() {
                       {kid.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {kid.gender} • {kid.sessionType}
+                      {kid.gender} • {formatSessionType(kid.sessionType)}
                     </p>
                   </div>
                 </div>

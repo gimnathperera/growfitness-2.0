@@ -93,7 +93,7 @@ export function formatInvoiceType(type: InvoiceType): string {
 
 export function formatSessionType(type: SessionType): string {
   const typeMap: Record<SessionType, string> = {
-    INDIVIDUAL: 'Individual',
+    INDIVIDUAL: 'Private',
     GROUP: 'Group',
     BOTH: 'Both',
   };

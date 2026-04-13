@@ -28,6 +28,7 @@ import { usersService } from '@/services/users.service';
 import { locationsService } from '@/services/locations.service';
 import { kidsService } from '@/services/kids.service';
 import { useToast } from '@/hooks/useToast';
+import { formatSessionType } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { useModalParams } from '@/hooks/useModalParams';
 
@@ -200,7 +201,7 @@ export function EditSessionDialog({
             {/* Session Type - Read-only display */}
             <CustomFormField label="Session Type">
               <Input
-                value={session.type === SessionType.INDIVIDUAL ? 'Individual' : 'Group'}
+                value={formatSessionType(session.type)}
                 disabled
                 className="bg-muted"
               />

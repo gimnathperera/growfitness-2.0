@@ -255,7 +255,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={SessionType.INDIVIDUAL}>Individual</SelectItem>
+                      <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                       <SelectItem value={SessionType.GROUP}>Group</SelectItem>
                     </SelectContent>
                   </Select>
