@@ -32,7 +32,7 @@ export function LoginPage() {
       await login(data.email, data.password);
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err?.message || 'Login failed');
     }
   };
 
@@ -69,14 +69,14 @@ export function LoginPage() {
             <p className="text-muted-foreground mb-8">
               Enter your email and password to access the admin dashboard
             </p>
-            
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {error && (
                 <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md">
                   {error}
                 </div>
               )}
-              
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2 text-foreground">
                   Email
@@ -90,9 +90,12 @@ export function LoginPage() {
                   required
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="password" className="block text-sm font-medium mb-2 text-foreground">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium mb-2 text-foreground"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -108,15 +111,11 @@ export function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isSubmitting}
