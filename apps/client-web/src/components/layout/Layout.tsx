@@ -1,8 +1,7 @@
-import { Outlet } from "react-router-dom";
-import Header from "./Header";
-import { DashboardFooter, Footer } from "./Footer";
-import { SideNav } from "./SideNav";
-
+import { Outlet } from 'react-router-dom';
+import Header from './Header';
+import { DashboardFooter, Footer } from './Footer';
+import { SideNav } from './SideNav';
 
 export function Layout() {
   return (
@@ -24,13 +23,13 @@ export function DashboardLayout() {
       {/* Header (fixed) */}
       <Header />
 
-      <div className="flex flex-1 pt-20"> {/* Header height is h-20 (80px) */}
+      <div className="flex flex-1 pt-16 md:pt-20">
         {/* Sidebar (fixed) */}
         <SideNav />
 
         {/* scrollable area for content and footer */}
-        <div className="flex-1 flex flex-col min-w-0 ml-64 overflow-y-auto">
-          <main className="flex-1 p-6">
+        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto lg:ml-64">
+          <main className="flex-1 p-4 pb-24 sm:p-6 sm:pb-6">
             <Outlet />
           </main>
           <DashboardFooter />
@@ -39,5 +38,3 @@ export function DashboardLayout() {
     </div>
   );
 }
-
-

@@ -1,12 +1,6 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-import { useKid } from "@/contexts/kid/useKid";
+import { useKid } from '@/contexts/kid/useKid';
 import { useAuth } from '@/contexts/useAuth';
 
 export function DashboardHeader() {
@@ -21,7 +15,7 @@ export function DashboardHeader() {
     },
     COACH: {
       greeting: `Hi Coach 👋`,
-      subtitle: "Ready to inspire young athletes today?",
+      subtitle: 'Ready to inspire young athletes today?',
     },
   };
 
@@ -42,28 +36,20 @@ export function DashboardHeader() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         {/* ---------- LEFT ---------- */}
         <div className="text-center md:text-left">
-          <h1 className="text-base sm:text-lg font-semibold text-gray-800">
-            {config?.greeting}
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500">
-            {config?.subtitle}
-          </p>
+          <h1 className="text-base sm:text-lg font-semibold text-gray-800">{config?.greeting}</h1>
+          <p className="text-xs sm:text-sm text-gray-500">{config?.subtitle}</p>
 
-          {role === "PARENT" && selectedKid && (
+          {role === 'PARENT' && selectedKid && (
             <p className="text-[11px] sm:text-xs text-gray-400 mt-1">
-              {isKidLoading
-                ? "Loading..."
-                : `Selected: ${selectedKid.name}`}
+              {isKidLoading ? 'Loading...' : `Selected: ${selectedKid.name}`}
             </p>
           )}
         </div>
 
         {/* ---------- RIGHT (KID SELECTOR) ---------- */}
-        {role === "PARENT" && (
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            <span className="text-sm font-bold text-gray-700">
-              Kid&apos;s Name:
-            </span>
+        {role === 'PARENT' && (
+          <div className="flex w-full flex-col items-start gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <span className="text-sm font-bold text-gray-700">Kid&apos;s Name:</span>
 
             {kids.length === 1 ? (
               <span className="px-3 py-1 rounded-md bg-gray-100 text-sm font-medium">
@@ -71,18 +57,18 @@ export function DashboardHeader() {
               </span>
             ) : (
               <Select
-                value={selectedKid?.id ?? ""}
-                onValueChange={(value) => {
-                  const kid = kids.find((k) => k.id === value);
+                value={selectedKid?.id ?? ''}
+                onValueChange={value => {
+                  const kid = kids.find(k => k.id === value);
                   if (kid) setSelectedKid(kid);
                 }}
               >
-                <SelectTrigger className="w-[200px] text-sm">
+                <SelectTrigger className="w-full text-sm sm:w-[200px]">
                   <SelectValue placeholder="Select Kid" />
                 </SelectTrigger>
 
                 <SelectContent>
-                  {kids.map((kid) => (
+                  {kids.map(kid => (
                     <SelectItem key={kid.id} value={kid.id}>
                       {kid.name}
                     </SelectItem>

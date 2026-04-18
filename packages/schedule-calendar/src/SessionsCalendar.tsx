@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -33,6 +33,17 @@ export function SessionsCalendar({
   height = '700px',
 }: SessionsCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
+
+  useEffect(() => {
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const handleEventClick = (info: { event: { extendedProps: unknown } }) => {
     onSessionClick(info.event.extendedProps as Session);
@@ -84,19 +95,27 @@ export function SessionsCalendar({
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay',
-        }}
+        initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
+        headerToolbar={
+          isMobile
+            ? {
+                left: 'prev,next',
+                center: 'title',
+                right: 'today',
+              }
+            : {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay',
+              }
+        }
         events={events}
         editable={editable}
         selectable={editable}
         selectMirror={editable}
         dayMaxEvents={true}
         weekends={true}
-        height={height}
+        height={isMobile ? 'auto' : height}
         eventClick={handleEventClick}
         eventDrop={handleEventDrop}
         eventResize={handleEventResize}
@@ -112,7 +131,7 @@ export function SessionsCalendar({
           omitZeroMinute: true,
           meridiem: 'narrow',
         }}
-        dayHeaderContent={(arg) => (
+        dayHeaderContent={arg => (
           <div className="fc-col-header-cell-cushion">
             <span className="day-name">
               {arg.date.toLocaleDateString('en-US', { weekday: 'short' })}

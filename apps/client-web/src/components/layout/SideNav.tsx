@@ -1,24 +1,16 @@
-import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  FileText,
-  User,
-} from "lucide-react";
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, FileText, User } from 'lucide-react';
 
 export function SideNav() {
   const linkClasses =
-    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200";
+    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200';
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 border-r bg-white dark:bg-zinc-900 p-4 mt-20">
+    <aside className="fixed left-0 top-20 hidden h-[calc(100vh-5rem)] w-64 border-r bg-white p-4 dark:bg-zinc-900 lg:block">
       {/* Logo / Title */}
       <div className="mb-8 px-2">
-        <h2 className="text-xl font-bold tracking-tight">
-          Grow Fitness
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Parent Portal
-        </p>
+        <h2 className="text-xl font-bold tracking-tight">Grow Fitness</h2>
+        <p className="text-xs text-muted-foreground">Parent Portal</p>
       </div>
 
       {/* Navigation */}
@@ -28,8 +20,8 @@ export function SideNav() {
           className={({ isActive }) =>
             `${linkClasses} ${
               isActive
-                ? "bg-primary text-white shadow-md"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? 'bg-primary text-white shadow-md'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`
           }
         >
@@ -42,8 +34,8 @@ export function SideNav() {
           className={({ isActive }) =>
             `${linkClasses} ${
               isActive
-                ? "bg-primary text-white shadow-md"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? 'bg-primary text-white shadow-md'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`
           }
         >
@@ -56,8 +48,8 @@ export function SideNav() {
           className={({ isActive }) =>
             `${linkClasses} ${
               isActive
-                ? "bg-primary text-white shadow-md"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? 'bg-primary text-white shadow-md'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`
           }
         >

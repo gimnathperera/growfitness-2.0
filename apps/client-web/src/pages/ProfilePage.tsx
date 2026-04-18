@@ -184,11 +184,11 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background mx-12 mt-24">
-      <div className="mx-auto space-y-6">
+    <div className="min-h-screen bg-background px-4 pb-8 pt-20 sm:px-6 sm:pt-24 lg:px-10">
+      <div className="mx-auto max-w-5xl space-y-6">
         {/* Header */}
         <div className="text-start space-y-1">
-          <h1 className="text-3xl font-bold">Your Profile</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Your Profile</h1>
           <p className="text-muted-foreground">View your personal information</p>
         </div>
 
@@ -275,9 +275,9 @@ export default function ProfilePage() {
                       <Label>Available times</Label>
                     </div>
                     {(form.availableTimes ?? []).map((slot, index) => (
-                      <div key={index} className="flex gap-2 items-center flex-wrap">
+                      <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <select
-                          className="flex h-9 w-[130px] rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm sm:w-[160px]"
                           value={slot.dayOfWeek}
                           disabled
                         >
@@ -287,8 +287,18 @@ export default function ProfilePage() {
                             </option>
                           ))}
                         </select>
-                        <Input type="time" className="w-28" value={slot.startTime} disabled />
-                        <Input type="time" className="w-28" value={slot.endTime} disabled />
+                        <Input
+                          type="time"
+                          className="w-full sm:w-28"
+                          value={slot.startTime}
+                          disabled
+                        />
+                        <Input
+                          type="time"
+                          className="w-full sm:w-28"
+                          value={slot.endTime}
+                          disabled
+                        />
                       </div>
                     ))}
                   </div>

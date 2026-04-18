@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { addDays, endOfDay, startOfDay, startOfWeek, endOfWeek } from 'date-fns';
 import type { PaginatedResponse, Session } from '@grow-fitness/shared-types';
 import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
@@ -32,13 +32,13 @@ export default function ScheduleTab() {
   const { selectedKid } = useKid();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [view, setView] = useState<ScheduleView>('list');
-  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [openBooking, setOpenBooking] = useState(false);
-  const canRequestExtraSession =
-    Boolean(selectedKid) &&
+  const canRequestExtraSession = Boolean(
+    selectedKid &&
     (selectedKid.sessionType === 'INDIVIDUAL' ||
       selectedKid.sessionType === 'GROUP' ||
-      selectedKid.sessionType === 'BOTH');
+      selectedKid.sessionType === 'BOTH')
+  );
 
   const listRange = useMemo(() => {
     const start = startOfDay(new Date());
@@ -52,13 +52,9 @@ export default function ScheduleTab() {
     return { start: start.toISOString(), end: end.toISOString() };
   }, []);
 
-  useEffect(() => {
-    if (view === 'calendar' && !dateRange) {
-      setDateRange(calendarInitialRange);
-    }
-  }, [view, dateRange, calendarInitialRange]);
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>(calendarInitialRange);
 
-  const effectiveRange = view === 'list' ? listRange : (dateRange ?? calendarInitialRange);
+  const effectiveRange = view === 'list' ? listRange : dateRange;
 
   const { data: sessionsData, isLoading } = useApiQuery<PaginatedResponse<Session>>(
     ['sessions', selectedKid?.id ?? '', view, effectiveRange.start, effectiveRange.end],
@@ -81,7 +77,7 @@ export default function ScheduleTab() {
     { enabled: Boolean(selectedKid?.id) }
   );
 
-  const sessions = sessionsData?.data ?? [];
+  const sessions = useMemo(() => sessionsData?.data ?? [], [sessionsData?.data]);
 
   const events = useMemo(() => {
     return sessions.map(session =>
@@ -100,13 +96,13 @@ export default function ScheduleTab() {
   return (
     <>
       <Card className="border-[#23B685]/20 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center text-base font-semibold">
             <CalendarIcon className="mr-2 h-5 w-5 text-[#23B685]" />
             Schedule
           </CardTitle>
           {canRequestExtraSession && (
-            <Button size="sm" onClick={() => setOpenBooking(true)}>
+            <Button size="sm" onClick={() => setOpenBooking(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Book Extra Session
             </Button>
@@ -114,7 +110,7 @@ export default function ScheduleTab() {
         </CardHeader>
         <CardContent>
           <Tabs value={view} onValueChange={v => setView(v as ScheduleView)}>
-            <TabsList className="mb-4 grid w-full max-w-[240px] grid-cols-2">
+            <TabsList className="mb-4 grid w-full grid-cols-2 sm:max-w-[240px]">
               <TabsTrigger value="list" className="flex items-center gap-2">
                 <List className="h-4 w-4" />
                 List
@@ -141,15 +137,15 @@ export default function ScheduleTab() {
                       <button
                         type="button"
                         onClick={() => setSelectedSession(session)}
-                        className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none"
+                        className="flex w-full flex-col items-start gap-1 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none sm:flex-row sm:items-center sm:gap-4"
                       >
-                        <span className="min-w-[140px] text-sm text-muted-foreground">
+                        <span className="text-xs text-muted-foreground sm:min-w-[140px] sm:text-sm">
                           {formatDateTime(session.dateTime)}
                         </span>
-                        <span className="flex-1 font-medium text-foreground">
+                        <span className="w-full font-medium text-foreground sm:flex-1">
                           {session.title?.trim() || getSessionLabel(session)}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground sm:ml-auto">
                           {session.duration} min
                         </span>
                       </button>
