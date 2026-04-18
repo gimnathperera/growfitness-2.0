@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import type {
-  Control,
-  FieldError,
-  FieldPath,
-  FieldValues,
-  Path,
-  PathValue,
-} from 'react-hook-form';
+import type { Control, FieldError, FieldPath, FieldValues, Path, PathValue } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Controller } from 'react-hook-form';
 import { FormMessage } from '@/components/ui/form-message';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { QuestionConfig, QuestionOption } from '@/types/question-config';
 
 interface QuestionRendererProps<TFormValues extends FieldValues = FieldValues> {
@@ -79,6 +79,9 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
     loadOptions();
   }, [question.options, question.type]);
 
+  const questionPath = String(question.id);
+  const isSignupGoalSelect = question.type === 'select' && /^kids\.\d+\.goal$/.test(questionPath);
+
   const renderInput = () => {
     switch (question.type) {
       case 'text': {
@@ -87,9 +90,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field }) => {
-              const val =
-                (field.value as PathValue<TFormValues, Path<TFormValues>>) ??
-                '';
+              const val = (field.value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
@@ -118,8 +119,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field: { value, onChange, ...field } }) => {
-              const val =
-                (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+              const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
@@ -149,8 +149,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field: { value, onChange, ...field } }) => {
-              const val =
-                (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+              const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
@@ -180,12 +179,11 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field: { value, onChange, ...field } }) => {
-              const val =
-                (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
-              
+              const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+
               // Real-time password validation
               const isPasswordMismatch = val && passwordValue && val !== passwordValue;
-              
+
               return (
                 <div className="space-y-2">
                   <motion.input
@@ -193,7 +191,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                     value={val as string}
                     type="password"
                     onChange={e => onChange(e.target.value)}
-                    placeholder={question.placeholder || "Confirm password"}
+                    placeholder={question.placeholder || 'Confirm password'}
                     className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
                       error || isPasswordMismatch
                         ? 'border-red-400 focus:border-red-500'
@@ -226,9 +224,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field }) => {
-              const val =
-                (field.value as PathValue<TFormValues, Path<TFormValues>>) ??
-                '';
+              const val = (field.value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
@@ -292,9 +288,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field }) => {
-              const val =
-                (field.value as PathValue<TFormValues, Path<TFormValues>>) ??
-                '';
+              const val = (field.value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
@@ -322,9 +316,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             name={question.id as Path<TFormValues>}
             control={control}
             render={({ field }) => {
-              const val =
-                (field.value as PathValue<TFormValues, Path<TFormValues>>) ??
-                '';
+              const val = (field.value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.textarea
                   {...field}
@@ -374,9 +366,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                           ease: 'linear',
                         }}
                       />
-                      <span className="text-gray-600 text-lg">
-                        Loading available options...
-                      </span>
+                      <span className="text-gray-600 text-lg">Loading available options...</span>
                     </div>
                   </motion.div>
                 );
@@ -413,6 +403,40 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
               }
 
               // Show options
+              if (isSignupGoalSelect) {
+                return (
+                  <motion.div variants={inputVariants} initial="hidden" animate="visible">
+                    <Select
+                      value={current ? String(current) : ''}
+                      onValueChange={value =>
+                        field.onChange(value as PathValue<TFormValues, Path<TFormValues>>)
+                      }
+                    >
+                      <SelectTrigger
+                        className={`h-auto min-h-[64px] rounded-xl border-2 px-4 sm:px-6 py-4 sm:py-5 text-left text-lg sm:text-xl shadow-none ${
+                          error
+                            ? 'border-red-400 focus:border-red-500'
+                            : 'border-amber-200 bg-amber-50 focus:border-emerald-400'
+                        } focus:ring-4 focus:ring-emerald-100`}
+                      >
+                        <SelectValue placeholder={question.placeholder || 'Select a goal'} />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-2 border-amber-200 bg-amber-50">
+                        {options.map(option => (
+                          <SelectItem
+                            key={String(option.value)}
+                            value={String(option.value)}
+                            className="py-3 text-base text-gray-900 focus:bg-emerald-50"
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </motion.div>
+                );
+              }
+
               return (
                 <motion.div
                   className="grid gap-3 sm:gap-4 w-full"
@@ -425,15 +449,11 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                       key={String(option.value)}
                       type="button"
                       onClick={() =>
-                        field.onChange(
-                          option.value as PathValue<TFormValues, Path<TFormValues>>,
-                        )
+                        field.onChange(option.value as PathValue<TFormValues, Path<TFormValues>>)
                       }
                       style={{
-                        backgroundColor:
-                          current === option.value ? '#ecfdf5' : '#fffbeb',
-                        borderColor:
-                          current === option.value ? '#10b981' : '#f3e8d0',
+                        backgroundColor: current === option.value ? '#ecfdf5' : '#fffbeb',
+                        borderColor: current === option.value ? '#10b981' : '#f3e8d0',
                       }}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
                         current === option.value
@@ -447,11 +467,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                       whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex items-center gap-4">
-                        {option.icon && (
-                          <span className="text-2xl sm:text-3xl">
-                            {option.icon}
-                          </span>
-                        )}
+                        {option.icon && <span className="text-2xl sm:text-3xl">{option.icon}</span>}
                         <div className="flex-1">
                           <span className="text-lg sm:text-xl font-medium text-gray-900">
                             {option.label}
@@ -495,9 +511,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                 const newValues = selectedValues.includes(optionValue)
                   ? selectedValues.filter(v => v !== optionValue)
                   : [...selectedValues, optionValue];
-                field.onChange(
-                  newValues as PathValue<TFormValues, Path<TFormValues>>,
-                );
+                field.onChange(newValues as PathValue<TFormValues, Path<TFormValues>>);
               };
 
               // Show loading state
@@ -519,9 +533,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                           ease: 'linear',
                         }}
                       />
-                      <span className="text-gray-600 text-lg">
-                        Loading available options...
-                      </span>
+                      <span className="text-gray-600 text-lg">Loading available options...</span>
                     </div>
                   </motion.div>
                 );
@@ -588,9 +600,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                       >
                         <div className="flex items-center gap-4">
                           {option.icon && (
-                            <span className="text-2xl sm:text-3xl">
-                              {option.icon}
-                            </span>
+                            <span className="text-2xl sm:text-3xl">{option.icon}</span>
                           )}
                           <div className="flex-1">
                             <span className="text-lg sm:text-xl font-medium text-gray-900">
@@ -599,9 +609,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                           </div>
                           <div
                             className={`w-6 h-6 border-2 rounded flex items-center justify-center transition-all duration-200 ${
-                              isSelected
-                                ? 'border-emerald-500 bg-emerald-500'
-                                : 'border-gray-300'
+                              isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
                             }`}
                           >
                             {isSelected && (
@@ -649,7 +657,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             control={control}
             render={({ field }) => {
               const currentValue = field.value as boolean | undefined;
-              
+
               return (
                 <motion.div
                   className="grid gap-3 sm:gap-4 w-full"
@@ -674,9 +682,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
-                        <span className="text-lg sm:text-xl font-medium text-gray-900">
-                          Yes
-                        </span>
+                        <span className="text-lg sm:text-xl font-medium text-gray-900">Yes</span>
                       </div>
                       {currentValue === true && (
                         <motion.div
@@ -712,9 +718,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
-                        <span className="text-lg sm:text-xl font-medium text-gray-900">
-                          No
-                        </span>
+                        <span className="text-lg sm:text-xl font-medium text-gray-900">No</span>
                       </div>
                       {currentValue === false && (
                         <motion.div

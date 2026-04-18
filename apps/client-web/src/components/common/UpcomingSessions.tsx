@@ -58,7 +58,7 @@ export const UpcomingSessions = ({ kidId, coachId }: UpcomingSessionsProps) => {
       case SessionStatus.CANCELLED:
         return 'border-l-red-500';
       default:
-        return 'border-l-amber-500';
+        return 'border-l-primary';
     }
   };
 

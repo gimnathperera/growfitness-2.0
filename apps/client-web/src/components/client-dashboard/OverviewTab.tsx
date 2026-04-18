@@ -1,25 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Calendar } from "lucide-react";
-import { UserRole, type Kid } from "@grow-fitness/shared-types";
-import { StatsGrid } from "../common/StatGrid";
-import type { DashboardStats } from "@/types/dashboard";
-import { UpcomingSessions } from "../common/UpcomingSessions";
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User, Calendar } from 'lucide-react';
+import { type Kid } from '@grow-fitness/shared-types';
+import { UpcomingSessions } from '../common/UpcomingSessions';
 
 interface OverviewTabProps {
   kid: Kid | null;
 }
 
 export function OverviewTab({ kid }: OverviewTabProps) {
-  // Temporary mock sessions & stats (replace later)
-  const stats: DashboardStats = {
-    totalChildren: 1,
-    todaySessions: 1,
-    upcomingSessions: 2,
-    weeklyProgress: 75,
-    avgProgress: 75,
-  };
-
   return (
     <div className="space-y-6 relative z-0">
       <Card className="border-[#23B685]/30 shadow-sm">
@@ -48,13 +37,11 @@ export function OverviewTab({ kid }: OverviewTabProps) {
                 <User className="h-6 w-6 text-[#23B685]" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-[#243E36]">
-                  {kid?.name ?? "-"}
-                </h3>
+                <h3 className="text-sm font-semibold text-[#243E36]">{kid?.name ?? '-'}</h3>
                 <p className="text-xs text-gray-600">
                   {kid?.birthDate
                     ? `${new Date().getFullYear() - new Date(kid.birthDate).getFullYear()} years old`
-                    : "-"}
+                    : '-'}
                 </p>
               </div>
             </div>
@@ -75,16 +62,12 @@ export function OverviewTab({ kid }: OverviewTabProps) {
             <div className="rounded-lg bg-[#23B685]/5 px-3 py-2">
               <p className="text-xs text-gray-600">Member Since</p>
               <p className="text-sm font-medium text-[#243E36]">
-                {kid?.createdAt ? new Date(kid.createdAt).toLocaleDateString() : "-"}
+                {kid?.createdAt ? new Date(kid.createdAt).toLocaleDateString() : '-'}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <div>
-        <StatsGrid stats={stats} role={UserRole.PARENT} />
-      </div>
     </div>
   );
 }

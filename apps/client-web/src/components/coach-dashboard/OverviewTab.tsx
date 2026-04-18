@@ -1,17 +1,15 @@
-import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User as UserIcon, Calendar, Phone, MapPin, Briefcase } from "lucide-react";
-import { UserRole, type User } from "@grow-fitness/shared-types";
-import { StatsGrid } from "../common/StatGrid";
-import type { DashboardStats } from "@/types/dashboard";
-import { useAuth } from "@/contexts/useAuth";
-import { UpcomingSessions } from "../common/UpcomingSessions";
-import { usersService } from "@/services/users.service";
+import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User as UserIcon, Calendar, Phone, MapPin, Briefcase } from 'lucide-react';
+import { type User } from '@grow-fitness/shared-types';
+import { useAuth } from '@/contexts/useAuth';
+import { UpcomingSessions } from '../common/UpcomingSessions';
+import { usersService } from '@/services/users.service';
 
 function formatDate(value: Date | string | undefined): string {
-  if (!value) return "–";
-  const d = typeof value === "string" ? new Date(value) : value;
+  if (!value) return '–';
+  const d = typeof value === 'string' ? new Date(value) : value;
   return d.toLocaleDateString();
 }
 
@@ -35,8 +33,8 @@ export function OverviewTab() {
 
         setCoach(response);
       } catch (err) {
-        console.error("Failed to fetch coach:", err);
-        setError("Failed to load coach profile");
+        console.error('Failed to fetch coach:', err);
+        setError('Failed to load coach profile');
       } finally {
         setLoading(false);
       }
@@ -44,14 +42,6 @@ export function OverviewTab() {
 
     fetchCoach();
   }, [coachId]);
-
-  const stats: DashboardStats = {
-    totalChildren: 12,
-    todaySessions: 3,
-    upcomingSessions: 5,
-    weeklyProgress: 80,
-    avgProgress: 78,
-  };
 
   return (
     <div className="space-y-6 relative z-0">
@@ -98,26 +88,26 @@ export function OverviewTab() {
 
                   <div>
                     <h3 className="text-sm font-semibold text-[#243E36]">
-                      {coach?.coachProfile?.name ?? "-"}
+                      {coach?.coachProfile?.name ?? '-'}
                     </h3>
-                    <p className="text-xs text-gray-600">{coach?.email ?? "-"}</p>
+                    <p className="text-xs text-gray-600">{coach?.email ?? '-'}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   <Badge
                     className={
-                      coach?.status === "ACTIVE"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
+                      coach?.status === 'ACTIVE'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
                     }
                   >
-                    {coach?.status ?? "-"}
+                    {coach?.status ?? '-'}
                   </Badge>
                   {coach?.coachProfile?.employmentType && (
                     <Badge variant="secondary" className="bg-[#23B685]/10 text-[#23B685]">
                       <Briefcase className="mr-1 h-3 w-3" />
-                      {coach.coachProfile.employmentType.replace(/_/g, " ")}
+                      {coach.coachProfile.employmentType.replace(/_/g, ' ')}
                     </Badge>
                   )}
                 </div>
@@ -127,7 +117,7 @@ export function OverviewTab() {
                 <div className="rounded-lg bg-[#23B685]/5 px-3 py-2">
                   <p className="text-xs text-gray-600">Member Since</p>
                   <p className="text-sm font-medium text-[#243E36]">
-                    {coach?.createdAt ? new Date(coach.createdAt).toLocaleDateString() : "-"}
+                    {coach?.createdAt ? new Date(coach.createdAt).toLocaleDateString() : '-'}
                   </p>
                 </div>
 
@@ -135,7 +125,7 @@ export function OverviewTab() {
                   <p className="text-xs text-gray-600">Date of Birth</p>
                   <p className="text-sm font-medium text-[#243E36]">
                     {formatDate(
-                      typeof coach?.coachProfile?.dateOfBirth === "string"
+                      typeof coach?.coachProfile?.dateOfBirth === 'string'
                         ? coach.coachProfile.dateOfBirth
                         : (coach?.coachProfile?.dateOfBirth as Date | undefined)
                     )}
@@ -147,7 +137,7 @@ export function OverviewTab() {
                     <Phone className="h-3 w-3" />
                     Phone
                   </p>
-                  <p className="text-sm font-medium text-[#243E36]">{coach?.phone ?? "-"}</p>
+                  <p className="text-sm font-medium text-[#243E36]">{coach?.phone ?? '-'}</p>
                 </div>
 
                 <div className="rounded-lg bg-[#23B685]/5 px-3 py-2">
@@ -156,7 +146,7 @@ export function OverviewTab() {
                     Address
                   </p>
                   <p className="text-sm font-medium text-[#243E36] truncate">
-                    {coach?.coachProfile?.homeAddress ?? "-"}
+                    {coach?.coachProfile?.homeAddress ?? '-'}
                   </p>
                 </div>
               </div>
@@ -164,8 +154,6 @@ export function OverviewTab() {
           )}
         </CardContent>
       </Card>
-
-      <StatsGrid stats={stats} role={UserRole.COACH} />
     </div>
   );
 }
