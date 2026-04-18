@@ -492,7 +492,9 @@ export class SessionsService {
     return {
       created: createdSessions.length,
       recurringGroupId,
-      sessions: await Promise.all(createdSessions.map(session => this.findById(session._id.toString()))),
+      sessions: await Promise.all(
+        createdSessions.map(session => this.findById(session._id.toString()))
+      ),
     };
   }
 
@@ -508,13 +510,12 @@ export class SessionsService {
 
     if (
       updateSessionDto.kids &&
-      updateSessionDto.kids.length > 0 &&
       session.type === SessionType.INDIVIDUAL &&
-      updateSessionDto.kids.length !== 1
+      updateSessionDto.kids.length < 1
     ) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
-        message: 'Individual sessions require exactly one kid ID',
+        message: 'Individual sessions require at least one kid ID',
       });
     }
 

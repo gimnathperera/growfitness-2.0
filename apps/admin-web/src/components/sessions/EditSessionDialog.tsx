@@ -157,7 +157,9 @@ export function EditSessionDialog({
       status: session.status,
       kids: Array.isArray(session.kids)
         ? session.kids.map(kid => extractId(kid)).filter(Boolean)
-        : undefined,
+        : session.kidId
+          ? [extractId(session.kidId)].filter(Boolean)
+          : undefined,
       kidId: session.kidId ? extractId(session.kidId) : undefined,
       isFreeSession: session.isFreeSession,
     },
@@ -175,7 +177,9 @@ export function EditSessionDialog({
         status: session.status,
         kids: Array.isArray(session.kids)
           ? session.kids.map(kid => extractId(kid)).filter(Boolean)
-          : undefined,
+          : session.kidId
+            ? [extractId(session.kidId)].filter(Boolean)
+            : undefined,
         kidId: session.kidId ? extractId(session.kidId) : undefined,
         isFreeSession: session.isFreeSession,
       });
@@ -221,9 +225,11 @@ export function EditSessionDialog({
     // Transform dateTime to string format if it's a Date object
     const normalizedKids =
       session.type === SessionType.INDIVIDUAL
-        ? data.kidId
-          ? [data.kidId]
-          : data.kids || []
+        ? data.kids && data.kids.length > 0
+          ? data.kids
+          : data.kidId
+            ? [data.kidId]
+            : []
         : data.kids || [];
 
     const submitData: UpdateSessionDto = {
@@ -467,28 +473,31 @@ export function EditSessionDialog({
               )}
 
               {session.type === SessionType.INDIVIDUAL && (
-                <CustomFormField label="Kid" required error={form.formState.errors.kidId?.message}>
-                  <Select
-                    value={form.watch('kidId') || form.watch('kids')?.[0] || ''}
-                    onValueChange={value => {
-                      form.setValue('kidId', value);
-                      form.setValue('kids', [value]);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select kid" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(kidsData?.data || []).map(kid => {
-                        const kidId = kid.id;
-                        return (
-                          <SelectItem key={kidId} value={kidId}>
-                            {kid.name}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                <CustomFormField label="Kids" required error={form.formState.errors.kids?.message}>
+                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
+                    {(kidsData?.data || []).map(kid => {
+                      const kidId = kid.id;
+                      return (
+                        <div key={kidId} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={form.watch('kids')?.includes(kidId) || false}
+                            onCheckedChange={checked => {
+                              const currentKids = form.watch('kids') || [];
+                              if (checked) {
+                                form.setValue('kids', [...currentKids, kidId]);
+                              } else {
+                                form.setValue(
+                                  'kids',
+                                  currentKids.filter(id => id !== kidId)
+                                );
+                              }
+                            }}
+                          />
+                          <label className="text-sm">{kid.name}</label>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </CustomFormField>
               )}
 

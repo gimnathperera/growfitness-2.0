@@ -107,7 +107,19 @@ export class SessionsController {
   })
   @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
   findAll(@Query() query: GetSessionsQueryDto) {
-    const { page, limit, search, coachId, locationId, kidId, status, startDate, endDate, sortBy, sortOrder } = query;
+    const {
+      page,
+      limit,
+      search,
+      coachId,
+      locationId,
+      kidId,
+      status,
+      startDate,
+      endDate,
+      sortBy,
+      sortOrder,
+    } = query;
     return this.sessionsService.findAll(
       { page, limit, search },
       {
@@ -242,7 +254,7 @@ export class SessionsController {
           type: 'array',
           items: { type: 'string' },
           description:
-            'Optional array of kid IDs for enrollment. Group sessions can be created without kids; individual sessions require exactly one kid ID.',
+            'Optional array of kid IDs for enrollment. Group sessions can be created without kids; individual sessions require at least one kid ID.',
         },
         isFreeSession: {
           type: 'boolean',
@@ -354,12 +366,12 @@ export class SessionsController {
         kids: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Array of kid IDs (exactly one for individual sessions)',
+          description: 'Array of kid IDs (at least one for individual sessions)',
           example: ['507f1f77bcf86cd799439011'],
         },
         kidId: {
           type: 'string',
-          description: 'Kid ID (for individual sessions, alternative to kids array)',
+          description: 'Kid ID (legacy fallback for individual sessions; prefer kids array)',
           example: '507f1f77bcf86cd799439011',
         },
         status: {
