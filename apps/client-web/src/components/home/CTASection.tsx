@@ -7,7 +7,6 @@ export const CTASection = () => {
     <section className="py-24">
       <Container>
         <div className="relative bg-gradient-to-br from-brand-green to-brand-dark rounded-[4rem] p-12 md:p-20 text-center overflow-hidden shadow-2xl">
-          {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24"></div>
           
