@@ -37,15 +37,14 @@ export const HeroTop: React.FC<HeroTopProps> = ({ banners, loading }) => {
           </div>
 
           <h1 className="mb-5 font-insanibc text-4xl font-bold leading-tight text-gray-900 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl">
-            Where Kids <br />
-            <span className="text-brand-green">Grow</span> <br />
-            Stronger & Happier
+            <span className="text-brand-green">Childhood used to happen
+            outside</span> <br />
+            now it happens on screens.
           </h1>
 
           <p className="mb-8 max-w-lg text-base leading-relaxed text-gray-600 sm:text-lg md:mb-10">
-            Fun, safe, and expertly coached fitness programs that build confidence, coordination,
-            and <span className="text-brand-green font-bold">lifelong</span> healthy habits.
-          </p>
+            Grow Fitness helps kids fall in love with <span className="text-brand-black font-bold">physical activity</span>. So we can bring back the <span className="text-brand-green font-bold">lifelong</span> healthy habits.
+          </p>  
 
           <div className="flex flex-wrap gap-3 sm:gap-4">
             <AnimatedButton
@@ -55,17 +54,17 @@ export const HeroTop: React.FC<HeroTopProps> = ({ banners, loading }) => {
               className="rounded-full bg-brand-green px-6 py-4 text-base text-white shadow-xl hover:bg-brand-dark sm:px-8 sm:py-6 sm:text-lg"
               rightIcon={ArrowRight}
             >
-              Enroll Your Child
+              Book a Free Session
             </AnimatedButton>
 
-            <AnimatedButton
+            {/* <AnimatedButton
               href="#programs"
               variant="outline"
               size="lg"
               className="rounded-full border-2 border-gray-200 px-6 py-4 text-base text-gray-700 hover:border-brand-green hover:text-brand-green sm:px-8 sm:py-6 sm:text-lg"
             >
               Explore Programs
-            </AnimatedButton>
+            </AnimatedButton> */}
           </div>
         </div>
 

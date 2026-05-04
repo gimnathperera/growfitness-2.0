@@ -7,8 +7,10 @@ import { MidStats } from '@/components/home/MidStats';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { BenefitsSection } from '@/components/home/BenefitsSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
-import { BottomStatsBar } from '@/components/home/BottomStatsBar';
 import { CTASection } from '@/components/home/CTASection';
+import { AudienceSection } from '../components/home/AudienceSection';
+import { HowItWorksSection } from '../components/home/HowItWorksSection';
+import { FaqSection } from '@/components/home/FaqSection';
 
 function HomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -39,11 +41,13 @@ function HomePage() {
       */}
       
       <HeroTop banners={banners} loading={isLoading} />
-      <MidStats />
-      <FeaturesSection />
       <BenefitsSection />
+      <MidStats />
+      <AudienceSection />
+      <HowItWorksSection/>
       <TestimonialsSection />
-      <BottomStatsBar />
+      <FeaturesSection />
+      <FaqSection/>
       <CTASection />
     </div>
   );

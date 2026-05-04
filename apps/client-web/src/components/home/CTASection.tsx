@@ -7,7 +7,6 @@ export const CTASection = () => {
     <section className="py-24">
       <Container>
         <div className="relative bg-gradient-to-br from-brand-green to-brand-dark rounded-[4rem] p-12 md:p-20 text-center overflow-hidden shadow-2xl">
-          {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24"></div>
           
@@ -36,7 +35,7 @@ export const CTASection = () => {
                Book a free session
              </AnimatedButton>
              
-             <div className="flex flex-wrap justify-center gap-6 mt-10 text-white/70 text-sm font-medium">
+             <div className="flex flex-wrap justify-center gap-6 mt-10 text-white/70 text-sm font-medium leading-relaxed">
                <div className="flex items-center gap-2">
                  <div className="w-1.5 h-1.5 bg-brand-accent rounded-full"></div>
                  No credit card required

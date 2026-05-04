@@ -3,10 +3,9 @@ import { Container } from '../layout/Container';
 
 export function BenefitsSection() {
   const benefits = [
-    { text: 'Age-appropriate fitness programs' },
-    { text: 'Progress tracking and goal setting' },
-    { text: 'Social interaction and teamwork' },
-    { text: 'Confidence and self-esteem building' },
+    { text: 'Increased screen addiction' },
+    { text: 'Reduced outdoor play' },
+    { text: 'Declining physical literacy' },
   ];
 
   return (
@@ -19,12 +18,11 @@ export function BenefitsSection() {
         <div className="bg-white rounded-[3rem] p-12 md:p-16 shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 font-insanibc leading-tight">
-              Building Healthy <br />
-              <span className="text-brand-green">Habits for Life</span>
+              Today's kids face <br />
+              <span className="text-brand-green">three major challenges</span>
             </h2>
             <p className="text-gray-600 text-lg mb-10 max-w-lg leading-relaxed">
-              Our programs are designed to create lasting positive changes in your child's life, 
-              focusing on both physical ability and mental resilience.
+              These affect confidence, attention, and long-term health. We battle them through physical activity.
             </p>
 
             <div className="grid sm:grid-cols-2 gap-6">
@@ -33,7 +31,7 @@ export function BenefitsSection() {
                   <div className="w-8 h-8 bg-brand-green rounded-full flex items-center justify-center shrink-0">
                     <Check className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-gray-700 font-semibold text-lg">
+                  <span className="text-gray-700 font-semibold text-base leading-relaxed">
                     {benefit.text}
                   </span>
                 </div>

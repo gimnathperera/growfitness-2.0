@@ -47,7 +47,7 @@ export function TestimonialsSection() {
             What Parents Are <span className="text-brand-green">Saying</span>
           </h2>
 
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto italic">
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto italic leading-relaxed">
             "Real stories from families who experienced the GROW difference 💕"
           </p>
         </div>
@@ -100,7 +100,7 @@ export function TestimonialsSection() {
                           </p>
                           
                           <div>
-                            <div className="font-bold text-xl text-gray-900">{item.authorName}</div>
+                            <div className="font-bold text-xl text-gray-900 font-insanibc">{item.authorName}</div>
                             <div className="text-gray-500 font-medium">
                               {item.childName}, age {item.childAge}
                             </div>
