@@ -26,7 +26,7 @@ import { usersService } from '@/services/users.service';
 import { uploadFileViaGcs } from '@/services/uploads.service';
 import { useToast } from '@/hooks/useToast';
 import { useModalParams } from '@/hooks/useModalParams';
-import { Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { FileDropzone } from '@/components/common/FileDropzone';
 
 interface CreateCoachDialogProps {
@@ -89,6 +89,7 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [showPhotoUrl, setShowPhotoUrl] = useState(false);
   const [showCvUrl, setShowCvUrl] = useState(false);
+  const [uploadingFileLabel, setUploadingFileLabel] = useState<string | null>(null);
 
   const form = useForm<CreateCoachDto>({
     resolver: zodResolver(CreateCoachSchema),
@@ -108,12 +109,14 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
       setCvFile(null);
       setShowPhotoUrl(false);
       setShowCvUrl(false);
+      setUploadingFileLabel(null);
     } else {
       form.reset(defaultValues);
       setPhotoFile(null);
       setCvFile(null);
       setShowPhotoUrl(false);
       setShowCvUrl(false);
+      setUploadingFileLabel(null);
     }
   }, [open, form]);
 
@@ -128,8 +131,24 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
       cvFile: File | null;
     }) => {
       const coach = await usersService.createCoach(payload);
-      if (pf) await uploadFileViaGcs(UploadKind.COACH_PHOTO, coach.id, pf);
-      if (cf) await uploadFileViaGcs(UploadKind.COACH_CV, coach.id, cf);
+      if (pf) {
+        setUploadingFileLabel('profile photo');
+        await uploadFileViaGcs(UploadKind.COACH_PHOTO, coach.id, pf).catch(error => {
+          throw new Error(
+            `Profile photo upload failed: ${
+              error instanceof Error ? error.message : 'Could not upload profile photo'
+            }`
+          );
+        });
+      }
+      if (cf) {
+        setUploadingFileLabel('CV');
+        await uploadFileViaGcs(UploadKind.COACH_CV, coach.id, cf).catch(error => {
+          throw new Error(
+            `CV upload failed: ${error instanceof Error ? error.message : 'Could not upload CV'}`
+          );
+        });
+      }
       return coach;
     },
     {
@@ -139,11 +158,13 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
         form.reset(defaultValues);
         setPhotoFile(null);
         setCvFile(null);
+        setUploadingFileLabel(null);
         setTimeout(() => {
           onOpenChange(false);
         }, 100);
       },
       onError: error => {
+        setUploadingFileLabel(null);
         toast.error('Failed to create coach', error.message || 'An error occurred');
       },
     }
@@ -342,7 +363,14 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
                 Cancel
               </Button>
               <Button type="submit" form="create-coach-form" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Creating...' : 'Create Coach'}
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {uploadingFileLabel ? `Uploading ${uploadingFileLabel}...` : 'Creating...'}
+                  </>
+                ) : (
+                  'Create Coach'
+                )}
               </Button>
             </div>
           </div>

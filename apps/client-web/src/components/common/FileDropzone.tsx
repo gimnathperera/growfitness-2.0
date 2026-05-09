@@ -28,6 +28,29 @@ function formatAcceptList(accept: string[]): string {
     .join(", ");
 }
 
+function inferFileType(file: File): string {
+  const type = file.type;
+  const name = file.name.toLowerCase();
+
+  if (type && type !== "application/octet-stream") {
+    return type;
+  }
+  if (name.endsWith(".pdf")) {
+    return "application/pdf";
+  }
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+  if (name.endsWith(".png")) {
+    return "image/png";
+  }
+  if (name.endsWith(".webp")) {
+    return "image/webp";
+  }
+
+  return type;
+}
+
 export function FileDropzone({
   value,
   onChange,
@@ -58,7 +81,7 @@ export function FileDropzone({
   const selectFile = (file: File | null) => {
     if (!file) return;
 
-    if (!accept.includes(file.type)) {
+    if (!accept.includes(inferFileType(file))) {
       setError(`Allowed file types: ${formatAcceptList(accept)}`);
       onChange(null);
       return;
