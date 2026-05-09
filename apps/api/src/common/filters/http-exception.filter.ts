@@ -12,6 +12,19 @@ export interface ErrorResponse {
   errors?: string[];
 }
 
+function isRequestAbortedError(exception: unknown): boolean {
+  if (!(exception instanceof Error)) {
+    return false;
+  }
+
+  const maybeBodyParserError = exception as Error & {
+    code?: string;
+    type?: string;
+  };
+
+  return maybeBodyParserError.code === 'ECONNABORTED' || maybeBodyParserError.type === 'request.aborted';
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
@@ -29,6 +42,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status = HttpStatus.BAD_REQUEST;
       errorCode = ErrorCode.INVALID_ID;
       message = `Invalid ID format: ${exception.value}. Expected a valid MongoDB ObjectId.`;
+    } else if (isRequestAbortedError(exception)) {
+      status = HttpStatus.BAD_REQUEST;
+      errorCode = ErrorCode.VALIDATION_ERROR;
+      message = 'Request aborted by client';
     } else if (exception instanceof MongooseError.ValidationError) {
       // Handle Mongoose ValidationError (schema validation failures)
       status = HttpStatus.BAD_REQUEST;

@@ -1,0 +1,197 @@
+import {
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Storage } from '@google-cloud/storage';
+import { randomUUID } from 'crypto';
+import { UploadKind, UserRole } from '@grow-fitness/shared-types';
+import type { UploadPresignDto, UploadFinalizeDto } from '@grow-fitness/shared-schemas';
+import type { JwtPayload } from '../auth/auth.service';
+import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
+import { User, UserDocument } from '../../infra/database/schemas/user.schema';
+import { AuditService } from '../audit/audit.service';
+
+@Injectable()
+export class UploadsService {
+  private readonly storage: Storage;
+  private readonly bucketName: string;
+  private readonly publicBase: string;
+
+  constructor(
+    private readonly config: ConfigService,
+    @InjectModel(Kid.name) private readonly kidModel: Model<KidDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly auditService: AuditService
+  ) {
+    this.bucketName = this.config.get<string>('GCS_BUCKET_NAME', '');
+    const projectId = this.config.get<string>('GCP_PROJECT_ID', '');
+    this.storage = new Storage(projectId ? { projectId } : undefined);
+    this.publicBase = (this.config.get<string>('GCS_PUBLIC_BASE_URL', '') || '').replace(/\/$/, '');
+  }
+
+  private ensureBucket(): void {
+    if (!this.bucketName) {
+      throw new ServiceUnavailableException({
+        message: 'File uploads are not configured (GCS_BUCKET_NAME)',
+      });
+    }
+  }
+
+  private isGoogleCredentialsError(error: unknown): boolean {
+    return (
+      error instanceof Error &&
+      (error.message.includes('Could not load the default credentials') ||
+        error.message.includes('Unable to detect a Project Id') ||
+        error.message.includes('Cannot sign data without'))
+    );
+  }
+
+  private extensionForContentType(contentType: string): string {
+    const map: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'application/pdf': 'pdf',
+    };
+    return map[contentType] ?? 'bin';
+  }
+
+  private buildObjectKey(kind: UploadKind, entityId: string, contentType: string): string {
+    const ext = this.extensionForContentType(contentType);
+    const id = randomUUID();
+    switch (kind) {
+      case UploadKind.KID_AVATAR:
+        return `public/avatars/kids/${entityId}/${id}.${ext}`;
+      case UploadKind.COACH_PHOTO:
+        return `public/avatars/coaches/${entityId}/${id}.${ext}`;
+      case UploadKind.COACH_CV:
+        return `public/cvs/coaches/${entityId}/${id}.${ext}`;
+      default:
+        throw new BadRequestException('Invalid upload kind');
+    }
+  }
+
+  private expectedKeyPrefix(kind: UploadKind, entityId: string): string {
+    switch (kind) {
+      case UploadKind.KID_AVATAR:
+        return `public/avatars/kids/${entityId}/`;
+      case UploadKind.COACH_PHOTO:
+        return `public/avatars/coaches/${entityId}/`;
+      case UploadKind.COACH_CV:
+        return `public/cvs/coaches/${entityId}/`;
+    }
+  }
+
+  publicUrlForKey(objectKey: string): string {
+    const base =
+      this.publicBase || `https://storage.googleapis.com/${this.bucketName}`;
+    const encoded = objectKey.split('/').map(encodeURIComponent).join('/');
+    return `${base}/${encoded}`;
+  }
+
+  private async assertKidAvatarAuth(entityId: string, user: JwtPayload): Promise<void> {
+    const kid = await this.kidModel.findById(entityId).exec();
+    if (!kid) {
+      throw new NotFoundException('Kid not found');
+    }
+    if (user.role === UserRole.ADMIN) {
+      return;
+    }
+    if (user.role !== UserRole.PARENT || kid.parentId.toString() !== user.sub) {
+      throw new ForbiddenException('Not allowed to upload for this kid');
+    }
+  }
+
+  private async assertCoachEntity(entityId: string): Promise<void> {
+    const coach = await this.userModel.findOne({ _id: entityId, role: UserRole.COACH }).exec();
+    if (!coach) {
+      throw new NotFoundException('Coach not found');
+    }
+  }
+
+  async presign(dto: UploadPresignDto, user: JwtPayload) {
+    this.ensureBucket();
+    if (dto.kind === UploadKind.KID_AVATAR) {
+      await this.assertKidAvatarAuth(dto.entityId, user);
+    } else {
+      if (user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can upload coach files');
+      }
+      await this.assertCoachEntity(dto.entityId);
+    }
+
+    const objectKey = this.buildObjectKey(dto.kind, dto.entityId, dto.contentType);
+    const expiresMs = 15 * 60 * 1000;
+    const bucket = this.storage.bucket(this.bucketName);
+    const file = bucket.file(objectKey);
+    let uploadUrl: string;
+
+    try {
+      [uploadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'write',
+        expires: Date.now() + expiresMs,
+        contentType: dto.contentType,
+      });
+    } catch (error) {
+      if (this.isGoogleCredentialsError(error)) {
+        throw new ServiceUnavailableException({
+          message:
+            'File uploads are not configured with Google credentials. Set GOOGLE_APPLICATION_CREDENTIALS locally or configure the Cloud Run service account permissions.',
+        });
+      }
+      throw error;
+    }
+
+    const publicUrl = this.publicUrlForKey(objectKey);
+    const expiresAt = new Date(Date.now() + expiresMs).toISOString();
+    return { uploadUrl, publicUrl, objectKey, expiresAt };
+  }
+
+  async finalize(dto: UploadFinalizeDto, user: JwtPayload) {
+    this.ensureBucket();
+    const prefix = this.expectedKeyPrefix(dto.kind, dto.entityId);
+    if (!dto.objectKey.startsWith(prefix)) {
+      throw new BadRequestException('Invalid object key');
+    }
+    const publicUrl = this.publicUrlForKey(dto.objectKey);
+    if (dto.publicUrl && dto.publicUrl !== publicUrl) {
+      throw new BadRequestException('publicUrl does not match objectKey');
+    }
+
+    if (dto.kind === UploadKind.KID_AVATAR) {
+      await this.assertKidAvatarAuth(dto.entityId, user);
+      await this.kidModel.findByIdAndUpdate(dto.entityId, { profilePhotoUrl: publicUrl }).exec();
+    } else {
+      if (user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can finalize coach files');
+      }
+      await this.assertCoachEntity(dto.entityId);
+      if (dto.kind === UploadKind.COACH_PHOTO) {
+        await this.userModel
+          .findByIdAndUpdate(dto.entityId, { $set: { 'coachProfile.photoUrl': publicUrl } })
+          .exec();
+      } else {
+        await this.userModel
+          .findByIdAndUpdate(dto.entityId, { $set: { 'coachProfile.cvUrl': publicUrl } })
+          .exec();
+      }
+    }
+
+    await this.auditService.log({
+      actorId: user.sub,
+      action: 'UPLOAD_FINALIZE',
+      entityType: 'Upload',
+      entityId: dto.entityId,
+      metadata: { kind: dto.kind, objectKey: dto.objectKey },
+    });
+
+    return { publicUrl, objectKey: dto.objectKey };
+  }
+}

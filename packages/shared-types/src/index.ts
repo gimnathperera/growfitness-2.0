@@ -84,6 +84,21 @@ export enum EmploymentType {
   OTHER = 'OTHER',
 }
 
+/** GCS-backed uploads (presign + finalize). */
+export enum UploadKind {
+  KID_AVATAR = 'kidAvatar',
+  COACH_PHOTO = 'coachPhoto',
+  COACH_CV = 'coachCv',
+}
+
+/** Response from POST /uploads/presign */
+export interface UploadPresignResponse {
+  uploadUrl: string;
+  publicUrl: string;
+  objectKey: string;
+  expiresAt: string;
+}
+
 export enum NotificationType {
   FREE_SESSION_REQUEST = 'FREE_SESSION_REQUEST',
   RESCHEDULE_REQUEST = 'RESCHEDULE_REQUEST',
@@ -155,6 +170,7 @@ export interface Kid {
   gender: string;
   birthDate: Date;
   goal?: string;
+  profilePhotoUrl?: string;
   currentlyInSports: boolean;
   medicalConditions: string[];
   sessionType: SessionType;

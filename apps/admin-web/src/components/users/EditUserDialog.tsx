@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -25,15 +25,21 @@ import {
   UpdateParentDto,
   UpdateCoachDto,
 } from '@grow-fitness/shared-schemas';
-import { User, UserStatus, EmploymentType } from '@grow-fitness/shared-types';
+import { User, UserStatus, EmploymentType, UploadKind } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { usersService } from '@/services/users.service';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 import { useToast } from '@/hooks/useToast';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useModalParams } from '@/hooks/useModalParams';
 import { Plus, Trash2 } from 'lucide-react';
+import { FileDropzone } from '@/components/common/FileDropzone';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const PDF_UPLOAD_TYPES = ['application/pdf'];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_CV_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 function flattenNestedArray<T>(value: T | T[] | (T | T[])[]): T[] {
   if (!Array.isArray(value)) {
@@ -105,6 +111,12 @@ export function EditUserDialog({
     return null;
   }
   const { toast } = useToast();
+
+  const [coachPhotoFile, setCoachPhotoFile] = useState<File | null>(null);
+  const [coachCvFile, setCoachCvFile] = useState<File | null>(null);
+  const [uploadingCoachFiles, setUploadingCoachFiles] = useState(false);
+  const [showCoachPhotoUrl, setShowCoachPhotoUrl] = useState(false);
+  const [showCoachCvUrl, setShowCoachCvUrl] = useState(false);
 
   const coachDefaults =
     userType === 'coach'
@@ -180,6 +192,11 @@ export function EditUserDialog({
         status: user.status,
         ...coachReset,
       });
+      setCoachPhotoFile(null);
+      setCoachCvFile(null);
+      setUploadingCoachFiles(false);
+      setShowCoachPhotoUrl(false);
+      setShowCoachCvUrl(false);
     }
   }, [open, user, userType, form]);
 
@@ -195,6 +212,8 @@ export function EditUserDialog({
       invalidateQueries: [[`users`, userType === 'parent' ? 'parents' : 'coaches']],
       onSuccess: () => {
         toast.success(`${userType === 'parent' ? 'Parent' : 'Coach'} updated successfully`);
+        setCoachPhotoFile(null);
+        setCoachCvFile(null);
         onOpenChange(false);
       },
       onError: error => {
@@ -203,11 +222,36 @@ export function EditUserDialog({
     }
   );
 
-  const onSubmit = (data: UpdateParentDto | UpdateCoachDto) => {
+  const onSubmit = async (data: UpdateParentDto | UpdateCoachDto) => {
     if (userType === 'coach') {
+      const coachData = data as UpdateCoachDto;
+      let photoUrl = coachData.photoUrl;
+      let cvUrl = coachData.cvUrl;
+      try {
+        setUploadingCoachFiles(true);
+        if (coachPhotoFile) {
+          const r = await uploadFileViaGcs(UploadKind.COACH_PHOTO, user.id, coachPhotoFile);
+          photoUrl = r.publicUrl;
+        }
+        if (coachCvFile) {
+          const r = await uploadFileViaGcs(UploadKind.COACH_CV, user.id, coachCvFile);
+          cvUrl = r.publicUrl;
+        }
+      } catch (err) {
+        toast.error(
+          'Upload failed',
+          err instanceof Error ? err.message : 'Could not upload file'
+        );
+        return;
+      } finally {
+        setUploadingCoachFiles(false);
+      }
+
       updateMutation.mutate({
-        ...(data as UpdateCoachDto),
-        availableTimes: normalizeAvailableTimes((data as UpdateCoachDto).availableTimes),
+        ...coachData,
+        availableTimes: normalizeAvailableTimes(coachData.availableTimes),
+        photoUrl: photoUrl || undefined,
+        cvUrl: cvUrl || undefined,
       });
       return;
     }
@@ -260,11 +304,36 @@ export function EditUserDialog({
                   <Input type="date" {...form.register('dateOfBirth')} />
                 </CustomFormField>
                 <CustomFormField
-                  label="Photo URL"
+                  label="Profile photo"
                   error={(form.formState.errors as { photoUrl?: { message?: string } }).photoUrl?.message}
                 >
-                  <Input type="url" placeholder="https://..." {...form.register('photoUrl')} />
+                  <FileDropzone
+                    value={coachPhotoFile}
+                    onChange={setCoachPhotoFile}
+                    accept={IMAGE_UPLOAD_TYPES}
+                    maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                    preview="image"
+                    label="Drop photo here or browse"
+                    description="JPEG, PNG, or WebP up to 5MB"
+                    disabled={updateMutation.isPending || uploadingCoachFiles}
+                  />
                 </CustomFormField>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-xs text-muted-foreground"
+                  onClick={() => setShowCoachPhotoUrl(v => !v)}
+                >
+                  {showCoachPhotoUrl ? 'Hide image URL field' : 'Paste image URL instead'}
+                </Button>
+                {showCoachPhotoUrl && (
+                  <CustomFormField
+                    label="Photo URL"
+                    error={(form.formState.errors as { photoUrl?: { message?: string } }).photoUrl?.message}
+                  >
+                    <Input type="url" placeholder="https://..." {...form.register('photoUrl')} />
+                  </CustomFormField>
+                )}
                 <CustomFormField
                   label="Home address"
                   error={(form.formState.errors as { homeAddress?: { message?: string } }).homeAddress?.message}
@@ -353,11 +422,36 @@ export function EditUserDialog({
                   </Select>
                 </CustomFormField>
                 <CustomFormField
-                  label="CV URL"
+                  label="CV (PDF)"
                   error={(form.formState.errors as { cvUrl?: { message?: string } }).cvUrl?.message}
                 >
-                  <Input type="url" placeholder="https://..." {...form.register('cvUrl')} />
+                  <FileDropzone
+                    value={coachCvFile}
+                    onChange={setCoachCvFile}
+                    accept={PDF_UPLOAD_TYPES}
+                    maxSizeBytes={MAX_CV_UPLOAD_BYTES}
+                    preview="file"
+                    label="Drop CV here or browse"
+                    description="PDF up to 10MB"
+                    disabled={updateMutation.isPending || uploadingCoachFiles}
+                  />
                 </CustomFormField>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-xs text-muted-foreground"
+                  onClick={() => setShowCoachCvUrl(v => !v)}
+                >
+                  {showCoachCvUrl ? 'Hide CV URL field' : 'Paste CV URL instead'}
+                </Button>
+                {showCoachCvUrl && (
+                  <CustomFormField
+                    label="CV URL"
+                    error={(form.formState.errors as { cvUrl?: { message?: string } }).cvUrl?.message}
+                  >
+                    <Input type="url" placeholder="https://..." {...form.register('cvUrl')} />
+                  </CustomFormField>
+                )}
               </>
             )}
 
@@ -395,8 +489,8 @@ export function EditUserDialog({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" form="edit-user-form" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Updating...' : 'Update'}
+              <Button type="submit" form="edit-user-form" disabled={updateMutation.isPending || uploadingCoachFiles}>
+                {updateMutation.isPending || uploadingCoachFiles ? 'Updating...' : 'Update'}
               </Button>
             </div>
           </div>

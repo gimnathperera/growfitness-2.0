@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { SessionType } from "@grow-fitness/shared-types";
+import { SessionType, UploadKind } from "@grow-fitness/shared-types";
 import type { UpdateKidDto } from "@grow-fitness/shared-schemas";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +25,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { kidsService } from "@/services/kids.service";
+import { uploadFileViaGcs } from "@/services/uploads.service";
 import { useKid } from "@/contexts/kid/useKid";
+import { FileDropzone } from "@/components/common/FileDropzone";
 
 import { User, Calendar, Award, Heart, Loader2, Save } from "lucide-react";
+
+const IMAGE_UPLOAD_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export function KidProfileTab() {
   const { toast } = useToast();
@@ -33,12 +40,15 @@ export function KidProfileTab() {
   const kidId = selectedKid?.id;
 
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState<Partial<UpdateKidDto>>({
     name: "",
     gender: "",
     birthDate: "",
     goal: "",
+    profilePhotoUrl: "",
     currentlyInSports: false,
     medicalConditions: [],
     sessionType: SessionType.INDIVIDUAL,  
@@ -63,10 +73,12 @@ export function KidProfileTab() {
           gender: fullKidData.gender || "",
           birthDate: formatDateForInput(fullKidData.birthDate),
           goal: fullKidData.goal || "",
+          profilePhotoUrl: fullKidData.profilePhotoUrl || "",
           currentlyInSports: fullKidData.currentlyInSports || false,
           medicalConditions: fullKidData.medicalConditions || [],
           sessionType: fullKidData.sessionType || "INDIVIDUAL",
         });
+        setProfilePhotoFile(null);
       } catch (error: unknown) {
         setFormData((prev) => ({
           ...prev,
@@ -118,11 +130,32 @@ export function KidProfileTab() {
 
     try {
       setSaving(true);
+      let profilePhotoUrl = formData.profilePhotoUrl?.trim() || undefined;
+
+      if (profilePhotoFile) {
+        try {
+          setUploadingPhoto(true);
+          const uploadResult = await uploadFileViaGcs(UploadKind.KID_AVATAR, kidId, profilePhotoFile);
+          profilePhotoUrl = uploadResult.publicUrl;
+        } catch (error) {
+          toast({
+            title: "Upload failed",
+            description:
+              error instanceof Error ? error.message : "Could not upload profile picture.",
+            variant: "destructive",
+          });
+          return;
+        } finally {
+          setUploadingPhoto(false);
+        }
+      }
+
       const payload: UpdateKidDto = {
         name: formData.name,
         gender: formData.gender,
         birthDate: formData.birthDate,
         goal: formData.goal ?? "",
+        profilePhotoUrl,
         currentlyInSports: formData.currentlyInSports || false,
         medicalConditions: formData.medicalConditions ?? [],
         sessionType: formData.sessionType as SessionType,
@@ -134,10 +167,12 @@ export function KidProfileTab() {
         gender: updatedKid.gender || "",
         birthDate: formatDateForInput(updatedKid.birthDate),
         goal: updatedKid.goal ?? "",
+        profilePhotoUrl: updatedKid.profilePhotoUrl || "",
         currentlyInSports: updatedKid.currentlyInSports || false,
         medicalConditions: updatedKid.medicalConditions ?? [],
         sessionType: updatedKid.sessionType || SessionType.INDIVIDUAL,
       });
+      setProfilePhotoFile(null);
 
       toast({
         title: "Success",
@@ -183,6 +218,43 @@ export function KidProfileTab() {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
+            <Avatar className="h-24 w-24 border-2 border-background shadow-sm">
+              {formData.profilePhotoUrl ? (
+                <AvatarImage
+                  src={formData.profilePhotoUrl}
+                  alt=""
+                  className="object-cover"
+                />
+              ) : null}
+              <AvatarFallback className="text-lg">
+                {(selectedKid.name || "?").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 space-y-2 w-full sm:w-auto">
+              <Label>Profile photo</Label>
+              <FileDropzone
+                value={profilePhotoFile}
+                onChange={setProfilePhotoFile}
+                accept={IMAGE_UPLOAD_TYPES}
+                maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                preview="image"
+                label="Drop photo here or browse"
+                description="JPEG, PNG, or WebP up to 5MB"
+                disabled={saving || uploadingPhoto || !kidId}
+              />
+              <p className="text-xs text-muted-foreground">
+                The selected photo uploads when you save changes.
+              </p>
+              {uploadingPhoto && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading…
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Grid layout for most fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
@@ -307,9 +379,9 @@ export function KidProfileTab() {
           <Button
             type="submit"
             className="w-full h-12 text-base font-semibold"
-            disabled={saving}
+            disabled={saving || uploadingPhoto}
           >
-            {saving ? (
+            {saving || uploadingPhoto ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Saving...

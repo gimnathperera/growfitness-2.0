@@ -13,6 +13,8 @@ on:
       - 'apps/api/Dockerfile'
       - 'cloudbuild.yaml'
       - '.github/workflows/deploy-api-cloudrun.yml'
+      - 'scripts/gcs-uploads-setup.sh'
+      - 'scripts/gcp-enable-apis.sh'
 
 env:
   REGION: us-central1
@@ -80,6 +82,9 @@ jobs:
             TEXTLK_ENABLED=${{ secrets.TEXTLK_ENABLED }}
             TEXTLK_API_TOKEN=${{ secrets.TEXTLK_API_TOKEN }}
             TEXTLK_SENDER_ID=${{ secrets.TEXTLK_SENDER_ID }}
+            GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+            GCS_PUBLIC_BASE_URL=${{ secrets.GCS_PUBLIC_BASE_URL }}
+            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
 
       - name: Output service URL
         run: |

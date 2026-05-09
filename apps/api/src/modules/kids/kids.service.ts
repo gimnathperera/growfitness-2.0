@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
 import { CreateKidDto, UpdateKidDto } from '@grow-fitness/shared-schemas';
+import { UserRole } from '@grow-fitness/shared-types';
+import type { JwtPayload } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
@@ -62,9 +64,14 @@ export class KidsService {
     return new PaginatedResponseDto(transformedData, total, pagination.page, pagination.limit);
   }
 
-  async findById(id: string) {
+  async findById(id: string, user?: JwtPayload) {
+    const query: Record<string, unknown> = { _id: id, isApproved: true };
+    if (user?.role === UserRole.PARENT) {
+      query.parentId = new Types.ObjectId(user.sub);
+    }
+
     const kid = await this.kidModel
-      .findOne({ _id: id, isApproved: true })
+      .findOne(query)
       .populate('parentId', 'email parentProfile coachProfile')
       .lean()
       .exec();
@@ -105,6 +112,10 @@ export class KidsService {
       birthDate: new Date(createKidDto.birthDate),
       medicalConditions: createKidDto.medicalConditions || [],
       isApproved,
+      ...(createKidDto.profilePhotoUrl !== undefined &&
+      createKidDto.profilePhotoUrl !== ''
+        ? { profilePhotoUrl: createKidDto.profilePhotoUrl }
+        : {}),
     });
 
     await kid.save();
@@ -135,13 +146,20 @@ export class KidsService {
     };
   }
 
-  async update(id: string, updateKidDto: UpdateKidDto, actorId: string) {
+  async update(id: string, updateKidDto: UpdateKidDto, actorId: string, actorRole?: UserRole) {
     const kid = await this.kidModel.findById(id).exec();
 
     if (!kid) {
       throw new NotFoundException({
         errorCode: ErrorCode.KID_NOT_FOUND,
         message: 'Kid not found',
+      });
+    }
+
+    if (actorRole === UserRole.PARENT && kid.parentId.toString() !== actorId) {
+      throw new ForbiddenException({
+        errorCode: ErrorCode.FORBIDDEN,
+        message: 'You can only update your own children',
       });
     }
 
@@ -157,6 +175,10 @@ export class KidsService {
         medicalConditions: updateKidDto.medicalConditions,
       }),
       ...(updateKidDto.sessionType !== undefined && { sessionType: updateKidDto.sessionType }),
+      ...(updateKidDto.profilePhotoUrl !== undefined && {
+        profilePhotoUrl:
+          updateKidDto.profilePhotoUrl === '' ? undefined : updateKidDto.profilePhotoUrl,
+      }),
     });
 
     await kid.save();

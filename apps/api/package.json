@@ -27,6 +27,7 @@
     "migrate:coach-profiles": "ts-node -r tsconfig-paths/register scripts/migrate-coach-profiles.ts"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@grow-fitness/invoice-print": "workspace:^",
     "@grow-fitness/shared-schemas": "workspace:*",
     "@grow-fitness/shared-types": "workspace:*",

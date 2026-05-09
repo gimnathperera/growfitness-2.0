@@ -21,6 +21,9 @@ export class Kid {
   @Prop({ required: false })
   goal?: string;
 
+  @Prop({ required: false, type: String })
+  profilePhotoUrl?: string;
+
   @Prop({ required: true, default: false })
   currentlyInSports: boolean;
 

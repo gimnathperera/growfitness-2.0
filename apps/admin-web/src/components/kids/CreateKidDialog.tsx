@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -19,15 +19,20 @@ import {
 } from '@/components/ui/select';
 import { FormField as CustomFormField } from '@/components/common/FormField';
 import { CreateKidSchema, CreateKidDto } from '@grow-fitness/shared-schemas';
-import { SessionType } from '@grow-fitness/shared-types';
+import { SessionType, UploadKind } from '@grow-fitness/shared-types';
 import { useApiMutation, useApiQuery } from '@/hooks';
 import { kidsService } from '@/services/kids.service';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 import { usersService } from '@/services/users.service';
 import { useToast } from '@/hooks/useToast';
 import { DatePicker } from '@/components/common/DatePicker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { useModalParams } from '@/hooks/useModalParams';
+import { FileDropzone } from '@/components/common/FileDropzone';
+
+const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 interface CreateKidDialogProps {
   open: boolean;
@@ -46,6 +51,9 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
   };
   const { toast } = useToast();
 
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [showProfilePhotoUrl, setShowProfilePhotoUrl] = useState(false);
+
   const { data: parentsData } = useApiQuery(['users', 'parents', 'all'], () =>
     usersService.getParents(1, 100)
   );
@@ -59,6 +67,7 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
     medicalConditions: [],
     sessionType: SessionType.INDIVIDUAL,
     parentId: '',
+    profilePhotoUrl: undefined,
   };
 
   const form = useForm<CreateKidDto>({
@@ -70,34 +79,53 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
   useEffect(() => {
     if (open) {
       form.reset(defaultValues);
+      setProfilePhotoFile(null);
+      setShowProfilePhotoUrl(false);
     } else {
       form.reset(defaultValues);
+      setProfilePhotoFile(null);
+      setShowProfilePhotoUrl(false);
     }
   }, [open]);
 
-  const createMutation = useApiMutation((data: CreateKidDto) => kidsService.createKid(data), {
-    invalidateQueries: [['kids'], ['kids', 'all']],
-    onSuccess: () => {
-      toast.success('Kid created successfully');
-      form.reset(defaultValues);
-      setTimeout(() => {
-        handleOpenChange(false);
-      }, 100);
+  const createMutation = useApiMutation(
+    async ({
+      data,
+      profilePhotoFile: f,
+    }: {
+      data: CreateKidDto;
+      profilePhotoFile: File | null;
+    }) => {
+      const created = await kidsService.createKid(data);
+      if (f) await uploadFileViaGcs(UploadKind.KID_AVATAR, created.id, f);
+      return created;
     },
-    onError: error => {
-      toast.error('Failed to create kid', error.message || 'An error occurred');
-    },
-  });
+    {
+      invalidateQueries: [['kids'], ['kids', 'all']],
+      onSuccess: () => {
+        toast.success('Kid created successfully');
+        form.reset(defaultValues);
+        setProfilePhotoFile(null);
+        setTimeout(() => {
+          handleOpenChange(false);
+        }, 100);
+      },
+      onError: error => {
+        toast.error('Failed to create kid', error.message || 'An error occurred');
+      },
+    }
+  );
 
   const onSubmit = (data: CreateKidDto) => {
-    const formattedData = {
+    const formattedData: CreateKidDto = {
       ...data,
       birthDate:
         typeof data.birthDate === 'string'
           ? data.birthDate
           : format(data.birthDate as Date, 'yyyy-MM-dd'),
+      profilePhotoUrl: profilePhotoFile ? undefined : data.profilePhotoUrl || undefined,
     };
-    createMutation.mutate(formattedData);
+    createMutation.mutate({ data: formattedData, profilePhotoFile });
   };
 
   return (
@@ -136,6 +164,35 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
           <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
             <Input {...form.register('name')} />
           </CustomFormField>
+
+          <div className="space-y-2">
+            <CustomFormField
+              label="Profile photo"
+              error={form.formState.errors.profilePhotoUrl?.message}
+            >
+              <FileDropzone
+                value={profilePhotoFile}
+                onChange={setProfilePhotoFile}
+                accept={IMAGE_UPLOAD_TYPES}
+                maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                preview="image"
+                label="Drop photo here or browse"
+                description="JPEG, PNG, or WebP up to 5MB"
+                disabled={createMutation.isPending}
+              />
+            </CustomFormField>
+            <Button
+              type="button"
+              variant="link"
+              className="h-auto p-0 text-xs text-muted-foreground"
+              onClick={() => setShowProfilePhotoUrl(v => !v)}
+            >
+              {showProfilePhotoUrl ? 'Hide photo URL field' : 'Paste photo URL instead'}
+            </Button>
+            {showProfilePhotoUrl && (
+              <Input type="url" placeholder="https://..." {...form.register('profilePhotoUrl')} />
+            )}
+          </div>
 
           <CustomFormField label="Gender" required error={form.formState.errors.gender?.message}>
             <Select

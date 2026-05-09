@@ -26,6 +26,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole, SessionType } from '@grow-fitness/shared-types';
 import { CreateKidDto, UpdateKidDto } from '@grow-fitness/shared-schemas';
 import { FindKidsQueryDto } from './dto/find-kids-query.dto';
+import type { JwtPayload } from '../auth/auth.service';
 
 @ApiTags('kids')
 @ApiBearerAuth('JWT-auth')
@@ -104,6 +105,11 @@ export class KidsController {
           description: 'Preferred session type',
           example: 'INDIVIDUAL',
         },
+        profilePhotoUrl: {
+          type: 'string',
+          format: 'uri',
+          description: 'Optional profile photo URL',
+        },
         parentId: {
           type: 'string',
           description: 'Parent ID (MongoDB ObjectId)',
@@ -121,15 +127,17 @@ export class KidsController {
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.PARENT)
   @ApiOperation({ summary: 'Get kid by ID' })
   @ApiResponse({ status: 200, description: 'Kid details' })
   @ApiResponse({ status: 404, description: 'Kid not found' })
   @ApiResponse({ status: 400, description: 'Invalid ID format' })
-  findById(@Param('id', ObjectIdValidationPipe) id: string) {
-    return this.kidsService.findById(id);
+  findById(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.kidsService.findById(id, user);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.PARENT)
   @ApiOperation({ summary: 'Update a kid' })
   @ApiBody({
     schema: {
@@ -160,6 +168,11 @@ export class KidsController {
           enum: ['INDIVIDUAL', 'GROUP'],
           description: 'Preferred session type',
         },
+        profilePhotoUrl: {
+          type: 'string',
+          format: 'uri',
+          description: 'Profile photo URL',
+        },
       },
     },
   })
@@ -169,9 +182,9 @@ export class KidsController {
   update(
     @Param('id', ObjectIdValidationPipe) id: string,
     @Body() updateKidDto: UpdateKidDto,
-    @CurrentUser('sub') actorId: string
+    @CurrentUser() user: JwtPayload
   ) {
-    return this.kidsService.update(id, updateKidDto, actorId);
+    return this.kidsService.update(id, updateKidDto, user.sub, user.role);
   }
 
   @Post(':id/link-parent')

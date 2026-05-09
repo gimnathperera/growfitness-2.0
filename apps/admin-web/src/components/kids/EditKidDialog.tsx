@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -19,7 +19,8 @@ import {
 } from '@/components/ui/select';
 import { FormField as CustomFormField } from '@/components/common/FormField';
 import { UpdateKidSchema, UpdateKidDto } from '@grow-fitness/shared-schemas';
-import { Kid, SessionType } from '@grow-fitness/shared-types';
+import { Kid, SessionType, UploadKind } from '@grow-fitness/shared-types';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { kidsService } from '@/services/kids.service';
 import { useToast } from '@/hooks/useToast';
@@ -28,6 +29,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useModalParams } from '@/hooks/useModalParams';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Loader2 } from 'lucide-react';
+import { FileDropzone } from '@/components/common/FileDropzone';
+
+const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 interface EditKidDialogProps {
   open: boolean;
@@ -67,6 +74,10 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
   }
   const { toast } = useToast();
 
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [showProfilePhotoUrl, setShowProfilePhotoUrl] = useState(false);
+
   const form = useForm<UpdateKidDto>({
     resolver: zodResolver(UpdateKidSchema),
     defaultValues: {
@@ -80,6 +91,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
       currentlyInSports: kid.currentlyInSports,
       medicalConditions: kid.medicalConditions || [],
       sessionType: kid.sessionType,
+      profilePhotoUrl: kid.profilePhotoUrl ?? '',
     },
   });
 
@@ -96,7 +108,9 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
         currentlyInSports: kid.currentlyInSports,
         medicalConditions: kid.medicalConditions || [],
         sessionType: kid.sessionType,
+        profilePhotoUrl: kid.profilePhotoUrl ?? '',
       });
+      setProfilePhotoFile(null);
     }
   }, [open, kid, form]);
 
@@ -106,6 +120,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
       invalidateQueries: [['kids']],
       onSuccess: () => {
         toast.success('Kid updated successfully');
+        setProfilePhotoFile(null);
         onOpenChange(false);
       },
       onError: error => {
@@ -114,7 +129,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
     }
   );
 
-  const onSubmit = (data: UpdateKidDto) => {
+  const onSubmit = async (data: UpdateKidDto) => {
     const formattedData = {
       ...data,
       birthDate:
@@ -122,6 +137,23 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
           ? data.birthDate
           : format(data.birthDate as Date, 'yyyy-MM-dd'),
     };
+
+    if (profilePhotoFile) {
+      try {
+        setUploadingPhoto(true);
+        const { publicUrl } = await uploadFileViaGcs(UploadKind.KID_AVATAR, kid.id, profilePhotoFile);
+        formattedData.profilePhotoUrl = publicUrl;
+      } catch (error) {
+        toast.error(
+          'Upload failed',
+          error instanceof Error ? error.message : 'Could not upload photo'
+        );
+        return;
+      } finally {
+        setUploadingPhoto(false);
+      }
+    }
+
     updateMutation.mutate(formattedData);
   };
 
@@ -140,6 +172,49 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
           {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
             <form onSubmit={form.handleSubmit(onSubmit)} id="edit-kid-form" className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start rounded-lg border bg-muted/30 p-4">
+              <Avatar className="h-20 w-20 border-2 border-background">
+                {form.watch('profilePhotoUrl') ? (
+                  <AvatarImage
+                    src={form.watch('profilePhotoUrl')}
+                    alt=""
+                    className="object-cover"
+                  />
+                ) : null}
+                <AvatarFallback>{kid.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="space-y-2 flex-1 w-full">
+                <label className="text-sm font-medium">Profile photo</label>
+                <FileDropzone
+                  value={profilePhotoFile}
+                  onChange={setProfilePhotoFile}
+                  accept={IMAGE_UPLOAD_TYPES}
+                  maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                  preview="image"
+                  label="Drop photo here or browse"
+                  description="JPEG, PNG, or WebP up to 5MB"
+                  disabled={uploadingPhoto || updateMutation.isPending}
+                />
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-xs text-muted-foreground"
+                  onClick={() => setShowProfilePhotoUrl(v => !v)}
+                >
+                  {showProfilePhotoUrl ? 'Hide photo URL field' : 'Paste photo URL instead'}
+                </Button>
+                {showProfilePhotoUrl && (
+                  <Input type="url" placeholder="https://..." {...form.register('profilePhotoUrl')} />
+                )}
+                {uploadingPhoto && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading…
+                </div>
+              )}
+              </div>
+            </div>
+
             <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
               <Input {...form.register('name')} />
             </CustomFormField>
@@ -219,8 +294,8 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" form="edit-kid-form" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Updating...' : 'Update'}
+              <Button type="submit" form="edit-kid-form" disabled={updateMutation.isPending || uploadingPhoto}>
+                {updateMutation.isPending || uploadingPhoto ? 'Updating...' : 'Update'}
               </Button>
             </div>
           </div>

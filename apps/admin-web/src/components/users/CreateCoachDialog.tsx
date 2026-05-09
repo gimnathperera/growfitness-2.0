@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -20,12 +20,14 @@ import {
 } from '@/components/ui/select';
 import { FormField as CustomFormField } from '@/components/common/FormField';
 import { CreateCoachSchema, CreateCoachDto } from '@grow-fitness/shared-schemas';
-import { EmploymentType } from '@grow-fitness/shared-types';
+import { EmploymentType, UploadKind } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { usersService } from '@/services/users.service';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 import { useToast } from '@/hooks/useToast';
 import { useModalParams } from '@/hooks/useModalParams';
 import { Plus, Trash2 } from 'lucide-react';
+import { FileDropzone } from '@/components/common/FileDropzone';
 
 interface CreateCoachDialogProps {
   open: boolean;
@@ -33,6 +35,10 @@ interface CreateCoachDialogProps {
 }
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const PDF_UPLOAD_TYPES = ['application/pdf'];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_CV_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 function flattenNestedArray<T>(value: T | T[] | (T | T[])[]): T[] {
   if (!Array.isArray(value)) {
@@ -79,6 +85,11 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
   };
   const { toast } = useToast();
 
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [showPhotoUrl, setShowPhotoUrl] = useState(false);
+  const [showCvUrl, setShowCvUrl] = useState(false);
+
   const form = useForm<CreateCoachDto>({
     resolver: zodResolver(CreateCoachSchema),
     defaultValues,
@@ -93,18 +104,41 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
   useEffect(() => {
     if (open) {
       form.reset(defaultValues);
+      setPhotoFile(null);
+      setCvFile(null);
+      setShowPhotoUrl(false);
+      setShowCvUrl(false);
     } else {
       form.reset(defaultValues);
+      setPhotoFile(null);
+      setCvFile(null);
+      setShowPhotoUrl(false);
+      setShowCvUrl(false);
     }
   }, [open, form]);
 
   const createMutation = useApiMutation(
-    (data: CreateCoachDto) => usersService.createCoach(data),
+    async ({
+      payload,
+      photoFile: pf,
+      cvFile: cf,
+    }: {
+      payload: CreateCoachDto;
+      photoFile: File | null;
+      cvFile: File | null;
+    }) => {
+      const coach = await usersService.createCoach(payload);
+      if (pf) await uploadFileViaGcs(UploadKind.COACH_PHOTO, coach.id, pf);
+      if (cf) await uploadFileViaGcs(UploadKind.COACH_CV, coach.id, cf);
+      return coach;
+    },
     {
       invalidateQueries: [['users', 'coaches']],
       onSuccess: () => {
         toast.success('Coach created successfully');
         form.reset(defaultValues);
+        setPhotoFile(null);
+        setCvFile(null);
         setTimeout(() => {
           onOpenChange(false);
         }, 100);
@@ -123,14 +157,14 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
       phone: data.phone,
       password: data.password,
       dateOfBirth: values.dateOfBirth || undefined,
-      photoUrl: values.photoUrl || undefined,
+      photoUrl: photoFile ? undefined : values.photoUrl || undefined,
       homeAddress: values.homeAddress || undefined,
       school: values.school || undefined,
       availableTimes: normalizeAvailableTimes(values.availableTimes),
       employmentType: values.employmentType ?? undefined,
-      cvUrl: values.cvUrl || undefined,
+      cvUrl: cvFile ? undefined : values.cvUrl || undefined,
     };
-    createMutation.mutate(payload);
+    createMutation.mutate({ payload, photoFile, cvFile });
   };
 
   return (
@@ -191,13 +225,57 @@ export function CreateCoachDialog({ open, onOpenChange }: CreateCoachDialogProps
                   </Select>
                 </CustomFormField>
 
-                <CustomFormField label="Photo URL" error={form.formState.errors.photoUrl?.message}>
-                  <Input type="url" placeholder="https://..." {...form.register('photoUrl')} />
-                </CustomFormField>
+                <div className="space-y-2 sm:col-span-2">
+                  <CustomFormField label="Profile photo" error={form.formState.errors.photoUrl?.message}>
+                    <FileDropzone
+                      value={photoFile}
+                      onChange={setPhotoFile}
+                      accept={IMAGE_UPLOAD_TYPES}
+                      maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                      preview="image"
+                      label="Drop photo here or browse"
+                      description="JPEG, PNG, or WebP up to 5MB"
+                      disabled={createMutation.isPending}
+                    />
+                  </CustomFormField>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-xs text-muted-foreground"
+                    onClick={() => setShowPhotoUrl(v => !v)}
+                  >
+                    {showPhotoUrl ? 'Hide image URL field' : 'Paste image URL instead'}
+                  </Button>
+                  {showPhotoUrl && (
+                    <Input type="url" placeholder="https://..." {...form.register('photoUrl')} />
+                  )}
+                </div>
 
-                <CustomFormField label="CV URL" error={form.formState.errors.cvUrl?.message}>
-                  <Input type="url" placeholder="https://..." {...form.register('cvUrl')} />
-                </CustomFormField>
+                <div className="space-y-2 sm:col-span-2">
+                  <CustomFormField label="CV (PDF)" error={form.formState.errors.cvUrl?.message}>
+                    <FileDropzone
+                      value={cvFile}
+                      onChange={setCvFile}
+                      accept={PDF_UPLOAD_TYPES}
+                      maxSizeBytes={MAX_CV_UPLOAD_BYTES}
+                      preview="file"
+                      label="Drop CV here or browse"
+                      description="PDF up to 10MB"
+                      disabled={createMutation.isPending}
+                    />
+                  </CustomFormField>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-xs text-muted-foreground"
+                    onClick={() => setShowCvUrl(v => !v)}
+                  >
+                    {showCvUrl ? 'Hide CV URL field' : 'Paste CV URL instead'}
+                  </Button>
+                  {showCvUrl && (
+                    <Input type="url" placeholder="https://..." {...form.register('cvUrl')} />
+                  )}
+                </div>
 
                 <CustomFormField label="School" error={form.formState.errors.school?.message} className="sm:col-span-2">
                   <Input {...form.register('school')} />

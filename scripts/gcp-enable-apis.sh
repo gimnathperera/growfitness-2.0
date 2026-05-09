@@ -16,6 +16,7 @@ gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
   artifactregistry.googleapis.com \
+  storage.googleapis.com \
   --project="$PROJECT_ID"
 
 echo "Done. APIs enabled for $PROJECT_ID"

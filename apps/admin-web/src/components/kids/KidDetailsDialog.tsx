@@ -4,7 +4,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Kid } from '@grow-fitness/shared-types';
@@ -141,6 +141,13 @@ export function KidDetailsDialog({ open, onOpenChange, kid: kidProp }: KidDetail
                 </div>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-16 w-16 flex-shrink-0">
+                    {displayKid.profilePhotoUrl ? (
+                      <AvatarImage
+                        src={displayKid.profilePhotoUrl}
+                        alt=""
+                        className="object-cover"
+                      />
+                    ) : null}
                     <AvatarFallback className="text-base">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">

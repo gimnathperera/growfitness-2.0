@@ -7,6 +7,7 @@ import {
   QuestionType,
   ReportType,
   EmploymentType,
+  UploadKind,
 } from '@grow-fitness/shared-types';
 
 // Auth Schemas
@@ -143,6 +144,7 @@ export const CreateKidSchema = z.object({
   gender: z.string().min(1, 'Gender is required'),
   birthDate: z.string().or(z.date()),
   goal: z.string().optional(),
+  profilePhotoUrl: z.union([z.string().url(), z.literal('')]).optional(),
   currentlyInSports: z.boolean(),
   medicalConditions: z.array(z.string()).default([]),
   sessionType: z.nativeEnum(SessionType),
@@ -156,12 +158,82 @@ export const UpdateKidSchema = z.object({
   gender: z.string().min(1).optional(),
   birthDate: z.string().or(z.date()).optional(),
   goal: z.string().optional(),
+  profilePhotoUrl: z.union([z.string().url(), z.literal('')]).optional(),
   currentlyInSports: z.boolean().optional(),
   medicalConditions: z.array(z.string()).optional(),
   sessionType: z.nativeEnum(SessionType).optional(),
 });
 
 export type UpdateKidDto = z.infer<typeof UpdateKidSchema>;
+
+const OBJECT_ID_REGEX = /^[a-f0-9]{24}$/i;
+
+const imageContentTypesUpload = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const cvContentTypesUpload = new Set(['application/pdf']);
+
+const MAX_UPLOAD_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_UPLOAD_CV_BYTES = 10 * 1024 * 1024;
+
+export const UploadPresignSchema = z
+  .object({
+    kind: z.nativeEnum(UploadKind),
+    entityId: z
+      .string()
+      .min(1)
+      .regex(OBJECT_ID_REGEX, 'Invalid id'),
+    contentType: z.string().min(1),
+    size: z.number().int().positive(),
+    originalName: z.string().max(255).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.kind === UploadKind.KID_AVATAR || data.kind === UploadKind.COACH_PHOTO) {
+      if (!imageContentTypesUpload.has(data.contentType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Allowed image types: JPEG, PNG, WebP',
+          path: ['contentType'],
+        });
+      }
+      if (data.size > MAX_UPLOAD_IMAGE_BYTES) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Image must be 5MB or smaller',
+          path: ['size'],
+        });
+      }
+    }
+    if (data.kind === UploadKind.COACH_CV) {
+      if (!cvContentTypesUpload.has(data.contentType)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'CV must be a PDF',
+          path: ['contentType'],
+        });
+      }
+      if (data.size > MAX_UPLOAD_CV_BYTES) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'CV must be 10MB or smaller',
+          path: ['size'],
+        });
+      }
+    }
+  });
+
+export type UploadPresignDto = z.infer<typeof UploadPresignSchema>;
+
+export const UploadFinalizeSchema = z.object({
+  kind: z.nativeEnum(UploadKind),
+  entityId: z
+    .string()
+    .min(1)
+    .regex(OBJECT_ID_REGEX, 'Invalid id'),
+  objectKey: z.string().min(1).max(1024),
+  /** Optional; if sent, must match the server-computed public URL for objectKey. */
+  publicUrl: z.string().url().optional(),
+});
+
+export type UploadFinalizeDto = z.infer<typeof UploadFinalizeSchema>;
 
 // Session Schemas
 export const CreateSessionSchema = z

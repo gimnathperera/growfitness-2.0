@@ -26,13 +26,14 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { SupportChatModule } from './modules/support-chat/support-chat.module';
 import { GoogleCalendarModule } from './modules/google-calendar/google-calendar.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['apps/api/.env.local', 'apps/api/.env', '.env.local', '.env'],
     }),
     MongooseModule.forRootAsync({
       useFactory: () => ({
@@ -58,6 +59,7 @@ import { GoogleCalendarModule } from './modules/google-calendar/google-calendar.
     RemindersModule,
     SupportChatModule,
     GoogleCalendarModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [
