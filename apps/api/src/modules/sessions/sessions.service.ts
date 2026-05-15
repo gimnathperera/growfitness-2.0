@@ -259,6 +259,28 @@ export class SessionsService {
     return this.toSessionResponse(session as any);
   }
 
+  /** Kid ID string or summary object when kids are populated on the session. */
+  private toSessionKidRef(k: any) {
+    if (k && typeof k === 'object' && k._id) {
+      const parentIdVal = k.parentId?._id ?? k.parentId;
+      return {
+        id: k._id.toString(),
+        parentId: parentIdVal != null ? parentIdVal.toString() : undefined,
+        name: k.name,
+        gender: k.gender,
+        birthDate: k.birthDate,
+        goal: k.goal,
+        profilePhotoUrl: k.profilePhotoUrl,
+        currentlyInSports: k.currentlyInSports ?? false,
+        medicalConditions: k.medicalConditions ?? [],
+        sessionType: k.sessionType,
+        createdAt: k.createdAt,
+        updatedAt: k.updatedAt,
+      };
+    }
+    return k?.toString?.() ?? k;
+  }
+
   /**
    * Normalize session document: keep coachId/locationId as string IDs and expose
    * populated refs as coach and location.
@@ -286,16 +308,7 @@ export class SessionsService {
           }
         : undefined;
     const kids = Array.isArray(s.kids)
-      ? s.kids.map((k: any) => {
-          if (k && typeof k === 'object' && k._id) {
-            return {
-              id: k._id.toString(),
-              name: k.name,
-              gender: k.gender,
-            };
-          }
-          return k?.toString?.() ?? k;
-        })
+      ? s.kids.map((k: any) => this.toSessionKidRef(k))
       : undefined;
     return {
       id: s._id?.toString(),
