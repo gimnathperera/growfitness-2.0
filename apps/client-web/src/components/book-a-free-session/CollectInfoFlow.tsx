@@ -9,6 +9,7 @@ import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
 import {
   FreeSessionFormSchema,
   validateFreeSessionStepField,
+  type FreeSessionFormValues,
   type FreeSessionStepField,
 } from '@/lib/free-session-form-schemas';
 import { collectInfoQuestions } from './collect-info.questions';
@@ -45,7 +46,7 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
     setError,
     clearErrors,
     formState: { errors },
-  } = useForm<CreateFreeSessionRequestDto>({
+  } = useForm<FreeSessionFormValues>({
     resolver: zodResolver(FreeSessionFormSchema),
     mode: 'onChange',
     defaultValues: {
@@ -79,7 +80,7 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
       const data = getValues();
       setIsSubmitting(true);
       try {
-        await onSubmit(data);
+        await onSubmit(data as CreateFreeSessionRequestDto);
         setTimeout(() => {
           setIsSubmitting(false);
           setIsSubmitSuccess(true);

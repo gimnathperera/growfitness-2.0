@@ -30,14 +30,14 @@ export function ReadOnlyProfilePhoto({
   helperText = 'Your profile photo is managed by an administrator.',
 }: ReadOnlyProfilePhotoProps) {
   const fallback = initials(displayName, email);
-  const src = photoUrl?.trim() || null;
+  const imageSrc = photoUrl?.trim() || undefined;
   const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     setImageFailed(false);
-  }, [src]);
+  }, [imageSrc]);
 
-  const showImage = Boolean(src) && !imageFailed;
+  const showImage = Boolean(imageSrc) && !imageFailed;
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
@@ -48,8 +48,8 @@ export function ReadOnlyProfilePhoto({
       >
         {showImage ? (
           <img
-            key={src}
-            src={src}
+            key={imageSrc}
+            src={imageSrc}
             alt=""
             className="h-full w-full object-cover"
             onError={() => setImageFailed(true)}

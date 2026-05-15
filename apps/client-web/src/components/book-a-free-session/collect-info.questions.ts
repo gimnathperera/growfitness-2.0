@@ -1,4 +1,4 @@
-import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
+import type { FreeSessionFormValues } from '@/lib/free-session-form-schemas';
 import type { Session } from '@grow-fitness/shared-types';
 import type { QuestionConfig, QuestionOption } from '@/types/question-config';
 import { sessionsService } from '@/services/sessions.service';
@@ -68,9 +68,7 @@ const fetchFreeSessions = async (): Promise<SessionOption[]> => {
   }
 };
 
-export const collectInfoQuestions: QuestionConfig<
-  keyof CreateFreeSessionRequestDto
->[] = [
+export const collectInfoQuestions: QuestionConfig<keyof FreeSessionFormValues>[] = [
   {
     id: 'parentName',
     type: 'text',

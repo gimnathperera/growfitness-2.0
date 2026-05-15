@@ -32,26 +32,26 @@ export function UserAvatar({
   fallbackClassName,
 }: UserAvatarProps) {
   const letter = initials(displayName ?? undefined, email ?? undefined);
-  const src = photoUrl?.trim() || null;
+  const imageSrc = photoUrl?.trim() || undefined;
   const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     setImageFailed(false);
-  }, [src]);
+  }, [imageSrc]);
 
   const mergedClass = cn(
     'relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full',
     className
   );
   const mergedFallback = cn('bg-primary text-sm font-medium text-white', fallbackClassName);
-  const showImage = Boolean(src) && !imageFailed;
+  const showImage = Boolean(imageSrc) && !imageFailed;
 
   return (
     <div className={mergedClass}>
       {showImage ? (
         <img
-          key={src}
-          src={src}
+          key={imageSrc}
+          src={imageSrc}
           alt=""
           className="h-full w-full object-cover"
           onError={() => setImageFailed(true)}
