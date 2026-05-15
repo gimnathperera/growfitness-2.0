@@ -33,6 +33,8 @@ export interface AuthResponse {
     id: string;
     email: string;
     role: UserRole;
+    parentProfile?: { photoUrl?: string | null };
+    coachProfile?: { photoUrl?: string | null; name?: string | null };
   };
 }
 
@@ -106,6 +108,15 @@ export class AuthService {
         id: user._id.toString(),
         email: user.email,
         role: user.role,
+        ...(user.parentProfile?.photoUrl != null && {
+          parentProfile: { photoUrl: user.parentProfile.photoUrl },
+        }),
+        ...(user.role === UserRole.COACH && {
+          coachProfile: {
+            photoUrl: user.coachProfile?.photoUrl ?? null,
+            name: user.coachProfile?.name ?? null,
+          },
+        }),
       },
     };
   }

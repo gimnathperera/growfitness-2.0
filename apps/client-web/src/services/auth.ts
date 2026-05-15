@@ -10,6 +10,8 @@ export interface AuthUser {
   id: string;
   email: string;
   role: UserRole;
+  parentProfile?: { photoUrl?: string | null };
+  coachProfile?: { photoUrl?: string | null; name?: string | null };
 }
 
 /* ---------- AUTH RESPONSE ---------- */

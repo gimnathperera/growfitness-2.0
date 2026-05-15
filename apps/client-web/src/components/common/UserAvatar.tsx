@@ -1,4 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 function initials(displayName?: string, email?: string): string {
   const name = displayName?.trim();
@@ -31,14 +32,33 @@ export function UserAvatar({
   fallbackClassName,
 }: UserAvatarProps) {
   const letter = initials(displayName ?? undefined, email ?? undefined);
+  const src = photoUrl?.trim() || null;
+  const [imageFailed, setImageFailed] = useState(false);
 
-  const mergedClass = ['size-9', className].filter(Boolean).join(' ');
-  const mergedFallback = ['bg-primary text-white', fallbackClassName].filter(Boolean).join(' ');
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
+
+  const mergedClass = cn(
+    'relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full',
+    className
+  );
+  const mergedFallback = cn('bg-primary text-sm font-medium text-white', fallbackClassName);
+  const showImage = Boolean(src) && !imageFailed;
 
   return (
-    <Avatar className={mergedClass}>
-      {photoUrl ? <AvatarImage src={photoUrl} alt="" className="object-cover" /> : null}
-      <AvatarFallback className={mergedFallback}>{letter}</AvatarFallback>
-    </Avatar>
+    <div className={mergedClass}>
+      {showImage ? (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span className={mergedFallback}>{letter}</span>
+      )}
+    </div>
   );
 }

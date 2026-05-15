@@ -14,11 +14,11 @@ import { UpdateParentSelfBodyDto } from './dto/update-parent-self-body.dto';
 @ApiBearerAuth('JWT-auth')
 @Controller('users/me')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.PARENT)
 export class UsersMeProfileController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('profile')
+  @Roles(UserRole.PARENT)
   @ApiOperation({ summary: 'Get logged-in parent profile' })
   @ApiResponse({ status: 200, description: 'Parent user document' })
   @ApiResponse({ status: 404, description: 'Parent not found' })
@@ -27,6 +27,7 @@ export class UsersMeProfileController {
   }
 
   @Patch('profile')
+  @Roles(UserRole.PARENT)
   @ApiOperation({ summary: 'Update logged-in parent profile (not email or status)' })
   @ApiResponse({ status: 200, description: 'Updated parent user' })
   @ApiResponse({ status: 404, description: 'Parent not found' })

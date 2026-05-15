@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/useAuth';
 import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvider';
+import { useCoachProfile } from '@/contexts/coach-profile/CoachProfileProvider';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { useConfirm } from '@/hooks/useConfirm';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -27,6 +28,20 @@ type HeaderProps = {
 export default function Header({ forceSolid = false }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const parentProfile = useParentProfile();
+  const coachProfile = useCoachProfile();
+
+  const headerPhotoUrl =
+    user?.role === 'PARENT'
+      ? parentProfile.photoUrl
+      : user?.role === 'COACH'
+        ? coachProfile.photoUrl
+        : undefined;
+  const headerDisplayName =
+    user?.role === 'PARENT'
+      ? parentProfile.displayName
+      : user?.role === 'COACH'
+        ? coachProfile.displayName
+        : undefined;
   const { confirm: requestConfirm, confirmState } = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,8 +147,8 @@ export default function Header({ forceSolid = false }: HeaderProps) {
                     type="button"
                   >
                     <UserAvatar
-                      photoUrl={user?.role === 'PARENT' ? parentProfile.photoUrl : undefined}
-                      displayName={user?.role === 'PARENT' ? parentProfile.displayName : undefined}
+                      photoUrl={headerPhotoUrl}
+                      displayName={headerDisplayName}
                       email={user?.email}
                       className="size-9 cursor-pointer"
                     />
@@ -183,16 +198,16 @@ export default function Header({ forceSolid = false }: HeaderProps) {
 
               {isAuthenticated && (
                 <div className="pt-3 border-t mt-3 flex flex-col gap-2">
-                  {user?.role === 'PARENT' && (
+                  {(user?.role === 'PARENT' || user?.role === 'COACH') && (
                     <div className="flex items-center gap-3 px-4 py-2">
                       <UserAvatar
-                        photoUrl={parentProfile.photoUrl}
-                        displayName={parentProfile.displayName}
+                        photoUrl={headerPhotoUrl}
+                        displayName={headerDisplayName}
                         email={user.email}
                         className="size-10 shrink-0"
                       />
                       <span className="text-sm font-medium truncate">
-                        {parentProfile.displayName}
+                        {headerDisplayName}
                       </span>
                     </div>
                   )}

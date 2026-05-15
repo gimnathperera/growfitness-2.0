@@ -9,6 +9,7 @@ import { KidProvider } from "./contexts/kid/KidProvider";
 import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./contexts/AuthProvider";
 import { ParentProfileProvider } from "./contexts/parent-profile/ParentProfileProvider";
+import { CoachProfileProvider } from "./contexts/coach-profile/CoachProfileProvider";
 import { useAuth } from "./contexts/useAuth";
 import { Payments } from "./pages/Payments";
 import { SignUpPage } from "./pages/SignUpPage";
@@ -35,6 +36,7 @@ function App() {
   return (
     <AuthProvider>
       <ParentProfileProvider>
+      <CoachProfileProvider>
       <Routes>
         {/* ---------- PUBLIC ROUTES ---------- */}
         <Route element={<Layout />}>
@@ -60,6 +62,7 @@ function App() {
         </Route>
       </Routes>
       <Toaster />
+      </CoachProfileProvider>
       </ParentProfileProvider>
     </AuthProvider>
   );

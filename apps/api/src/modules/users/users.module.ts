@@ -1,7 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersController } from './users.controller';
+import { UsersMeController } from './users-me.controller';
 import { UsersMeProfileController } from './users-me-profile.controller';
+import { UsersMeCoachProfileController } from './users-me-coach-profile.controller';
 import { UsersService } from './users.service';
 import { User, UserSchema } from '../../infra/database/schemas/user.schema';
 import { Kid, KidSchema } from '../../infra/database/schemas/kid.schema';
@@ -20,11 +22,16 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: Kid.name, schema: KidSchema },
       { name: UserRegistrationRequest.name, schema: UserRegistrationRequestSchema },
     ]),
-    AuthModule,
+    forwardRef(() => AuthModule),
     AuditModule,
     NotificationsModule,
   ],
-  controllers: [UsersController, UsersMeProfileController],
+  controllers: [
+    UsersController,
+    UsersMeController,
+    UsersMeProfileController,
+    UsersMeCoachProfileController,
+  ],
   providers: [UsersService],
   exports: [UsersService],
 })

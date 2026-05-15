@@ -466,6 +466,23 @@ export class UsersService {
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
 
+  async findCoachSelf(userId: string) {
+    const coach = await this.userModel
+      .findOne({ _id: userId, role: UserRole.COACH })
+      .select('-passwordHash -googleCalendarRefreshToken')
+      .lean()
+      .exec();
+
+    if (!coach) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.USER_NOT_FOUND,
+        message: 'Coach not found',
+      });
+    }
+
+    return coach;
+  }
+
   async findCoachById(id: string) {
     const coach = await this.userModel.findOne({ _id: id, role: UserRole.COACH }).exec();
 
@@ -568,12 +585,14 @@ export class UsersService {
       ...(updateCoachDto.dateOfBirth !== undefined && {
         dateOfBirth: updateCoachDto.dateOfBirth ? new Date(updateCoachDto.dateOfBirth) : undefined,
       }),
-      ...(updateCoachDto.photoUrl !== undefined && { photoUrl: updateCoachDto.photoUrl || undefined }),
+      ...(updateCoachDto.photoUrl !== undefined &&
+        updateCoachDto.photoUrl !== '' && { photoUrl: updateCoachDto.photoUrl }),
       ...(updateCoachDto.homeAddress !== undefined && { homeAddress: updateCoachDto.homeAddress }),
       ...(updateCoachDto.school !== undefined && { school: updateCoachDto.school }),
       ...(normalizedAvailableTimes !== undefined && { availableTimes: normalizedAvailableTimes }),
       ...(updateCoachDto.employmentType !== undefined && { employmentType: updateCoachDto.employmentType }),
-      ...(updateCoachDto.cvUrl !== undefined && { cvUrl: updateCoachDto.cvUrl || undefined }),
+      ...(updateCoachDto.cvUrl !== undefined &&
+        updateCoachDto.cvUrl !== '' && { cvUrl: updateCoachDto.cvUrl }),
     };
 
     await coach.save();

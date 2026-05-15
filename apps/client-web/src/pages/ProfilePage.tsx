@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { usersService } from '@/services/users.service';
 import { googleCalendarService } from '@/services/google-calendar.service';
 import { profileService } from '@/services/profile.service';
 import { uploadFileViaGcs } from '@/services/uploads.service';
@@ -17,6 +16,7 @@ import {
   parseParentProfileForm,
   zodFieldErrorMap,
 } from '@/lib/profile-form-schemas';
+import { resolveCoachPhotoUrl } from '@/lib/coach-profile';
 import {
   User as UserIcon,
   Mail,
@@ -32,8 +32,10 @@ import {
 
 import { useAuth } from '@/contexts/useAuth';
 import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvider';
+import { useCoachProfile } from '@/contexts/coach-profile/CoachProfileProvider';
+import { ReadOnlyProfilePhoto } from '@/components/common/ReadOnlyProfilePhoto';
 import { useToast } from '@/hooks/use-toast';
-import type { CoachProfileAvailableTime } from '@grow-fitness/shared-types';
+import type { CoachProfileAvailableTime, User } from '@grow-fitness/shared-types';
 import { UploadKind } from '@grow-fitness/shared-types';
 
 const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -55,6 +57,7 @@ type FormState = {
 export default function ProfilePage() {
   const { user } = useAuth();
   const parentCtx = useParentProfile();
+  const coachCtx = useCoachProfile();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -68,9 +71,7 @@ export default function ProfilePage() {
     address: '',
     parentPhotoUrl: '',
   });
-  const [coachData, setCoachData] = useState<Awaited<
-    ReturnType<typeof usersService.getCoachById>
-  > | null>(null);
+  const [coachData, setCoachData] = useState<User | null>(null);
 
   const [savingParent, setSavingParent] = useState(false);
   const [uploadingParentPhoto, setUploadingParentPhoto] = useState(false);
@@ -109,34 +110,32 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user?.id || user.role !== 'COACH') return;
 
-    const fetchProfile = async () => {
-      try {
-        const data = await usersService.getCoachById(user.id);
-        setCoachData(data);
-        const nameParts = data.coachProfile?.name?.split(' ') || [];
+    if (coachCtx.isLoading) return;
 
-        setForm({
-          firstName: nameParts[0] || '',
-          lastName: nameParts.slice(1).join(' ') || '',
-          phone: data.phone || '',
-          homeAddress: data.coachProfile?.homeAddress ?? '',
-          photoUrl: data.coachProfile?.photoUrl ?? '',
-          availableTimes:
-            data.coachProfile?.availableTimes?.map(t => ({
-              dayOfWeek: t.dayOfWeek,
-              startTime: t.startTime,
-              endTime: t.endTime,
-            })) ?? [],
-        });
-      } catch (error) {
-        console.error('Failed to load profile', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const data = coachCtx.profile;
+    if (!data) {
+      setLoading(false);
+      return;
+    }
 
-    void fetchProfile();
-  }, [user]);
+    setCoachData(data);
+    const nameParts = data.coachProfile?.name?.split(' ') || [];
+
+    setForm({
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      phone: data.phone || '',
+      homeAddress: data.coachProfile?.homeAddress ?? '',
+      photoUrl: data.coachProfile?.photoUrl ?? '',
+      availableTimes:
+        data.coachProfile?.availableTimes?.map(t => ({
+          dayOfWeek: t.dayOfWeek,
+          startTime: t.startTime,
+          endTime: t.endTime,
+        })) ?? [],
+    });
+    setLoading(false);
+  }, [user?.id, user?.role, coachCtx.isLoading, coachCtx.profile]);
 
   useEffect(() => {
     if (!user?.id || !isGmail) return;
@@ -286,7 +285,9 @@ export default function ProfilePage() {
 
   const parentAvatarSrc = parentPhotoObjectUrl ?? form.parentPhotoUrl ?? undefined;
 
-  if (loading) {
+  const coachProfileLoading = user?.role === 'COACH' && coachCtx.isLoading;
+
+  if (loading || coachProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -470,8 +471,18 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               </form>
-            ) : (
-              <div className="border-t pt-6 grid gap-4 md:grid-cols-2">
+            ) : user.role === 'COACH' ? (
+              <div className="space-y-6 border-t pt-6">
+                <ReadOnlyProfilePhoto
+                  photoUrl={
+                    coachCtx.photoUrl ??
+                    resolveCoachPhotoUrl(coachData) ??
+                    form.photoUrl
+                  }
+                  displayName={coachCtx.displayName}
+                  email={user.email}
+                />
+                <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>First Name</Label>
                   <Input value={form.firstName} disabled />
@@ -500,18 +511,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Photo URL</Label>
-                    <Input
-                      type="url"
-                      placeholder="https://..."
-                      value={form.photoUrl ?? ''}
-                      disabled
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Available times</Label>
-                    </div>
+                    <Label>Available times</Label>
                     {(form.availableTimes ?? []).map((slot, index) => (
                       <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <select
@@ -541,11 +541,10 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 </>
-              </div>
-            )}
+                </div>
 
-            {user.role === 'COACH' && coachData?.coachProfile && (
-              <div className="border-t pt-6 grid gap-4 md:grid-cols-2">
+                {coachData?.coachProfile && (
+              <div className="grid gap-4 md:grid-cols-2 border-t pt-6">
                 <h4 className="text-sm font-medium col-span-2">Read-only (set by admin)</h4>
                 {coachData.coachProfile.dateOfBirth && (
                   <div className="space-y-2">
@@ -595,7 +594,9 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-            )}
+                )}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
