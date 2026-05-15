@@ -28,11 +28,15 @@ import { kidsService } from "@/services/kids.service";
 import { uploadFileViaGcs } from "@/services/uploads.service";
 import { useKid } from "@/contexts/kid/useKid";
 import { FileDropzone } from "@/components/common/FileDropzone";
+import { FieldError } from "@/components/common/FieldError";
+import { kidProfileFormSchema, zodFieldErrorMap } from "@/lib/profile-form-schemas";
 
 import { User, Calendar, Award, Heart, Loader2, Save } from "lucide-react";
 
 const IMAGE_UPLOAD_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+type KidFieldKey = "name" | "gender" | "birthDate" | "goal";
 
 export function KidProfileTab() {
   const { toast } = useToast();
@@ -42,6 +46,7 @@ export function KidProfileTab() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [kidFieldErrors, setKidFieldErrors] = useState<Partial<Record<KidFieldKey, string>>>({});
 
   const [formData, setFormData] = useState<Partial<UpdateKidDto>>({
     name: "",
@@ -79,6 +84,7 @@ export function KidProfileTab() {
           sessionType: fullKidData.sessionType || "INDIVIDUAL",
         });
         setProfilePhotoFile(null);
+        setKidFieldErrors({});
       } catch (error: unknown) {
         setFormData((prev) => ({
           ...prev,
@@ -100,8 +106,16 @@ export function KidProfileTab() {
     fetchKidDetails();
   }, [kidId, selectedKid, toast]);
 
-  const handleInputChange = (field: keyof UpdateKidDto, value: string | boolean) =>
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const clearKidError = (key: KidFieldKey) => {
+    setKidFieldErrors(prev => ({ ...prev, [key]: undefined }));
+  };
+
+  const handleInputChange = (field: keyof UpdateKidDto, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'name' || field === 'gender' || field === 'birthDate' || field === 'goal') {
+      clearKidError(field);
+    }
+  };
 
   const handleMedicalConditionChange = (condition: string, checked: boolean) => {
     setFormData((prev) => {
@@ -119,14 +133,18 @@ export function KidProfileTab() {
     e.preventDefault();
     if (!kidId) return;
 
-    if (!formData.name?.trim() || !formData.gender || !formData.birthDate) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields (name, gender, and birth date).",
-        variant: "destructive",
-      });
+    const parsed = kidProfileFormSchema.safeParse({
+      name: formData.name ?? '',
+      gender: formData.gender ?? '',
+      birthDate: formData.birthDate ? String(formData.birthDate) : '',
+      goal: formData.goal ?? '',
+    });
+
+    if (!parsed.success) {
+      setKidFieldErrors(zodFieldErrorMap(parsed.error.issues) as Partial<Record<KidFieldKey, string>>);
       return;
     }
+    setKidFieldErrors({});
 
     try {
       setSaving(true);
@@ -139,10 +157,10 @@ export function KidProfileTab() {
           profilePhotoUrl = uploadResult.publicUrl;
         } catch (error) {
           toast({
-            title: "Upload failed",
+            title: 'Upload failed',
             description:
-              error instanceof Error ? error.message : "Could not upload profile picture.",
-            variant: "destructive",
+              error instanceof Error ? error.message : 'Could not upload profile picture.',
+            variant: 'destructive',
           });
           return;
         } finally {
@@ -151,10 +169,10 @@ export function KidProfileTab() {
       }
 
       const payload: UpdateKidDto = {
-        name: formData.name,
-        gender: formData.gender,
-        birthDate: formData.birthDate,
-        goal: formData.goal ?? "",
+        name: parsed.data.name,
+        gender: parsed.data.gender,
+        birthDate: parsed.data.birthDate,
+        goal: parsed.data.goal ?? '',
         profilePhotoUrl,
         currentlyInSports: formData.currentlyInSports || false,
         medicalConditions: formData.medicalConditions ?? [],
@@ -163,26 +181,30 @@ export function KidProfileTab() {
 
       const updatedKid = await kidsService.updateKid(kidId, payload);
       setFormData({
-        name: updatedKid.name || "",
-        gender: updatedKid.gender || "",
+        name: updatedKid.name || '',
+        gender: updatedKid.gender || '',
         birthDate: formatDateForInput(updatedKid.birthDate),
-        goal: updatedKid.goal ?? "",
-        profilePhotoUrl: updatedKid.profilePhotoUrl || "",
+        goal: updatedKid.goal ?? '',
+        profilePhotoUrl: updatedKid.profilePhotoUrl || '',
         currentlyInSports: updatedKid.currentlyInSports || false,
         medicalConditions: updatedKid.medicalConditions ?? [],
         sessionType: updatedKid.sessionType || SessionType.INDIVIDUAL,
       });
       setProfilePhotoFile(null);
+      setKidFieldErrors({});
 
       toast({
-        title: "Success",
-        description: "Kid profile updated successfully.",
+        variant: 'success',
+        title: 'Profile saved',
+        description: updatedKid.name?.trim()
+          ? `${updatedKid.name.trim()}'s profile was updated successfully.`
+          : 'The profile was updated successfully.',
       });
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to update kid profile.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update kid profile.',
+        variant: 'destructive',
       });
     } finally {
       setSaving(false);
@@ -217,7 +239,7 @@ export function KidProfileTab() {
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form noValidate onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
             <Avatar className="h-24 w-24 border-2 border-background shadow-sm">
               {formData.profilePhotoUrl ? (
@@ -259,19 +281,27 @@ export function KidProfileTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="kid-name" className="flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" /> Name *
               </Label>
               <Input
+                id="kid-name"
                 value={formData.name || ""}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 disabled={saving}
+                autoComplete="name"
+                aria-invalid={Boolean(kidFieldErrors.name)}
+                aria-describedby={
+                  kidFieldErrors.name ? "kid-name-error" : undefined
+                }
+                className={kidFieldErrors.name ? "border-destructive" : undefined}
               />
+              <FieldError id="kid-name-error" message={kidFieldErrors.name} />
             </div>
 
             {/* Gender */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="kid-gender" className="flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" /> Gender *
               </Label>
               <Select
@@ -279,7 +309,16 @@ export function KidProfileTab() {
                 onValueChange={(v) => handleInputChange("gender", v)}
                 disabled={saving}
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  id="kid-gender"
+                  aria-invalid={Boolean(kidFieldErrors.gender)}
+                  aria-describedby={
+                    kidFieldErrors.gender ? "kid-gender-error" : undefined
+                  }
+                  className={
+                    kidFieldErrors.gender ? "w-full border-destructive" : "w-full"
+                  }
+                >
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -288,18 +327,29 @@ export function KidProfileTab() {
                   <SelectItem value="OTHER">Other</SelectItem>
                 </SelectContent>
               </Select>
+              <FieldError id="kid-gender-error" message={kidFieldErrors.gender} />
             </div>
 
             {/* Birth Date */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label htmlFor="kid-birthDate" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" /> Birth Date *
               </Label>
               <Input
+                id="kid-birthDate"
                 type="date"
                 value={formatDateForInput(formData.birthDate)}
                 onChange={(e) => handleInputChange("birthDate", e.target.value)}
                 disabled={saving}
+                aria-invalid={Boolean(kidFieldErrors.birthDate)}
+                aria-describedby={
+                  kidFieldErrors.birthDate ? "kid-birthDate-error" : undefined
+                }
+                className={kidFieldErrors.birthDate ? "border-destructive" : undefined}
+              />
+              <FieldError
+                id="kid-birthDate-error"
+                message={kidFieldErrors.birthDate}
               />
             </div>
 
@@ -343,15 +393,23 @@ export function KidProfileTab() {
 
           {/* Goal */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
+            <Label htmlFor="kid-goal" className="flex items-center gap-2">
               <Heart className="h-4 w-4 text-primary" /> Fitness Goal
             </Label>
             <Textarea
+              id="kid-goal"
               value={formData.goal || ""}
               onChange={(e) => handleInputChange("goal", e.target.value)}
               disabled={saving}
               placeholder="Enter fitness goals..."
+              rows={4}
+              aria-invalid={Boolean(kidFieldErrors.goal)}
+              aria-describedby={
+                kidFieldErrors.goal ? "kid-goal-error" : undefined
+              }
+              className={kidFieldErrors.goal ? "border-destructive" : undefined}
             />
+            <FieldError id="kid-goal-error" message={kidFieldErrors.goal} />
           </div>
 
           {/* Medical Conditions */}

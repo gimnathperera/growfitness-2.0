@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersController } from './users.controller';
+import { UsersMeProfileController } from './users-me-profile.controller';
 import { UsersService } from './users.service';
 import { User, UserSchema } from '../../infra/database/schemas/user.schema';
 import { Kid, KidSchema } from '../../infra/database/schemas/kid.schema';
@@ -23,7 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     AuditModule,
     NotificationsModule,
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, UsersMeProfileController],
   providers: [UsersService],
   exports: [UsersService],
 })

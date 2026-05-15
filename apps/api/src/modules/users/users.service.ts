@@ -17,6 +17,7 @@ import { NotificationType } from '@grow-fitness/shared-types';
 import {
   CreateParentDto,
   UpdateParentDto,
+  UpdateParentSelfDto,
   CreateCoachDto,
   UpdateCoachDto,
 } from '@grow-fitness/shared-schemas';
@@ -176,6 +177,69 @@ export class UsersService {
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
 
+  async findParentSelf(userId: string) {
+    const parent = await this.userModel.findOne({ _id: userId, role: UserRole.PARENT }).exec();
+
+    if (!parent) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.USER_NOT_FOUND,
+        message: 'Parent not found',
+      });
+    }
+
+    return parent;
+  }
+
+  async updateParentSelf(userId: string, dto: UpdateParentSelfDto) {
+    const parent = await this.userModel.findOne({ _id: userId, role: UserRole.PARENT }).exec();
+
+    if (!parent) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.USER_NOT_FOUND,
+        message: 'Parent not found',
+      });
+    }
+
+    const hasChanges =
+      dto.phone !== undefined || dto.name !== undefined || dto.location !== undefined;
+
+    if (!hasChanges) {
+      return parent;
+    }
+
+    if (dto.phone !== undefined) {
+      parent.phone = dto.phone;
+    }
+
+    if (dto.name !== undefined || dto.location !== undefined) {
+      parent.parentProfile = {
+        name: dto.name !== undefined ? dto.name : (parent.parentProfile?.name ?? ''),
+        location:
+          dto.location !== undefined ? dto.location : parent.parentProfile?.location,
+        photoUrl: parent.parentProfile?.photoUrl,
+      };
+    }
+
+    await parent.save();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: 'UPDATE_PARENT_SELF',
+      entityType: 'User',
+      entityId: userId,
+      metadata: dto as Record<string, unknown>,
+    });
+
+    await this.notificationService.createNotification({
+      userId,
+      type: NotificationType.PROFILE_UPDATED,
+      title: 'Profile updated',
+      body: 'Your profile information was saved.',
+    });
+
+    return parent;
+  }
+
   async findParentById(id: string, includeUnapproved: boolean = false) {
     const query: Record<string, unknown> = { _id: id, role: UserRole.PARENT };
     if (!includeUnapproved) {
@@ -324,14 +388,26 @@ export class UsersService {
       ...(updateParentDto.email && { email: updateParentDto.email.toLowerCase() }),
       ...(updateParentDto.phone && { phone: updateParentDto.phone }),
       ...(updateParentDto.status && { status: updateParentDto.status }),
-      ...(updateParentDto.name && {
-        parentProfile: {
-          ...parent.parentProfile,
-          name: updateParentDto.name,
-          location: updateParentDto.location || parent.parentProfile?.location,
-        },
-      }),
     });
+
+    const profilePatch =
+      updateParentDto.name !== undefined ||
+      updateParentDto.location !== undefined ||
+      updateParentDto.photoUrl !== undefined;
+
+    if (profilePatch) {
+      parent.parentProfile = {
+        name: updateParentDto.name ?? parent.parentProfile?.name ?? '',
+        location:
+          updateParentDto.location !== undefined
+            ? updateParentDto.location
+            : parent.parentProfile?.location,
+        photoUrl:
+          updateParentDto.photoUrl !== undefined
+            ? updateParentDto.photoUrl
+            : parent.parentProfile?.photoUrl,
+      };
+    }
 
     await parent.save();
 

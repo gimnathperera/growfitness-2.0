@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
 import CollectInfoFlow from './CollectInfoFlow';
 import ConfettiCelebration from './ConfettiCelebration';
 import { useHandleError } from '@/lib/errors';
@@ -132,7 +131,6 @@ const BookAFreeSessionForm: React.FC = () => {
 
   return (
     <div className="pt-20">
-      <Toaster />
       <CollectInfoFlow
         onSubmit={handleCollectInfoSubmit}
         onCancel={handleCancel}

@@ -77,10 +77,27 @@ export const UpdateParentSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().min(1).optional(),
   location: z.string().optional(),
+  photoUrl: z.string().url().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'DELETED']).optional(),
 });
 
 export type UpdateParentDto = z.infer<typeof UpdateParentSchema>;
+
+/** Parent self-service PATCH /users/me/profile (no email or status). */
+export const UpdateParentSelfSchema = z.object({
+  name: z.string().min(1).optional(),
+  phone: z
+    .string()
+    .min(1, 'Enter your phone number.')
+    .regex(
+      /^(\+?\d{1,3}[- ]?)?\d{10,12}$/,
+      'Enter a valid mobile number (e.g., +94771234567 or 0771234567).'
+    )
+    .optional(),
+  location: z.string().optional(),
+});
+
+export type UpdateParentSelfDto = z.infer<typeof UpdateParentSelfSchema>;
 
 const AvailableTimeSchema = z.object({
   dayOfWeek: z.string().min(1),
@@ -186,7 +203,11 @@ export const UploadPresignSchema = z
     originalName: z.string().max(255).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.kind === UploadKind.KID_AVATAR || data.kind === UploadKind.COACH_PHOTO) {
+    if (
+      data.kind === UploadKind.KID_AVATAR ||
+      data.kind === UploadKind.PARENT_AVATAR ||
+      data.kind === UploadKind.COACH_PHOTO
+    ) {
       if (!imageContentTypesUpload.has(data.contentType)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
