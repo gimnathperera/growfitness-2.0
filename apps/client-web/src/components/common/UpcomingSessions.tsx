@@ -54,28 +54,6 @@ export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessions
       .slice(0, limit);
   }, [sessions, limit]);
 
-  const getStatusBadge = (status: SessionStatus) => {
-    switch (status) {
-      case SessionStatus.CONFIRMED:
-        return (
-          <span className="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
-            Confirmed
-          </span>
-        );
-      case SessionStatus.CANCELLED:
-        return (
-          <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
-            Cancelled
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
-            Scheduled
-          </span>
-        );
-    }
-  };
 
   const getSessionAccent = (status: SessionStatus) => {
     switch (status) {
@@ -87,19 +65,6 @@ export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessions
         return 'border-l-primary';
     }
   };
-
-  const formatDate = (dateTime: string | Date) =>
-    new Date(dateTime).toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
-
-  const formatTime = (dateTime: string | Date) =>
-    new Date(dateTime).toLocaleTimeString(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
 
   if (isLoading) {
     return (
