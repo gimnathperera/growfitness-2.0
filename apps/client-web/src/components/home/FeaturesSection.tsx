@@ -30,7 +30,7 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section className="py-24 bg-white relative" id="programs">
+    <section className="pb-24 bg-white relative" id="programs">
       <Container>
         <div className="text-center mb-20">
           <div className="w-12 h-1 bg-brand-green mx-auto mb-6 rounded-full"></div>

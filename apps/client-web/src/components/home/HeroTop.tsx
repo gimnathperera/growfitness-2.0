@@ -38,23 +38,23 @@ export const HeroTop: React.FC<HeroTopProps> = ({ banners, loading }) => {
 
           <h1 className="mb-5 font-insanibc text-4xl font-bold leading-tight text-gray-900 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl">
             <span className="text-brand-green">Childhood used to happen
-            outside</span> <br />
+              outside</span> <br />
             now it happens on screens.
           </h1>
 
           <p className="mb-8 max-w-lg text-base leading-relaxed text-gray-600 sm:text-lg md:mb-10">
             Grow Fitness helps kids fall in love with <span className="text-brand-black font-bold">physical activity</span>. So we can bring back the <span className="text-brand-green font-bold">lifelong</span> healthy habits.
-          </p>  
+          </p>
 
           <div className="flex flex-wrap gap-3 sm:gap-4">
             <AnimatedButton
               href="/free-session"
               variant="default"
               size="lg"
-              className="rounded-full bg-brand-green px-6 py-4 text-base text-white shadow-xl hover:bg-brand-dark sm:px-8 sm:py-6 sm:text-lg"
+              className="rounded-full bg-brand-green px-6 py-4 text-base text-white shadow-xl hover:bg-brand-dark sm:px-8 sm:py-6 sm:text-lg hover:text-white"
               rightIcon={ArrowRight}
             >
-              Book a Free Session
+              Enroll Your Child
             </AnimatedButton>
 
             {/* <AnimatedButton
@@ -79,11 +79,10 @@ export const HeroTop: React.FC<HeroTopProps> = ({ banners, loading }) => {
               displayBanners.map((banner, index) => (
                 <div
                   key={banner.id}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${
-                    index === currentIndex
-                      ? 'opacity-100 pointer-events-auto'
-                      : 'opacity-0 pointer-events-none'
-                  }`}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${index === currentIndex
+                    ? 'opacity-100 pointer-events-auto'
+                    : 'opacity-0 pointer-events-none'
+                    }`}
                 >
                   <img
                     src={banner.imageUrl || defaultImage}

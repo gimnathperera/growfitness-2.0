@@ -1,107 +1,91 @@
-import { Facebook, Instagram, Twitter, Youtube, Mail, MapPin, type LucideIcon } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, MapPin, Phone, Linkedin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Container } from './Container';
 
 const logo = "/Grow Logo Versions-01.svg";
 
-interface FooterLink {
-  label: string;
-  href: string;
-  icon?: LucideIcon;
-}
-
-interface FooterSection {
-  title: string;
-  links: FooterLink[];
-}
-
 export function Footer() {
-  const footerSections: FooterSection[] = [
+  const contactLinks = [
     {
-      title: 'For Parents',
-      links: [
-        { label: 'Track Progress', href: '#' },
-        { label: 'Schedule Sessions', href: '#' },
-        { label: 'View Reports', href: '#' },
-      ],
+      label: 'growfitnesslk@gmail.com',
+      href: 'mailto:growfitnesslk@gmail.com',
+      icon: Mail,
     },
     {
-      title: 'For Coaches',
-      links: [
-        { label: 'Manage Classes', href: '#' },
-        { label: 'Student Progress', href: '#' },
-        { label: 'Communication Tools', href: '#' },
-      ],
+      label: '0770569954',
+      href: 'tel:0770569954',
+      icon: Phone,
     },
     {
-      title: 'Contact',
-      links: [
-        {
-          label: 'support@growfitness.com',
-          href: 'mailto:support@growfitness.com',
-          icon: Mail
-        },
-        { 
-          label: '123 Fitness St, Health City', 
-          href: '#',
-          icon: MapPin
-        },
-      ],
+      label: 'Maharagama, Sri Lanka',
+      href: '#',
+      icon: MapPin,
     },
+  ];
+
+  const socialLinks = [
+    { Icon: Facebook, href: 'https://www.facebook.com/grow.fitness.lk' },
+    { Icon: Instagram, href: 'https://www.instagram.com/growfitnesslk' },
+    { Icon: Linkedin, href: 'https://www.linkedin.com/company/grow-fitnesslk/' },
+    { Icon: Youtube, href: 'https://youtube.com/@growfitnesslk' },
   ];
 
   return (
     <footer className="bg-brand-dark text-white py-20 border-t border-white/5">
       <Container>
         <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
+
           {/* Brand Column */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-6">
             <Link to="/" className="flex items-center gap-3 mb-8 group">
               <div className="bg-white p-2 rounded-2xl transition-transform group-hover:scale-110">
-                <img
-                  src={logo}
-                  alt="Grow Fitness"
-                  className="h-10 w-auto"
-                />
+                <img src={logo} alt="Grow Fitness" className="h-10 w-auto" />
               </div>
               <span className="text-2xl font-bold font-insanibc">
-                Grow<span className="text-brand-green">Fitness</span>
+                <span className="text-white">GrowFitness</span>
               </span>
             </Link>
-            <p className="text-gray-400 text-lg mb-8 max-w-sm">
-              Empowering children through fitness and fun activities. 
-              Building healthy habits for a lifetime.
+
+            <p className="text-gray-400 text-lg mb-8 max-w-md">
+              Empowering children through fitness and fun activities. Building healthy habits for a lifetime.
             </p>
+
+            {/* Social Links */}
             <div className="flex gap-4">
-              {[Facebook, Instagram, Twitter, Youtube].map((Icon, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand-green hover:border-brand-green transition-all">
+              {socialLinks.map(({ Icon, href }, i) => (
+                <a
+                  key={i}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-brand-green hover:border-brand-green transition-all"
+                >
                   <Icon className="w-5 h-5" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Links Columns */}
-          {footerSections.map((section, index) => (
-            <div key={index} className="lg:col-span-2">
-              <h3 className="font-bold text-white text-lg mb-8 uppercase tracking-widest">
-                {section.title}
-              </h3>
-              <ul className="space-y-4">
-                {section.links.map((link, linkIndex) => (
-                  <li key={linkIndex}>
-                    <a
-                      href={link.href}
-                      className="text-gray-400 hover:text-brand-green transition-colors flex items-center gap-3 group"
-                    >
-                      {link.icon && <link.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />}
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Contact Column */}
+          <div className="lg:col-span-3 lg:col-start-9">
+            <h3 className="font-bold text-white text-lg mb-8 uppercase tracking-widest">
+              Contact
+            </h3>
+
+            <ul className="space-y-4">
+              {contactLinks.map((link, i) => (
+                <li key={i}>
+                  <a
+                    href={link.href}
+                    className="text-gray-400 hover:text-brand-green transition-colors flex items-center gap-3 group"
+                  >
+                    <link.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Bottom Bar */}
@@ -109,6 +93,7 @@ export function Footer() {
           <p className="text-gray-500 text-sm">
             &copy; {new Date().getFullYear()} GROW Kids Fitness Center. All rights reserved.
           </p>
+
           <div className="flex gap-8 text-sm text-gray-500">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>

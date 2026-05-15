@@ -62,8 +62,10 @@ export function AudienceSection() {
               </li>
             ))}
           </ul>
-          <Button className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground w-full h-12">
-            Try the first session
+          <Button className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground w-full h-12" asChild>
+            <a href="/free-session" className="hover:text-white">
+              Try the first session
+            </a>
           </Button>
         </div>
       </Container>

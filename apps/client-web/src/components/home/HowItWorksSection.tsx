@@ -25,7 +25,7 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section className="py-20 bg-primary/10">
+    <section id="about" className="py-20 bg-primary/10">
       <Container>
         <h2 className="font-insanibc text-3xl md:text-4xl text-center text-foreground uppercase tracking-wide mb-12 font-bold">
           How Grow Fitness Works
@@ -36,20 +36,18 @@ export function HowItWorksSection() {
             <div
               key={s.title}
               className={`rounded-3xl p-8 shadow-card transition-transform hover:-translate-y-1 
-                ${
-                s.dark
+                ${s.dark
                   ? "bg-brand-dark text-white"
                   : "bg-card text-foreground"
-              }`}
+                }`}
             >
               <span
-                className={`grid place-items-center w-16 h-16 rounded-2xl mb-6 ${
-                  s.dark ? "bg-accent text-brand-dark" : "bg-primary text-primary-foreground"
-                }`}
+                className={`grid place-items-center w-16 h-16 rounded-2xl mb-6 ${s.dark ? "bg-accent text-brand-dark" : "bg-primary text-primary-foreground"
+                  }`}
               >
                 <s.icon className="w-7 h-7" />
               </span>
-              <div className={`text-xs font-bold mb-2 ${s.dark ? "text-accent" : "text-primary"}`}> 
+              <div className={`text-xs font-bold mb-2 ${s.dark ? "text-accent" : "text-primary"}`}>
                 Step {i + 1}
               </div>
               <h3 className="font-insanibc text-2xl mb-3 leading-snug font-bold">{s.title}</h3>
@@ -62,8 +60,10 @@ export function HowItWorksSection() {
         </div>
 
         <div className="mt-10 flex justify-center">
-          <Button className="rounded-full bg-brand-dark hover:bg-brand-dark/90 text-white h-12 px-8">
-            Try the first session
+          <Button className="rounded-full bg-brand-dark hover:bg-brand-dark/90 text-white h-12 px-8" asChild>
+            <a href="/free-session" className="hover:text-white">
+              Try the first session
+            </a>
           </Button>
         </div>
       </Container>

@@ -9,7 +9,7 @@ export function BenefitsSection() {
   ];
 
   return (
-    <section className="py-24 bg-brand-light/30 relative overflow-hidden" id="about">
+    <section className="py-24 bg-brand-light/30 relative overflow-hidden">
       {/* Decorative circles */}
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-green/5 rounded-full"></div>
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-green/5 rounded-full"></div>
@@ -42,10 +42,10 @@ export function BenefitsSection() {
           <div className="flex-1 w-full flex justify-center">
             {/* You could add a mascot image here or more decorative elements */}
             <div className="relative w-64 h-64 bg-brand-light rounded-full flex items-center justify-center">
-               <img src="/images/character1.png" alt="Mascot" className="w-48 h-48 object-contain animate-bounce" />
-               <div className="absolute -top-4 -right-4 w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center animate-pulse">
-                 <span className="text-2xl">🌱</span>
-               </div>
+              <img src="/images/character1.png" alt="Mascot" className="w-48 h-48 object-contain animate-bounce" />
+              <div className="absolute -top-4 -right-4 w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center animate-pulse">
+                <span className="text-2xl">🌱</span>
+              </div>
             </div>
           </div>
         </div>

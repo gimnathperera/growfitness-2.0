@@ -39,7 +39,7 @@ export default function HeroSection() {
             rounded="full"
             headingLevel="h6"
           >
-            Book a free session
+            Enroll Your Child
           </AnimatedButton>
         </div>
 

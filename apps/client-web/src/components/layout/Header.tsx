@@ -9,7 +9,6 @@ import { ConfirmDialog } from "../common/ConfirmDialog";
 import {
   Dumbbell,
   Users,
-  Phone,
   Info,
   Menu,
   X,
@@ -24,7 +23,7 @@ const navLinks = [
   { label: "About Us", href: "#about", icon: Info },
   { label: "Our Plans", href: "#plans", icon: Dumbbell },
   { label: "Programs", href: "#programs", icon: Users },
-  { label: "Contact Us", href: "#contact", icon: Phone },
+  { label: "FAQ", href: "#faq", icon: Info },
 ];
 
 type HeaderProps = {
@@ -86,7 +85,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
       >
         <Container>
           <div className="flex items-center justify-between h-16 md:h-20">
-            
+
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
               <img src={logo} alt="Grow Fitness" className="h-10 md:h-12 w-auto transition-transform group-hover:scale-110" />
@@ -131,7 +130,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
               {isAuthenticated && (
                 <div className="flex items-center gap-3 ml-3">
                   <NotificationBell />
-                  
+
                   {/* Avatar → Dashboard */}
                   <button
                     onClick={() => navigate("/dashboard")}

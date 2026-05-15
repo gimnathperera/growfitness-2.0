@@ -9,7 +9,7 @@ export const MidStats = () => {
   ];
 
   return (
-    <section className="bg-brand-dark py-24 relative overflow-hidden">
+    <section id="plans" className="bg-brand-dark py-24 relative overflow-hidden">
       {/* Background patterns */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-64 h-64 border-4 border-white rounded-full"></div>
@@ -18,11 +18,11 @@ export const MidStats = () => {
 
       <Container className="text-center relative z-10">
         <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 uppercase tracking-wider font-insanibc leading-tight">
-         We Host Sessions Weekly For  <br />
+          We Host Sessions Weekly For  <br />
         </h2>
-        
+
         <p className="text-gray-300 text-xl mb-16 max-w-2xl mx-auto leading-relaxed">
-          <span className="text-brand-green font-bold">We've been helping kids get fit since 2023. That's why parents like you trust us.</span> 
+          <span className="text-brand-green font-bold">We've been helping kids get fit since 2023. That's why parents like you trust us.</span>
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
