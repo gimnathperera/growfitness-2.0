@@ -56,8 +56,7 @@ export class UploadsService {
   private isGoogleSignedUrlIamError(error: unknown): boolean {
     return (
       error instanceof Error &&
-      (error.message.includes('signBlob') ||
-        error.message.includes('iam.serviceAccounts'))
+      (error.message.includes('signBlob') || error.message.includes('iam.serviceAccounts'))
     );
   }
 
@@ -77,6 +76,8 @@ export class UploadsService {
     switch (kind) {
       case UploadKind.KID_AVATAR:
         return `public/avatars/kids/${entityId}/${id}.${ext}`;
+      case UploadKind.PARENT_AVATAR:
+        return `public/avatars/parents/${entityId}/${id}.${ext}`;
       case UploadKind.COACH_PHOTO:
         return `public/avatars/coaches/${entityId}/${id}.${ext}`;
       case UploadKind.COACH_CV:
@@ -90,16 +91,19 @@ export class UploadsService {
     switch (kind) {
       case UploadKind.KID_AVATAR:
         return `public/avatars/kids/${entityId}/`;
+      case UploadKind.PARENT_AVATAR:
+        return `public/avatars/parents/${entityId}/`;
       case UploadKind.COACH_PHOTO:
         return `public/avatars/coaches/${entityId}/`;
       case UploadKind.COACH_CV:
         return `public/cvs/coaches/${entityId}/`;
+      default:
+        throw new BadRequestException('Invalid upload kind');
     }
   }
 
   publicUrlForKey(objectKey: string): string {
-    const base =
-      this.publicBase || `https://storage.googleapis.com/${this.bucketName}`;
+    const base = this.publicBase || `https://storage.googleapis.com/${this.bucketName}`;
     const encoded = objectKey.split('/').map(encodeURIComponent).join('/');
     return `${base}/${encoded}`;
   }
@@ -124,10 +128,25 @@ export class UploadsService {
     }
   }
 
+  private async assertParentAvatarAuth(entityId: string, user: JwtPayload): Promise<void> {
+    const parent = await this.userModel.findOne({ _id: entityId, role: UserRole.PARENT }).exec();
+    if (!parent) {
+      throw new NotFoundException('Parent not found');
+    }
+    if (user.role === UserRole.ADMIN) {
+      return;
+    }
+    if (user.role !== UserRole.PARENT || entityId !== user.sub) {
+      throw new ForbiddenException('Not allowed to upload for this account');
+    }
+  }
+
   async presign(dto: UploadPresignDto, user: JwtPayload) {
     this.ensureBucket();
     if (dto.kind === UploadKind.KID_AVATAR) {
       await this.assertKidAvatarAuth(dto.entityId, user);
+    } else if (dto.kind === UploadKind.PARENT_AVATAR) {
+      await this.assertParentAvatarAuth(dto.entityId, user);
     } else {
       if (user.role !== UserRole.ADMIN) {
         throw new ForbiddenException('Only admins can upload coach files');
@@ -177,6 +196,11 @@ export class UploadsService {
     if (dto.kind === UploadKind.KID_AVATAR) {
       await this.assertKidAvatarAuth(dto.entityId, user);
       await this.kidModel.findByIdAndUpdate(dto.entityId, { profilePhotoUrl: publicUrl }).exec();
+    } else if (dto.kind === UploadKind.PARENT_AVATAR) {
+      await this.assertParentAvatarAuth(dto.entityId, user);
+      await this.userModel
+        .findByIdAndUpdate(dto.entityId, { $set: { 'parentProfile.photoUrl': publicUrl } })
+        .exec();
     } else {
       if (user.role !== UserRole.ADMIN) {
         throw new ForbiddenException('Only admins can finalize coach files');

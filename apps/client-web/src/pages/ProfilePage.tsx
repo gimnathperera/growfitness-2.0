@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { usersService } from '@/services/users.service';
+import { useEffect, useMemo, useState } from 'react';
 import { googleCalendarService } from '@/services/google-calendar.service';
+import { profileService } from '@/services/profile.service';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +9,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FileDropzone } from '@/components/common/FileDropzone';
+import { FieldError } from '@/components/common/FieldError';
 import {
-  User,
+  parseParentProfileForm,
+  zodFieldErrorMap,
+} from '@/lib/profile-form-schemas';
+import { resolveCoachPhotoUrl } from '@/lib/coach-profile';
+import {
+  User as UserIcon,
   Mail,
   Lock,
   Calendar,
@@ -19,16 +27,28 @@ import {
   Building2,
   Briefcase,
   FileText,
+  Save,
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/useAuth';
-import type { CoachProfileAvailableTime } from '@grow-fitness/shared-types';
+import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvider';
+import { useCoachProfile } from '@/contexts/coach-profile/CoachProfileProvider';
+import { ReadOnlyProfilePhoto } from '@/components/common/ReadOnlyProfilePhoto';
+import { useToast } from '@/hooks/use-toast';
+import type { CoachProfileAvailableTime, User } from '@grow-fitness/shared-types';
+import { UploadKind } from '@grow-fitness/shared-types';
+
+const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+type ParentFieldKey = 'firstName' | 'phone' | 'address';
 
 type FormState = {
   firstName: string;
   lastName: string;
   phone: string;
   address?: string;
+  parentPhotoUrl?: string;
   homeAddress?: string;
   photoUrl?: string;
   availableTimes?: CoachProfileAvailableTime[];
@@ -36,6 +56,9 @@ type FormState = {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const parentCtx = useParentProfile();
+  const coachCtx = useCoachProfile();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [calendarLoading, setCalendarLoading] = useState(false);
@@ -46,63 +69,73 @@ export default function ProfilePage() {
     lastName: '',
     phone: '',
     address: '',
+    parentPhotoUrl: '',
   });
-  const [coachData, setCoachData] = useState<Awaited<
-    ReturnType<typeof usersService.getCoachById>
-  > | null>(null);
+  const [coachData, setCoachData] = useState<User | null>(null);
+
+  const [savingParent, setSavingParent] = useState(false);
+  const [uploadingParentPhoto, setUploadingParentPhoto] = useState(false);
+  const [parentPhotoFile, setParentPhotoFile] = useState<File | null>(null);
+  const [parentFieldErrors, setParentFieldErrors] = useState<
+    Partial<Record<ParentFieldKey, string>>
+  >({});
 
   const isGmail = Boolean(user?.email && /@(gmail|googlemail)\.com$/i.test(user.email));
 
-  /**
-   * Fetch profile (UPDATE ONLY)
-   */
   useEffect(() => {
-    if (!user?.id || !user?.role) return;
+    if (!user?.id || user.role !== 'PARENT') return;
 
-    const fetchProfile = async () => {
-      try {
-        if (user.role === 'PARENT') {
-          const data = await usersService.getParentById(user.id);
-          const nameParts = data.parentProfile?.name?.split(' ') || [];
+    if (parentCtx.isLoading) return;
 
-          setForm({
-            firstName: nameParts[0] || '',
-            lastName: nameParts.slice(1).join(' ') || '',
-            phone: data.phone || '',
-            address: data.parentProfile?.location || '',
-          });
-        }
+    const data = parentCtx.profile;
+    if (!data) {
+      setLoading(false);
+      return;
+    }
 
-        if (user.role === 'COACH') {
-          const data = await usersService.getCoachById(user.id);
-          setCoachData(data);
-          const nameParts = data.coachProfile?.name?.split(' ') || [];
+    const nameParts = data.parentProfile?.name?.split(' ') || [];
 
-          setForm({
-            firstName: nameParts[0] || '',
-            lastName: nameParts.slice(1).join(' ') || '',
-            phone: data.phone || '',
-            homeAddress: data.coachProfile?.homeAddress ?? '',
-            photoUrl: data.coachProfile?.photoUrl ?? '',
-            availableTimes:
-              data.coachProfile?.availableTimes?.map(t => ({
-                dayOfWeek: t.dayOfWeek,
-                startTime: t.startTime,
-                endTime: t.endTime,
-              })) ?? [],
-          });
-        } else {
-          setCoachData(null);
-        }
-      } catch (error) {
-        console.error('Failed to load profile', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setForm(prev => ({
+      ...prev,
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      phone: data.phone || '',
+      address: data.parentProfile?.location || '',
+      parentPhotoUrl: data.parentProfile?.photoUrl || '',
+    }));
+    setParentFieldErrors({});
+    setLoading(false);
+  }, [user?.id, user?.role, parentCtx.isLoading, parentCtx.profile]);
 
-    fetchProfile();
-  }, [user]);
+  useEffect(() => {
+    if (!user?.id || user.role !== 'COACH') return;
+
+    if (coachCtx.isLoading) return;
+
+    const data = coachCtx.profile;
+    if (!data) {
+      setLoading(false);
+      return;
+    }
+
+    setCoachData(data);
+    const nameParts = data.coachProfile?.name?.split(' ') || [];
+
+    setForm({
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      phone: data.phone || '',
+      homeAddress: data.coachProfile?.homeAddress ?? '',
+      photoUrl: data.coachProfile?.photoUrl ?? '',
+      availableTimes:
+        data.coachProfile?.availableTimes?.map(t => ({
+          dayOfWeek: t.dayOfWeek,
+          startTime: t.startTime,
+          endTime: t.endTime,
+        })) ?? [],
+    });
+    setLoading(false);
+  }, [user?.id, user?.role, coachCtx.isLoading, coachCtx.profile]);
 
   useEffect(() => {
     if (!user?.id || !isGmail) return;
@@ -168,10 +201,93 @@ export default function ProfilePage() {
     }
   };
 
-  /**
-   * UI states
-   */
-  if (loading) {
+  const handleParentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id || user.role !== 'PARENT') return;
+
+    const parsed = parseParentProfileForm({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      phone: form.phone,
+      address: form.address ?? '',
+    });
+
+    if (!parsed.success) {
+      setParentFieldErrors(zodFieldErrorMap(parsed.error.issues) as Partial<Record<ParentFieldKey, string>>);
+      return;
+    }
+    setParentFieldErrors({});
+
+    try {
+      setSavingParent(true);
+
+      if (parentPhotoFile) {
+        try {
+          setUploadingParentPhoto(true);
+          await uploadFileViaGcs(UploadKind.PARENT_AVATAR, user.id, parentPhotoFile);
+        } catch (error) {
+          toast({
+            title: 'Upload failed',
+            description:
+              error instanceof Error ? error.message : 'Could not upload profile picture.',
+            variant: 'destructive',
+          });
+          return;
+        } finally {
+          setUploadingParentPhoto(false);
+        }
+      }
+
+      const fullName = [parsed.data.firstName, parsed.data.lastName].filter(Boolean).join(' ');
+
+      await profileService.updateMyProfile({
+        name: fullName,
+        phone: parsed.data.phone,
+        location: parsed.data.address || undefined,
+      });
+
+      setParentPhotoFile(null);
+      await parentCtx.refresh();
+
+      toast({
+        variant: 'success',
+        title: 'Profile saved',
+        description: 'Your details were updated. Changes appear everywhere your account is shown.',
+      });
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: string }).message)
+          : 'Could not save profile.';
+      toast({
+        title: 'Error',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingParent(false);
+    }
+  };
+
+  const parentStatus =
+    parentCtx.profile?.status ?? user?.status ?? 'ACTIVE';
+
+  const parentPhotoObjectUrl = useMemo(() => {
+    if (!parentPhotoFile) return null;
+    return URL.createObjectURL(parentPhotoFile);
+  }, [parentPhotoFile]);
+
+  useEffect(() => {
+    return () => {
+      if (parentPhotoObjectUrl) URL.revokeObjectURL(parentPhotoObjectUrl);
+    };
+  }, [parentPhotoObjectUrl]);
+
+  const parentAvatarSrc = parentPhotoObjectUrl ?? form.parentPhotoUrl ?? undefined;
+
+  const coachProfileLoading = user?.role === 'COACH' && coachCtx.isLoading;
+
+  if (loading || coachProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -186,10 +302,13 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background px-4 pb-8 pt-20 sm:px-6 sm:pt-24 lg:px-10">
       <div className="mx-auto max-w-5xl space-y-6">
-        {/* Header */}
         <div className="text-start space-y-1">
           <h1 className="text-2xl font-bold sm:text-3xl">Your Profile</h1>
-          <p className="text-muted-foreground">View your personal information</p>
+          <p className="text-muted-foreground">
+            {user.role === 'PARENT'
+              ? 'Update your personal information'
+              : 'View your personal information'}
+          </p>
         </div>
 
         <Card>
@@ -204,7 +323,6 @@ export default function ProfilePage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Read-only */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
@@ -218,37 +336,168 @@ export default function ProfilePage() {
 
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
-                  <User className="h-4 w-4" /> Status
+                  <UserIcon className="h-4 w-4" /> Status
                 </Label>
-                <Input disabled value={user.status ?? 'ACTIVE'} />
+                <Input
+                  disabled
+                  value={user.role === 'PARENT' ? parentStatus : (user.status ?? 'ACTIVE')}
+                />
               </div>
             </div>
 
-            {/* Editable */}
-            <div className="border-t pt-6 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>First Name</Label>
-                <Input value={form.firstName} disabled />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Last Name</Label>
-                <Input value={form.lastName} disabled />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={form.phone} disabled />
-              </div>
-
-              {user.role === 'PARENT' && (
-                <div className="space-y-2">
-                  <Label>Address</Label>
-                  <Input value={form.address} disabled />
+            {user.role === 'PARENT' ? (
+              <form
+                noValidate
+                onSubmit={handleParentSubmit}
+                className="space-y-6 border-t pt-6"
+              >
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
+                  <Avatar className="h-24 w-24 border-2 border-background shadow-sm">
+                    {parentAvatarSrc ? (
+                      <AvatarImage src={parentAvatarSrc} alt="" className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="text-lg">
+                      {(form.firstName || user.email || '?').slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-2 w-full sm:w-auto">
+                    <Label>Profile photo</Label>
+                    <FileDropzone
+                      value={parentPhotoFile}
+                      onChange={setParentPhotoFile}
+                      accept={IMAGE_UPLOAD_TYPES}
+                      maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                      preview="image"
+                      label="Drop photo here or browse"
+                      description="JPEG, PNG, or WebP up to 5MB"
+                      disabled={savingParent || uploadingParentPhoto}
+                    />
+                  </div>
                 </div>
-              )}
 
-              {user.role === 'COACH' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="parent-firstName">First Name</Label>
+                    <Input
+                      id="parent-firstName"
+                      value={form.firstName}
+                      onChange={e => {
+                        setForm(prev => ({ ...prev, firstName: e.target.value }));
+                        setParentFieldErrors(prev => ({ ...prev, firstName: undefined }));
+                      }}
+                      disabled={savingParent}
+                      autoComplete="given-name"
+                      aria-invalid={Boolean(parentFieldErrors.firstName)}
+                      aria-describedby={
+                        parentFieldErrors.firstName ? 'parent-firstName-error' : undefined
+                      }
+                      className={parentFieldErrors.firstName ? 'border-destructive' : undefined}
+                    />
+                    <FieldError
+                      id="parent-firstName-error"
+                      message={parentFieldErrors.firstName}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="parent-lastName">Last Name</Label>
+                    <Input
+                      id="parent-lastName"
+                      value={form.lastName}
+                      onChange={e => {
+                        setForm(prev => ({ ...prev, lastName: e.target.value }));
+                      }}
+                      disabled={savingParent}
+                      autoComplete="family-name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="parent-phone">Phone</Label>
+                    <Input
+                      id="parent-phone"
+                      type="tel"
+                      inputMode="tel"
+                      value={form.phone}
+                      onChange={e => {
+                        setForm(prev => ({ ...prev, phone: e.target.value }));
+                        setParentFieldErrors(prev => ({ ...prev, phone: undefined }));
+                      }}
+                      disabled={savingParent}
+                      autoComplete="tel"
+                      aria-invalid={Boolean(parentFieldErrors.phone)}
+                      aria-describedby={
+                        parentFieldErrors.phone ? 'parent-phone-error' : undefined
+                      }
+                      className={parentFieldErrors.phone ? 'border-destructive' : undefined}
+                    />
+                    <FieldError id="parent-phone-error" message={parentFieldErrors.phone} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="parent-address">Address</Label>
+                    <Input
+                      id="parent-address"
+                      value={form.address ?? ''}
+                      onChange={e => {
+                        setForm(prev => ({ ...prev, address: e.target.value }));
+                        setParentFieldErrors(prev => ({ ...prev, address: undefined }));
+                      }}
+                      disabled={savingParent}
+                      autoComplete="street-address"
+                      aria-invalid={Boolean(parentFieldErrors.address)}
+                      aria-describedby={
+                        parentFieldErrors.address ? 'parent-address-error' : undefined
+                      }
+                      className={parentFieldErrors.address ? 'border-destructive' : undefined}
+                    />
+                    <FieldError id="parent-address-error" message={parentFieldErrors.address} />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={savingParent || uploadingParentPhoto}>
+                    {savingParent || uploadingParentPhoto ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving…
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save changes
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            ) : user.role === 'COACH' ? (
+              <div className="space-y-6 border-t pt-6">
+                <ReadOnlyProfilePhoto
+                  photoUrl={
+                    coachCtx.photoUrl ??
+                    resolveCoachPhotoUrl(coachData) ??
+                    form.photoUrl
+                  }
+                  displayName={coachCtx.displayName}
+                  email={user.email}
+                />
+                <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input value={form.firstName} disabled />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input value={form.lastName} disabled />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input value={form.phone} disabled />
+                </div>
+
                 <>
                   <div className="space-y-2 md:col-span-2">
                     <Label className="flex items-center gap-2 text-muted-foreground">
@@ -262,18 +511,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Photo URL</Label>
-                    <Input
-                      type="url"
-                      placeholder="https://..."
-                      value={form.photoUrl ?? ''}
-                      disabled
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Available times</Label>
-                    </div>
+                    <Label>Available times</Label>
                     {(form.availableTimes ?? []).map((slot, index) => (
                       <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <select
@@ -303,11 +541,10 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 </>
-              )}
-            </div>
+                </div>
 
-            {user.role === 'COACH' && coachData?.coachProfile && (
-              <div className="border-t pt-6 grid gap-4 md:grid-cols-2">
+                {coachData?.coachProfile && (
+              <div className="grid gap-4 md:grid-cols-2 border-t pt-6">
                 <h4 className="text-sm font-medium col-span-2">Read-only (set by admin)</h4>
                 {coachData.coachProfile.dateOfBirth && (
                   <div className="space-y-2">
@@ -357,7 +594,9 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-            )}
+                )}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

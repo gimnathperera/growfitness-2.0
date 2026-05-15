@@ -1,13 +1,44 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { UserRole } from '@grow-fitness/shared-types';
 import { AuthService } from './auth.service';
 import { LoginDto, ForgotPasswordDto, ResetPasswordDto } from '@grow-fitness/shared-schemas';
 import { Public } from '../../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { UsersService } from '../users/users.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService
+  ) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get logged-in user profile (parent or coach)' })
+  @ApiResponse({ status: 200, description: 'User document with role-specific profile' })
+  getMe(@CurrentUser() user: { sub: string; role: UserRole }) {
+    if (user.role === UserRole.PARENT) {
+      return this.usersService.findParentSelf(user.sub);
+    }
+    if (user.role === UserRole.COACH) {
+      return this.usersService.findCoachSelf(user.sub);
+    }
+    throw new ForbiddenException('Profile is not available for this role');
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)

@@ -6,7 +6,12 @@ import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormSubmitError } from '@/components/ui/form-submit-error';
 import type { CreateFreeSessionRequestDto } from '@grow-fitness/shared-schemas';
-import { CreateFreeSessionRequestSchema } from '@grow-fitness/shared-schemas';
+import {
+  FreeSessionFormSchema,
+  validateFreeSessionStepField,
+  type FreeSessionFormValues,
+  type FreeSessionStepField,
+} from '@/lib/free-session-form-schemas';
 import { collectInfoQuestions } from './collect-info.questions';
 import QuestionRenderer from '../common/QuestionRenderer';
 import ProgressBar from '../common/ProgressBar';
@@ -35,9 +40,22 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { control, trigger, getValues, formState: { errors } } = useForm<CreateFreeSessionRequestDto>({
-    resolver: zodResolver(CreateFreeSessionRequestSchema),
+  const {
+    control,
+    getValues,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useForm<FreeSessionFormValues>({
+    resolver: zodResolver(FreeSessionFormSchema),
     mode: 'onChange',
+    defaultValues: {
+      parentName: '',
+      phone: '',
+      email: '',
+      kidName: '',
+      selectedSessionId: '',
+    },
   });
 
   const currentQuestion = collectInfoQuestions[currentStep];
@@ -46,15 +64,23 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   const progress = ((currentStep + 1) / collectInfoQuestions.length) * 100;
 
   const goToNext = useCallback(async () => {
-    const valid = await trigger(currentQuestion.id);
-    if (!valid) return;
+    const field = currentQuestion.id as FreeSessionStepField;
+    const value = getValues(field);
+
+    clearErrors(field);
+
+    const stepResult = validateFreeSessionStepField(field, value);
+    if (!stepResult.success) {
+      setError(field, { type: 'manual', message: stepResult.message });
+      return;
+    }
 
     if (!isLastStep) setCurrentStep(prev => prev + 1);
     else {
       const data = getValues();
       setIsSubmitting(true);
       try {
-        await onSubmit(data);
+        await onSubmit(data as CreateFreeSessionRequestDto);
         setTimeout(() => {
           setIsSubmitting(false);
           setIsSubmitSuccess(true);
@@ -64,7 +90,7 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
         setIsSubmitting(false);
       }
     }
-  }, [currentQuestion.id, isLastStep, trigger, getValues, onSubmit]);
+  }, [currentQuestion.id, isLastStep, getValues, setError, clearErrors, onSubmit]);
 
   const goToPrevious = useCallback(() => {
     if (!isFirstStep) setCurrentStep(prev => prev - 1);

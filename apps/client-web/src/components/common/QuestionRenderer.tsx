@@ -89,14 +89,19 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
           <Controller
             name={question.id as Path<TFormValues>}
             control={control}
-            render={({ field }) => {
-              const val = (field.value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+            render={({ field: { value, onChange, onBlur, ...field } }) => {
+              const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
                   value={val as string}
                   type="text"
+                  autoComplete="name"
                   placeholder={question.placeholder}
+                  onChange={e => onChange(e.target.value)}
+                  onBlur={onBlur}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? `${questionPath}-error` : undefined}
                   className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
                     error
                       ? 'border-red-400 focus:border-red-500'
@@ -223,14 +228,20 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
           <Controller
             name={question.id as Path<TFormValues>}
             control={control}
-            render={({ field }) => {
-              const val = (field.value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+            render={({ field: { value, onChange, onBlur, ...field } }) => {
+              const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
               return (
                 <motion.input
                   {...field}
                   value={val as string}
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   placeholder={question.placeholder}
+                  onChange={e => onChange(e.target.value)}
+                  onBlur={onBlur}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? `${questionPath}-error` : undefined}
                   className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
                     error
                       ? 'border-red-400 focus:border-red-500'
@@ -761,7 +772,9 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             exit="hidden"
             className="px-2"
           >
-            <FormMessage variant="error">{error.message}</FormMessage>
+            <FormMessage id={`${questionPath}-error`} variant="error">
+              {error.message}
+            </FormMessage>
           </motion.div>
         )}
       </AnimatePresence>

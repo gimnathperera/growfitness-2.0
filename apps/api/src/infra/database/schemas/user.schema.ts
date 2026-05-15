@@ -30,12 +30,14 @@ export class User {
     type: {
       name: { type: String, required: false },
       location: { type: String, required: false },
+      photoUrl: { type: String, required: false },
     },
     required: false,
   })
   parentProfile?: {
     name: string;
     location?: string;
+    photoUrl?: string;
   };
 
   @Prop({

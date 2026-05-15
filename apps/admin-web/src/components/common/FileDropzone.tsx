@@ -12,6 +12,8 @@ interface FileDropzoneProps {
   description: string;
   disabled?: boolean;
   preview?: 'image' | 'file';
+  /** Persisted URL from the server (shown when no new file is selected). */
+  existingUrl?: string | null;
 }
 
 function formatFileSize(bytes: number): string {
@@ -60,6 +62,7 @@ export function FileDropzone({
   description,
   disabled = false,
   preview = 'file',
+  existingUrl,
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -77,6 +80,11 @@ export function FileDropzone({
 
     return () => URL.revokeObjectURL(url);
   }, [preview, value]);
+
+  const persistedUrl = existingUrl?.trim() || null;
+  const imagePreviewSrc =
+    preview === 'image' ? (value ? previewUrl : persistedUrl) : null;
+  const showFileRow = Boolean(value || persistedUrl);
 
   const selectFile = (file: File | null) => {
     if (!file) return;
@@ -156,11 +164,11 @@ export function FileDropzone({
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 
-      {value && (
+      {showFileRow && (
         <div className="flex items-center gap-3 rounded-md border bg-background p-2">
-          {preview === 'image' && previewUrl ? (
+          {preview === 'image' && imagePreviewSrc ? (
             <img
-              src={previewUrl}
+              src={imagePreviewSrc}
               alt=""
               className="h-14 w-14 rounded-md border object-cover"
             />
@@ -170,20 +178,40 @@ export function FileDropzone({
             </div>
           )}
           <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-sm font-medium">{value.name}</p>
-            <p className="text-xs text-muted-foreground">{formatFileSize(value.size)}</p>
+            {value ? (
+              <>
+                <p className="truncate text-sm font-medium">{value.name}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(value.size)}</p>
+              </>
+            ) : persistedUrl && preview === 'file' ? (
+              <>
+                <p className="text-sm font-medium">Current CV</p>
+                <a
+                  href={persistedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary underline"
+                >
+                  View CV
+                </a>
+              </>
+            ) : persistedUrl && preview === 'image' ? (
+              <p className="text-sm font-medium text-muted-foreground">Current photo</p>
+            ) : null}
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={clearFile}
-            disabled={disabled}
-            aria-label="Remove selected file"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          {value ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={clearFile}
+              disabled={disabled}
+              aria-label="Remove selected file"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       )}
     </div>

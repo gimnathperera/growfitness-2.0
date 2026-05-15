@@ -7,6 +7,8 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   status?: string;
+  parentProfile?: { photoUrl?: string | null };
+  coachProfile?: { photoUrl?: string | null; name?: string | null };
 }
 
 export interface AuthContextType {

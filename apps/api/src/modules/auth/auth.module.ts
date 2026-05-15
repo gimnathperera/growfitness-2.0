@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -13,10 +13,12 @@ import {
   PasswordResetTokenSchema,
 } from '../../infra/database/schemas/password-reset-token.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
 
 @Global()
 @Module({
   imports: [
+    forwardRef(() => UsersModule),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },

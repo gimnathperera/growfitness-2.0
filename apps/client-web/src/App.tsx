@@ -8,11 +8,14 @@ import BookAFreeSession from "./pages/BookAFreeSession";
 import { KidProvider } from "./contexts/kid/KidProvider";
 import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./contexts/AuthProvider";
+import { ParentProfileProvider } from "./contexts/parent-profile/ParentProfileProvider";
+import { CoachProfileProvider } from "./contexts/coach-profile/CoachProfileProvider";
 import { useAuth } from "./contexts/useAuth";
 import { Payments } from "./pages/Payments";
 import { SignUpPage } from "./pages/SignUpPage";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import { Toaster } from "./components/ui/toaster";
 
 // Dashboard wrapper (unchanged)
 function DashboardWrapper() {
@@ -32,6 +35,8 @@ function DashboardWrapper() {
 function App() {
   return (
     <AuthProvider>
+      <ParentProfileProvider>
+      <CoachProfileProvider>
       <Routes>
         {/* ---------- PUBLIC ROUTES ---------- */}
         <Route element={<Layout />}>
@@ -56,6 +61,9 @@ function App() {
           <Route path="/payments" element={<Payments />} />
         </Route>
       </Routes>
+      <Toaster />
+      </CoachProfileProvider>
+      </ParentProfileProvider>
     </AuthProvider>
   );
 }

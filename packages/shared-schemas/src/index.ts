@@ -9,6 +9,10 @@ import {
   EmploymentType,
   UploadKind,
 } from '@grow-fitness/shared-types';
+import { personNameField, phoneField } from './field-validators';
+
+export { PHONE_REGEX, personNameField, phoneField } from './field-validators';
+export type { PersonNameOptions } from './field-validators';
 
 // Auth Schemas
 export const LoginSchema = z.object({
@@ -77,10 +81,27 @@ export const UpdateParentSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().min(1).optional(),
   location: z.string().optional(),
+  photoUrl: z.string().url().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'DELETED']).optional(),
 });
 
 export type UpdateParentDto = z.infer<typeof UpdateParentSchema>;
+
+/** Parent self-service PATCH /users/me/profile (no email or status). */
+export const UpdateParentSelfSchema = z.object({
+  name: z.string().min(1).optional(),
+  phone: z
+    .string()
+    .min(1, 'Enter your phone number.')
+    .regex(
+      /^(\+?\d{1,3}[- ]?)?\d{10,12}$/,
+      'Enter a valid mobile number (e.g., +94771234567 or 0771234567).'
+    )
+    .optional(),
+  location: z.string().optional(),
+});
+
+export type UpdateParentSelfDto = z.infer<typeof UpdateParentSelfSchema>;
 
 const AvailableTimeSchema = z.object({
   dayOfWeek: z.string().min(1),
@@ -186,7 +207,11 @@ export const UploadPresignSchema = z
     originalName: z.string().max(255).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.kind === UploadKind.KID_AVATAR || data.kind === UploadKind.COACH_PHOTO) {
+    if (
+      data.kind === UploadKind.KID_AVATAR ||
+      data.kind === UploadKind.PARENT_AVATAR ||
+      data.kind === UploadKind.COACH_PHOTO
+    ) {
       if (!imageContentTypesUpload.has(data.contentType)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -336,12 +361,19 @@ export type UpdateSessionDto = z.infer<typeof UpdateSessionSchema>;
 
 // Free Session Request Schema
 export const CreateFreeSessionRequestSchema = z.object({
-  parentName: z.string().min(1, 'Enter the parent\'s name.'),
-  phone: z.string().min(1, 'Enter your phone number.'),
-  email: z.string().email('Enter a valid email address.'),
-  kidName: z.string().min(1, 'Enter the child\'s name.'),
+  parentName: personNameField({
+    fieldLabel: 'your full name',
+    requireFullName: true,
+  }),
+  phone: phoneField('your phone number'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Enter your email address.')
+    .email('Enter a valid email address.'),
+  kidName: personNameField({ fieldLabel: "your child's name" }),
   sessionType: z.nativeEnum(SessionType),
-  selectedSessionId: z.string().optional(),
+  selectedSessionId: z.string().min(1, 'Select an available session.').optional(),
   preferredDateTime: z.string().or(z.date()),
   locationId: z.string().min(1, 'Location ID is required'),
 });

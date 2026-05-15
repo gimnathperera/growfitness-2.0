@@ -81,23 +81,25 @@ export function EditUserDialog({
 }: EditUserDialogProps) {
   const { entityId, closeModal } = useModalParams('userId');
 
-  // Fetch user from URL if prop not provided
+  const resolvedId = entityId ?? userProp?.id;
+
+  // Always refetch when editing a coach so photoUrl/cvUrl from uploads are present
   const { data: userFromUrl } = useApiQuery<User>(
-    ['users', entityId || 'no-id'],
+    ['users', resolvedId || 'no-id'],
     () => {
-      if (!entityId) {
+      if (!resolvedId) {
         throw new Error('User ID is required');
       }
       return userType === 'parent'
-        ? usersService.getParentById(entityId)
-        : usersService.getCoachById(entityId);
+        ? usersService.getParentById(resolvedId)
+        : usersService.getCoachById(resolvedId);
     },
     {
-      enabled: open && !userProp && !!entityId,
+      enabled: open && !!resolvedId && (userType === 'coach' || !userProp),
     }
   );
 
-  const user = userProp || userFromUrl;
+  const user = userFromUrl ?? userProp;
 
   // Handle close with URL params
   const handleOpenChange = (newOpen: boolean) => {
@@ -209,7 +211,10 @@ export function EditUserDialog({
       }
     },
     {
-      invalidateQueries: [[`users`, userType === 'parent' ? 'parents' : 'coaches']],
+      invalidateQueries: [
+        [`users`, userType === 'parent' ? 'parents' : 'coaches'],
+        ['users', user.id],
+      ],
       onSuccess: () => {
         toast.success(`${userType === 'parent' ? 'Parent' : 'Coach'} updated successfully`);
         setCoachPhotoFile(null);
@@ -225,17 +230,21 @@ export function EditUserDialog({
   const onSubmit = async (data: UpdateParentDto | UpdateCoachDto) => {
     if (userType === 'coach') {
       const coachData = data as UpdateCoachDto;
-      let photoUrl = coachData.photoUrl;
-      let cvUrl = coachData.cvUrl;
+      const existingPhoto = (user as User).coachProfile?.photoUrl;
+      const existingCv = (user as User).coachProfile?.cvUrl;
+      let photoUrl = coachData.photoUrl?.trim() || existingPhoto;
+      let cvUrl = coachData.cvUrl?.trim() || existingCv;
       try {
         setUploadingCoachFiles(true);
         if (coachPhotoFile) {
           const r = await uploadFileViaGcs(UploadKind.COACH_PHOTO, user.id, coachPhotoFile);
           photoUrl = r.publicUrl;
+          form.setValue('photoUrl', photoUrl);
         }
         if (coachCvFile) {
           const r = await uploadFileViaGcs(UploadKind.COACH_CV, user.id, coachCvFile);
           cvUrl = r.publicUrl;
+          form.setValue('cvUrl', cvUrl);
         }
       } catch (err) {
         toast.error(
@@ -310,6 +319,7 @@ export function EditUserDialog({
                   <FileDropzone
                     value={coachPhotoFile}
                     onChange={setCoachPhotoFile}
+                    existingUrl={form.watch('photoUrl')}
                     accept={IMAGE_UPLOAD_TYPES}
                     maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
                     preview="image"
@@ -428,6 +438,7 @@ export function EditUserDialog({
                   <FileDropzone
                     value={coachCvFile}
                     onChange={setCoachCvFile}
+                    existingUrl={form.watch('cvUrl')}
                     accept={PDF_UPLOAD_TYPES}
                     maxSizeBytes={MAX_CV_UPLOAD_BYTES}
                     preview="file"

@@ -87,6 +87,7 @@ export enum EmploymentType {
 /** GCS-backed uploads (presign + finalize). */
 export enum UploadKind {
   KID_AVATAR = 'kidAvatar',
+  PARENT_AVATAR = 'parentAvatar',
   COACH_PHOTO = 'coachPhoto',
   COACH_CV = 'coachCv',
 }
@@ -143,6 +144,7 @@ export interface User {
 export interface ParentProfile {
   name: string;
   location?: string;
+  photoUrl?: string;
 }
 
 export interface CoachProfileAvailableTime {
