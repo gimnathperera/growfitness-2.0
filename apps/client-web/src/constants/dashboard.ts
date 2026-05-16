@@ -36,6 +36,13 @@ export const parentGroupTabs = [
   { id: 'kidProfile', label: 'Kid Profile', icon: User },
 ];
 
+// Parent Tabs (Both Kids)
+export const parentBothTabs = [
+  { id: 'overview', label: 'Overview', icon: Home },
+  { id: 'schedule', label: 'Schedule', icon: Calendar },
+  { id: 'kidProfile', label: 'Kid Profile', icon: User },
+];
+
 /* =========================
    Quick Actions
 ========================= */
