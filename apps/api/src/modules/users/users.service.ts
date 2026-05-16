@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -73,6 +74,8 @@ function normalizeCoachAvailableTimes(value: unknown): CoachAvailableTime[] {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Kid.name) private kidModel: Model<KidDocument>,
@@ -540,6 +543,14 @@ export class UsersService {
       entityId: coach._id.toString(),
       metadata: { email: coach.email },
     });
+
+    await this.notificationService
+      .sendCoachAccountCreated({
+        email: coach.email,
+        phone: coach.phone,
+        coachName: createCoachDto.name,
+      })
+      .catch(err => this.logger.error('Failed to send coach welcome email/SMS', err));
 
     return coach;
   }

@@ -51,6 +51,12 @@ export interface RegistrationApprovedData {
   parentName?: string;
 }
 
+export interface CoachAccountCreatedData {
+  email: string;
+  phone: string;
+  coachName?: string;
+}
+
 export interface CoachPayoutPaidData {
   email?: string;
   phone: string;
@@ -172,6 +178,53 @@ export class NotificationService {
         this.textLkProvider
           .send({ to: data.phone, message })
           .catch(err => this.logger.error(`Failed to send registration approval SMS to ${data.phone}`, err))
+      );
+    }
+    if (tasks.length) await Promise.all(tasks);
+  }
+
+  /**
+   * Welcome email + SMS when an admin creates a coach account (mirrors registration approval flow).
+   */
+  async sendCoachAccountCreated(data: CoachAccountCreatedData) {
+    const name = data.coachName?.trim() || 'Coach';
+    const frontendUrl = this.configService
+      .get<string>('FRONTEND_URL', 'http://localhost:5173')
+      .replace(/\/$/, '');
+    const loginUrl = `${frontendUrl}/login`;
+    const emailBody = `Hello ${name},
+
+Your Grow Fitness coach account has been created. You can sign in at:
+${loginUrl}
+
+Use your email address and the password your administrator shared with you. If you need to reset your password, use "Forgot password" on the login page.
+
+Best regards,
+Grow Fitness Team`;
+
+    const smsMessage = `Hi ${name}, your Grow Fitness coach account is ready. Sign in: ${loginUrl} — use your email and the password from your administrator.`;
+
+    const tasks: Promise<void>[] = [];
+    if (data.email) {
+      tasks.push(
+        this.emailProvider
+          .send({
+            to: data.email,
+            subject: 'Your Grow Fitness coach account',
+            body: emailBody,
+          })
+          .catch(err =>
+            this.logger.error(`Failed to send coach welcome email to ${data.email}`, err)
+          )
+      );
+    }
+    if (data.phone) {
+      tasks.push(
+        this.textLkProvider
+          .send({ to: data.phone, message: smsMessage })
+          .catch(err =>
+            this.logger.error(`Failed to send coach welcome SMS to ${data.phone}`, err)
+          )
       );
     }
     if (tasks.length) await Promise.all(tasks);
