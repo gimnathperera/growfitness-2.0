@@ -233,10 +233,23 @@ export interface Session {
   kidId?: string; // for individual sessions
   status: SessionStatus;
   isFreeSession: boolean;
+  /** True when the session was created from an approved extra-session request. */
+  isExtraSession?: boolean;
   recurringGroupId?: string;
   recurringIndex?: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+const EXTRA_SESSION_TITLE_PATTERN = /^Extra (Group|Private) Session$/;
+
+/** Detects extra sessions from the persisted flag or legacy title pattern. */
+export function sessionIsExtraSession(
+  session: Pick<Session, 'title' | 'isExtraSession'>
+): boolean {
+  if (session.isExtraSession === true) return true;
+  const t = (session.title ?? '').trim();
+  return EXTRA_SESSION_TITLE_PATTERN.test(t);
 }
 
 export interface FreeSessionRequest {

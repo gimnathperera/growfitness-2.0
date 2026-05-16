@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Session, SessionType } from '@grow-fitness/shared-types';
+import { SessionSpecialBadges } from '@/components/sessions/SessionSpecialBadges';
+import { Session, SessionType, sessionIsExtraSession } from '@grow-fitness/shared-types';
 import { formatDateTime, formatSessionType } from '@/lib/formatters';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { sessionsService } from '@/services/sessions.service';
@@ -200,7 +201,12 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
           <div className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
             <div className="flex items-center gap-4">
               <div>
-                <h2 className="text-2xl font-semibold">{displaySession.title || `${formatSessionType(displaySession.type)} Session`}</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-2xl font-semibold">
+                    {displaySession.title || `${formatSessionType(displaySession.type)} Session`}
+                  </h2>
+                  <SessionSpecialBadges session={displaySession} />
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-sm text-muted-foreground">{formatDateTime(displaySession.dateTime)}</p>
                   <StatusBadge status={displaySession.status} />
@@ -286,6 +292,10 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
                     <span className="text-muted-foreground">Free Session</span>
                     <span className="text-muted-foreground">{displaySession.isFreeSession ? 'Yes' : 'No'}</span>
                   </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Extra session</span>
+                    <span className="text-muted-foreground">{sessionIsExtraSession(displaySession) ? 'Yes' : 'No'}</span>
+                  </div>
                   {isGroupSession && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Enrolled</span>
@@ -361,6 +371,10 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
                         <div>
                           <h4 className="text-sm font-medium text-muted-foreground mb-1">Free Session</h4>
                           <p className="text-sm">{displaySession.isFreeSession ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-1">Extra session</h4>
+                          <p className="text-sm">{sessionIsExtraSession(displaySession) ? 'Yes' : 'No'}</p>
                         </div>
                         {isGroupSession && capacity > 0 && (
                           <div>

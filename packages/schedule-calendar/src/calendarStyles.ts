@@ -99,6 +99,22 @@ export const CALENDAR_STYLES = `
   font-weight: 400 !important;
   opacity: 0.9;
 }
+/* Free / extra markers (status background colors stay; accent is a left stripe) */
+.fc-event.gf-session-event.gf-cal-event-interactive {
+  cursor: pointer;
+}
+.fc-event.gf-session-event.gf-cal-event-interactive:hover {
+  filter: brightness(0.95);
+}
+.fc-event.gf-session-free {
+  box-shadow: inset 3px 0 0 0 #f59e0b !important;
+}
+.fc-event.gf-session-extra {
+  box-shadow: inset 3px 0 0 0 #8b5cf6 !important;
+}
+.fc-event.gf-session-free.gf-session-extra {
+  box-shadow: inset 3px 0 0 0 #f59e0b, inset 6px 0 0 0 #8b5cf6 !important;
+}
 .fc-now-indicator-arrow {
   border-width: 5px 0 5px 6px;
   border-top-color: transparent;

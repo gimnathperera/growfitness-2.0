@@ -324,6 +324,7 @@ export class SessionsService {
       kids,
       status: s.status,
       isFreeSession: s.isFreeSession,
+      isExtraSession: Boolean(s.isExtraSession),
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
     };
@@ -450,6 +451,7 @@ export class SessionsService {
       capacity,
       kids: kidObjectIds,
       isFreeSession: createRecurringSessionDto.isFreeSession,
+      isExtraSession: createRecurringSessionDto.isExtraSession ?? false,
       recurringGroupId,
       recurringIndex: index,
     }));
@@ -558,6 +560,9 @@ export class SessionsService {
       ...(updateSessionDto.status && { status: updateSessionDto.status }),
       ...(updateSessionDto.isFreeSession !== undefined && {
         isFreeSession: updateSessionDto.isFreeSession,
+      }),
+      ...(updateSessionDto.isExtraSession !== undefined && {
+        isExtraSession: updateSessionDto.isExtraSession,
       }),
     };
 

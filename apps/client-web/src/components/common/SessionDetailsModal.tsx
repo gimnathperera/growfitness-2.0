@@ -3,8 +3,9 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { type Kid, type Session, type SessionKidRef, SessionType } from '@grow-fitness/shared-types';
+import { type Kid, type Session, type SessionKidRef, SessionType, sessionIsExtraSession } from '@grow-fitness/shared-types';
 import { SessionKidCard } from '@/components/common/SessionKidCard';
+import { SessionSpecialBadges } from '@/components/common/SessionSpecialBadges';
 import { formatDateTime, formatSessionType } from '@/lib/formatters';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { sessionsService } from '@/services/sessions.service';
@@ -73,8 +74,6 @@ export default function SessionDetailsDialog({
 }: SessionDetailsDialogProps) {
   const { entityId } = useModalParams('sessionId');
   const { role } = useAuth();
-  console.log('User role:', role);
-
   // Fetch session from URL if prop not provided
   const { data: sessionFromUrl } = useApiQuery<Session>(
     ['sessions', entityId || 'no-id'],
@@ -246,10 +245,13 @@ export default function SessionDetailsDialog({
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg sm:text-2xl font-semibold truncate">
-                {displaySession.title?.trim() ||
-                  `${formatSessionType(displaySession.type)} Session`}
-              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg sm:text-2xl font-semibold truncate">
+                  {displaySession.title?.trim() ||
+                    `${formatSessionType(displaySession.type)} Session`}
+                </h2>
+                <SessionSpecialBadges session={displaySession} className="shrink-0" />
+              </div>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   {formatDateTime(displaySession.dateTime)}
@@ -349,6 +351,12 @@ export default function SessionDetailsDialog({
                     <span className="text-muted-foreground">Free Session</span>
                     <span className="text-muted-foreground text-xs sm:text-sm">
                       {displaySession.isFreeSession ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm gap-2">
+                    <span className="text-muted-foreground">Extra session</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">
+                      {sessionIsExtraSession(displaySession) ? 'Yes' : 'No'}
                     </span>
                   </div>
                   {isGroupSession && (

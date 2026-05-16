@@ -4,6 +4,7 @@ import { sessionsService } from '@/services/sessions.service';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorState } from '@/components/common/ErrorState';
 import { EmptyState } from '@/components/common/EmptyState';
+import { SessionSpecialBadges } from '@/components/sessions/SessionSpecialBadges';
 import { formatDateTime, formatSessionType } from '@/lib/formatters';
 import { Calendar } from 'lucide-react';
 import { Session } from '@grow-fitness/shared-types';
@@ -79,8 +80,9 @@ export function TodaysSessions() {
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">
-                      {session.title || formatDateTime(session.dateTime)}
+                    <p className="font-medium truncate flex flex-wrap items-center gap-2">
+                      <span className="truncate">{session.title || formatDateTime(session.dateTime)}</span>
+                      <SessionSpecialBadges session={session} />
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
                       {locationName} • {kidNames}

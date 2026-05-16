@@ -1,5 +1,5 @@
 import type { EventInput } from '@fullcalendar/core';
-import { SessionStatus } from '@grow-fitness/shared-types';
+import { SessionStatus, sessionIsExtraSession } from '@grow-fitness/shared-types';
 import type { Session } from '@grow-fitness/shared-types';
 
 export function getStatusColor(status: SessionStatus): string {
@@ -35,6 +35,13 @@ export function sessionToCalendarEvent(
   const title =
     options?.formatTitle?.(session) ?? session.title ?? 'Session';
 
+  const classNames = [
+    'gf-session-event',
+    'gf-cal-event-interactive',
+    ...(session.isFreeSession ? ['gf-session-free'] : []),
+    ...(sessionIsExtraSession(session) ? ['gf-session-extra'] : []),
+  ];
+
   return {
     id: session.id,
     title,
@@ -43,6 +50,6 @@ export function sessionToCalendarEvent(
     extendedProps: session,
     backgroundColor: getStatusColor(session.status),
     borderColor: getStatusColor(session.status),
-    className: 'cursor-pointer hover:opacity-80 transition-opacity',
+    classNames,
   };
 }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar as CalendarIcon, List, CalendarDays } from 'lucide-react';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
+import { SessionSpecialBadges } from '@/components/common/SessionSpecialBadges';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useAuth } from '@/contexts/useAuth';
 import { StatusBadge } from '../common/StatusBadge';
@@ -132,46 +133,43 @@ export default function ScheduleTab() {
                     </thead>
 
                     <tbody className="divide-y divide-border bg-white">
-                      {sortedSessions.map((session) => (
+                      {sortedSessions.map(session => (
                         <tr
                           key={session.id}
                           onClick={() => setSelectedSession(session)}
                           className="cursor-pointer transition-colors hover:bg-muted/50"
                         >
-                          {/* Title */}
                           <td className="px-4 py-3 font-medium text-foreground">
-                            {session.title?.trim() || getSessionLabel(session)}
+                            <div className="flex max-w-[220px] flex-wrap items-center gap-2 sm:max-w-none">
+                              <span className="min-w-0">
+                                {session.title?.trim() || getSessionLabel(session)}
+                              </span>
+                              <SessionSpecialBadges session={session} className="shrink-0" />
+                            </div>
                           </td>
 
-                          {/* Date */}
                           <td className="px-4 py-3 text-muted-foreground">
                             {format(new Date(session.dateTime), 'dd MMM yyyy')}
                           </td>
 
-                          {/* Type */}
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {session.type}
-                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{session.type}</td>
 
-                          {/* Time */}
                           <td className="px-4 py-3 text-muted-foreground">
-                            {format(new Date(session.dateTime), 'hh:mm a')} - {format(
-                              new Date(new Date(session.dateTime).getTime() + session.duration * 60000),
+                            {format(new Date(session.dateTime), 'hh:mm a')} -{' '}
+                            {format(
+                              new Date(
+                                new Date(session.dateTime).getTime() + session.duration * 60000
+                              ),
                               'hh:mm a'
                             )}
                           </td>
 
-                          {/* Location */}
                           <td className="px-4 py-3 text-muted-foreground">
                             {session.location?.name ?? '-'}
                           </td>
 
-                          {/* Duration */}
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {session.duration} min
-                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{session.duration} min</td>
 
-                          {/* Status */}
                           <td className="px-4 py-3">
                             <StatusBadge status={session.status} />
                           </td>

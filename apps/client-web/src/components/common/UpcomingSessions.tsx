@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import { sessionsService } from '@/services/sessions.service';
 import { SessionStatus, type Session } from '@grow-fitness/shared-types';
 import SessionDetailsModal from './SessionDetailsModal';
+import { SessionSpecialBadges } from './SessionSpecialBadges';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { CalendarDays, Clock, MapPin, Tag, User } from 'lucide-react';
 import { addDays, addMinutes, endOfDay, format, startOfDay } from 'date-fns';
+import { formatSessionType } from '@/lib/formatters';
 
 type UpcomingSessionsProps = {
   kidId?: string;
@@ -105,7 +107,6 @@ export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessions
               )}`}
             >
               <div className="flex items-center gap-4">
-                {/* Date Box */}
                 <div className="flex h-14 w-14 flex-col items-center justify-center rounded-xl bg-[#CDEEE3] text-[#243E36]">
                   <span className="text-[10px] font-semibold uppercase tracking-wide">
                     {format(new Date(session.dateTime), 'MMM')}
@@ -116,49 +117,39 @@ export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessions
                   </span>
                 </div>
 
-                {/* Session Details */}
                 <div className="min-w-0 flex-1">
-                  {/* Title + Status */}
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="truncate text-xl font-semibold text-[#243E36]">
-                      {session.title}
+                      {session.title?.trim() || formatSessionType(session.type)}
                     </h3>
-
+                    <SessionSpecialBadges session={session} />
                     <span className="rounded-full bg-[#CDEEE3] px-2 py-0.5 text-xs font-medium text-[#1B7F5D]">
                       • {session.status}
                     </span>
                   </div>
 
-                  {/* Meta Details */}
                   <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-600">
-                    {/* Time */}
                     <div className="flex items-center gap-1">
                       <Clock size={14} />
                       <span>
                         {format(new Date(session.dateTime), 'hh:mm a')} -{' '}
                         {format(
-                          addMinutes(
-                            new Date(session.dateTime),
-                            session.duration
-                          ),
+                          addMinutes(new Date(session.dateTime), session.duration),
                           'hh:mm a'
                         )}
                       </span>
                     </div>
 
-                    {/* Coach */}
                     <div className="flex items-center gap-1">
                       <User size={14} />
                       <span>{session.coach?.coachProfile?.name || '-'}</span>
                     </div>
 
-                    {/* Location */}
                     <div className="flex items-center gap-1">
                       <MapPin size={14} />
                       <span>{session.location?.name || '-'}</span>
                     </div>
 
-                    {/* Type */}
                     <div className="flex items-center gap-1">
                       <Tag size={14} />
                       <span>{session.type}</span>

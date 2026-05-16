@@ -189,6 +189,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
       capacity: submitData.capacity,
       kids: submitData.kids,
       isFreeSession: submitData.isFreeSession ?? false,
+      isExtraSession: submitData.isExtraSession ?? false,
       recurrence: {
         frequency: repeatMode as RecurrenceFrequency,
         interval,
@@ -323,7 +324,9 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
                   }
                   onSelect={date => {
                     if (date) {
-                      form.setValue('dateTime', format(date, "yyyy-MM-dd'T'HH:mm"));
+                      // ISO-8601 with Z so the API stores the same instant as the picker (avoids
+                      // naive "yyyy-MM-ddTHH:mm" being parsed in the server's local TZ, e.g. UTC on Cloud Run).
+                      form.setValue('dateTime', date.toISOString());
                     } else {
                       form.setValue('dateTime', '');
                     }

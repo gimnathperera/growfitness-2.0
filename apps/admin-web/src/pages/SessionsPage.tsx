@@ -39,6 +39,7 @@ import { useModalParams } from '@/hooks/useModalParams';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSearchParams } from 'react-router-dom';
 import { SessionsCalendar } from '@/components/sessions/SessionsCalendar';
+import { SessionSpecialBadges } from '@/components/sessions/SessionSpecialBadges';
 import { googleCalendarService } from '@/services/google-calendar.service';
 
 export function SessionsPage() {
@@ -201,8 +202,9 @@ export function SessionsPage() {
       accessorKey: 'title',
       header: 'Title',
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span>{row.original.title || 'N/A'}</span>
+          <SessionSpecialBadges session={row.original} />
           {row.original.recurringGroupId ? (
             <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
               <Repeat className="h-3 w-3" />
@@ -236,11 +238,6 @@ export function SessionsPage() {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: 'isFreeSession',
-      header: 'Free Session',
-      cell: ({ row }) => (row.original.isFreeSession ? 'Yes' : 'No'),
     },
     {
       id: 'actions',

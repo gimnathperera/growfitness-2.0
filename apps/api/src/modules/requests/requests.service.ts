@@ -575,6 +575,7 @@ export class RequestsService {
         capacity: sessionType === SessionType.GROUP ? 10 : 1,
         kids: [request.kidId.toString()],
         isFreeSession: false,
+        isExtraSession: true,
       };
 
       this.logger.log(

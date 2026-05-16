@@ -59,6 +59,9 @@ export class Session {
   @Prop({ required: true, default: false })
   isFreeSession: boolean;
 
+  @Prop({ required: true, default: false })
+  isExtraSession: boolean;
+
   @Prop({ type: String, required: false })
   recurringGroupId?: string;
 
