@@ -15,6 +15,27 @@ import { notificationsService, type Notification } from '@/services/notification
 import { NotificationBubble } from './NotificationBubble';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { NotificationType } from '@grow-fitness/shared-types';
+
+const INVOICE_NOTIFICATION_TYPES = new Set<NotificationType>([
+  NotificationType.INVOICE_STATUS_UPDATED,
+  NotificationType.INVOICE_CREATED,
+  NotificationType.INVOICE_CREATION_REMINDER,
+  NotificationType.INVOICE_PAYMENT_REMINDER,
+  NotificationType.MONTH_END_PAYMENT_REMINDER,
+]);
+
+function notificationMentionsInvoiceText(n: { title: string; body: string }): boolean {
+  return /\binvoice\b/i.test(`${n.title}\n${n.body}`);
+}
+
+function isInvoiceRelatedNotification(n: Notification): boolean {
+  return (
+    INVOICE_NOTIFICATION_TYPES.has(n.type as NotificationType) ||
+    n.entityType === 'Invoice' ||
+    notificationMentionsInvoiceText(n)
+  );
+}
 
 const NOTIFICATION_SOUND_URL = `${(import.meta.env.BASE_URL || '/').replace(/\/*$/, '')}/sounds/notification.mp3`;
 
@@ -204,6 +225,13 @@ export function NotificationBell() {
   const handleMarkAsRead = (n: Notification) => {
     if (!n.read) {
       markReadMutation.mutate(n.id);
+    }
+
+    // Invoice-related → payments page (must run before session checks; some reminders use entityType Session)
+    if (isInvoiceRelatedNotification(n)) {
+      navigate('/payments');
+      setOpen(false);
+      return;
     }
 
     // Redirect to schedule tab if it's a session notification
