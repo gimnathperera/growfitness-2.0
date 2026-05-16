@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { addDays, endOfDay, startOfDay, startOfWeek, endOfWeek, format } from 'date-fns';
 import { sessionsService } from '@/services/sessions.service';
-import type { PaginatedResponse, Session, SessionStatus } from '@grow-fitness/shared-types';
+import type { PaginatedResponse, Session } from '@grow-fitness/shared-types';
 import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

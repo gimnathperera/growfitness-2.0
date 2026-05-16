@@ -11,7 +11,6 @@ import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useKid } from '@/contexts/kid/useKid';
 import BookSessionModal from './BookSessionModal';
-import { formatDateTime } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 
 type ScheduleView = 'list' | 'calendar';
