@@ -263,25 +263,6 @@ export class RequestsService {
       'RescheduleRequest',
       saved._id.toString()
     );
-    const sessionWithCoach = await this.sessionModel
-      .findById(dto.sessionId)
-      .select('coachId')
-      .lean()
-      .exec();
-    if (sessionWithCoach && (sessionWithCoach as any).coachId) {
-      const coachId =
-        (sessionWithCoach as any).coachId?.toString?.() ?? (sessionWithCoach as any).coachId;
-      if (coachId) {
-        await this.notificationService.createNotification({
-          userId: coachId,
-          type: NotificationType.RESCHEDULE_REQUEST,
-          title: 'Reschedule request',
-          body: 'A reschedule has been requested for one of your sessions.',
-          entityType: 'RescheduleRequest',
-          entityId: saved._id.toString(),
-        });
-      }
-    }
 
     return saved.populate(['sessionId', 'requestedBy']);
   }
@@ -506,16 +487,6 @@ export class RequestsService {
       'ExtraSessionRequest',
       saved._id.toString()
     );
-    if (dto.coachId) {
-      await this.notificationService.createNotification({
-        userId: dto.coachId,
-        type: NotificationType.EXTRA_SESSION_REQUEST,
-        title: 'Extra session request',
-        body: 'A parent has requested an extra session with you.',
-        entityType: 'ExtraSessionRequest',
-        entityId: saved._id.toString(),
-      });
-    }
 
     return saved.populate(['parentId', 'kidId', 'coachId', 'locationId']);
   }
