@@ -171,7 +171,7 @@ export default function Header({ forceSolid = false }: HeaderProps) {
             {/* Mobile Toggle */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className={cn('md:hidden p-2 rounded-lg', isSolid ? 'text-foreground' : 'text-white')}
+              className={cn('md:hidden p-2 rounded-lg', isSolid ? 'text-foreground' : 'text-primary')}
             >
               {menuOpen ? <X /> : <Menu />}
             </button>
@@ -213,6 +213,9 @@ export default function Header({ forceSolid = false }: HeaderProps) {
                   )}
                   <Button variant="outline" onClick={() => navigate('/dashboard')}>
                     Dashboard
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/profile')}>
+                    Profile
                   </Button>
 
                   <Button variant="destructive" onClick={handleLogout}>

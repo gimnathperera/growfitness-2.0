@@ -33,21 +33,21 @@ function HomePage() {
   }, []);
 
   return (
-    <div className="bg-white">
+    <div className="bg-white w-full overflow-x-hidden max-w-full">
       {/* 
          Note: HeroBanner is removed for now to match the static hero design 
          in the mockup. If dynamic banners are needed, we can integrate them 
          into the new design later.
       */}
-      
+
       <HeroTop banners={banners} loading={isLoading} />
       <BenefitsSection />
       <MidStats />
       <AudienceSection />
-      <HowItWorksSection/>
+      <HowItWorksSection />
       <TestimonialsSection />
       <FeaturesSection />
-      <FaqSection/>
+      <FaqSection />
       <CTASection />
     </div>
   );

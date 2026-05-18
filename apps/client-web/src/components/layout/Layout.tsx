@@ -5,14 +5,13 @@ import { SideNav } from './SideNav';
 
 export function Layout() {
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-        <Footer />
-      </div>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header />
+      <main className="flex-1 pt-14 md:pt-20 overflow-x-hidden">
+        <Outlet />
+      </main>
+
+      <Footer />
     </div>
   );
 }

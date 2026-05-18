@@ -52,12 +52,12 @@ export function OverviewTab({ kid }: OverviewTabProps) {
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <div className="rounded-lg bg-[#23B685]/5 px-3 py-2">
-              <p className="text-xs text-gray-600">Current Coach</p>
-              <p className="text-sm font-medium text-[#243E36]">-</p>
+              <p className="text-xs text-gray-600">Session Type</p>
+              <p className="text-sm font-medium text-[#243E36]">{kid?.sessionType}</p>
             </div>
             <div className="rounded-lg bg-[#23B685]/5 px-3 py-2">
-              <p className="text-xs text-gray-600">Program</p>
-              <p className="text-sm font-medium text-[#243E36]">Kids Fitness Fun</p>
+              <p className="text-xs text-gray-600">Gender</p>
+              <p className="text-sm font-medium text-[#243E36]">{kid?.gender}</p>
             </div>
             <div className="rounded-lg bg-[#23B685]/5 px-3 py-2">
               <p className="text-xs text-gray-600">Member Since</p>

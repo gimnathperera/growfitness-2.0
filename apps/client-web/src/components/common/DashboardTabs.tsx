@@ -37,7 +37,7 @@ export function DesktopTabs({
         >
           <TabsList
             className="
-              flex md:grid overflow-x-auto scrollbar-hide 
+              hidden md:grid overflow-x-auto scrollbar-hide 
               md:overflow-visible md:w-full 
               md:grid-cols-[repeat(auto-fit,minmax(120px,1fr))] 
               bg-transparent rounded-none border-0
