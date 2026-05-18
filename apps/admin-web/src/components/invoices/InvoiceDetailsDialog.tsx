@@ -75,7 +75,7 @@ export function InvoiceDetailsDialog({
   };
 
   const handleSendEmail = async () => {
-    if (!invoice) return;
+    if (!invoice || invoice.pdfEmailedAt) return;
     setIsSending(true);
     try {
       const { pdfEmailedAt } = await invoicesService.sendInvoicePdfEmail(invoice.id);
@@ -105,6 +105,8 @@ export function InvoiceDetailsDialog({
         ? invoice.coach?.email?.trim()
         : undefined;
 
+  const pdfAlreadySent = Boolean(invoice.pdfEmailedAt);
+
   const pdfViewModel = invoiceToPdfViewModel(invoice);
 
   return (
@@ -130,16 +132,20 @@ export function InvoiceDetailsDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={!recipientEmail || isSending || isDownloading}
+                disabled={
+                  !recipientEmail || isSending || isDownloading || pdfAlreadySent
+                }
                 title={
-                  !recipientEmail
-                    ? 'No email on file for this customer or coach'
-                    : `Send PDF to ${recipientEmail}`
+                  pdfAlreadySent && invoice.pdfEmailedAt
+                    ? `PDF was emailed on ${formatDateTime(invoice.pdfEmailedAt)}`
+                    : !recipientEmail
+                      ? 'No email on file for this customer or coach'
+                      : `Send PDF to ${recipientEmail}`
                 }
                 onClick={() => void handleSendEmail()}
               >
                 <Mail className="h-4 w-4 mr-2" />
-                {isSending ? 'Sending…' : 'Send'}
+                {isSending ? 'Sending…' : pdfAlreadySent ? 'Sent' : 'Send'}
               </Button>
             </div>
           </div>
