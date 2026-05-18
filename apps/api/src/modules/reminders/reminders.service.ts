@@ -79,6 +79,7 @@ export class RemindersService {
           status: InvoiceStatus.PENDING,
           dueDate: { $lte: inThreeDays },
           parentId: { $exists: true, $ne: null },
+          pdfEmailedAt: { $exists: true, $ne: null },
         })
         .populate('parentId', 'email phone parentProfile')
         .lean()
@@ -115,6 +116,7 @@ export class RemindersService {
           type: InvoiceType.PARENT_INVOICE,
           status: InvoiceStatus.PENDING,
           parentId: { $exists: true, $ne: null },
+          pdfEmailedAt: { $exists: true, $ne: null },
         })
         .populate('parentId', 'email phone parentProfile')
         .lean()

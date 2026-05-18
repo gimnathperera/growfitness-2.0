@@ -4,9 +4,6 @@ import type { InvoicePdfViewModel } from './types';
 import { InvoiceTemplatePrint } from './InvoiceTemplatePrint';
 import { INVOICE_PRINT_CSS } from './invoice-print-styles';
 
-const GOOGLE_FONTS_MONTSERRAT =
-  'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap';
-
 type NodeFs = {
   existsSync: (path: string) => boolean;
   readFileSync: (path: string) => { toString: (encoding: 'base64') => string };
@@ -97,9 +94,6 @@ export function renderInvoicePrintToFullHtml(data: InvoicePdfViewModel): string 
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Invoice</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="${GOOGLE_FONTS_MONTSERRAT}" rel="stylesheet"/>
 <style>${INVOICE_PRINT_CSS}</style>
 </head>
 <body>

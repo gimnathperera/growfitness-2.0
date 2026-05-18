@@ -37,14 +37,17 @@ export class InvoicesService {
     actor: JwtPayload
   ) {
     const scoped = { ...(filters ?? {}) };
+    let recipientVisibleOnly = false;
     if (actor.role === UserRole.PARENT) {
       scoped.parentId = actor.sub;
       scoped.type = InvoiceType.PARENT_INVOICE;
+      recipientVisibleOnly = true;
     } else if (actor.role === UserRole.COACH) {
       scoped.coachId = actor.sub;
       scoped.type = InvoiceType.COACH_PAYOUT;
+      recipientVisibleOnly = true;
     }
-    return this.findAll(pagination, scoped);
+    return this.findAll(pagination, { ...scoped, recipientVisibleOnly });
   }
 
   async findAll(
@@ -54,6 +57,8 @@ export class InvoicesService {
       parentId?: string;
       coachId?: string;
       status?: InvoiceStatus;
+      /** Only invoices whose PDF was sent at least once (admin Send). */
+      recipientVisibleOnly?: boolean;
     }
   ) {
     const query: Record<string, unknown> = {};
@@ -72,6 +77,10 @@ export class InvoicesService {
 
     if (filters?.status) {
       query.status = filters.status;
+    }
+
+    if (filters?.recipientVisibleOnly) {
+      query.pdfEmailedAt = { $exists: true, $ne: null };
     }
 
     const skip = (pagination.page - 1) * pagination.limit;
@@ -113,6 +122,15 @@ export class InvoicesService {
   async findByIdForActor(id: string, actor: JwtPayload) {
     const invoice = await this.findById(id);
     this.assertActorCanAccessInvoice(invoice, actor);
+    if (
+      (actor.role === UserRole.PARENT || actor.role === UserRole.COACH) &&
+      invoice.pdfEmailedAt == null
+    ) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.INVOICE_NOT_FOUND,
+        message: 'Invoice not found',
+      });
+    }
     return invoice;
   }
 
@@ -190,43 +208,13 @@ export class InvoicesService {
   }
 
   /**
-   * Records that the invoice PDF was emailed (updates timestamp on each successful send).
+   * Notify parent or coach that the invoice PDF was delivered (first admin Send only).
    */
-  async markInvoicePdfEmailed(invoiceId: string): Promise<Date> {
-    const at = new Date();
-    const updated = await this.invoiceModel
-      .findByIdAndUpdate(invoiceId, { $set: { pdfEmailedAt: at } }, { new: true })
-      .exec();
-    if (!updated) {
-      throw new NotFoundException({
-        errorCode: ErrorCode.INVOICE_NOT_FOUND,
-        message: 'Invoice not found',
-      });
+  async notifyRecipientsInvoiceDeliveredOnce(invoiceId: string): Promise<void> {
+    const invoice = await this.invoiceModel.findById(invoiceId).exec();
+    if (!invoice) {
+      return;
     }
-    return at;
-  }
-
-  async create(createInvoiceDto: CreateInvoiceDto, actorId: string) {
-    const { kidName, ...invoicePayload } = createInvoiceDto;
-    const totalAmount = invoicePayload.items.reduce((sum, item) => sum + item.amount, 0);
-
-    const invoice = new this.invoiceModel({
-      ...invoicePayload,
-      ...(kidName ? { exportFields: { kidName } } : {}),
-      totalAmount,
-      dueDate: new Date(createInvoiceDto.dueDate),
-      status: InvoiceStatus.PENDING,
-    });
-
-    await invoice.save();
-
-    await this.auditService.log({
-      actorId,
-      action: 'CREATE_INVOICE',
-      entityType: 'Invoice',
-      entityId: invoice._id.toString(),
-      metadata: createInvoiceDto,
-    });
 
     const invoiceIdStr = invoice._id.toString();
 
@@ -266,8 +254,48 @@ export class InvoicesService {
         entityId: invoiceIdStr,
       });
     }
+  }
 
-    return this.findById(invoiceIdStr);
+  /**
+   * Records that the invoice PDF was emailed (updates timestamp on each successful send).
+   */
+  async markInvoicePdfEmailed(invoiceId: string): Promise<Date> {
+    const at = new Date();
+    const updated = await this.invoiceModel
+      .findByIdAndUpdate(invoiceId, { $set: { pdfEmailedAt: at } }, { new: true })
+      .exec();
+    if (!updated) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.INVOICE_NOT_FOUND,
+        message: 'Invoice not found',
+      });
+    }
+    return at;
+  }
+
+  async create(createInvoiceDto: CreateInvoiceDto, actorId: string) {
+    const { kidName, ...invoicePayload } = createInvoiceDto;
+    const totalAmount = invoicePayload.items.reduce((sum, item) => sum + item.amount, 0);
+
+    const invoice = new this.invoiceModel({
+      ...invoicePayload,
+      ...(kidName ? { exportFields: { kidName } } : {}),
+      totalAmount,
+      dueDate: new Date(createInvoiceDto.dueDate),
+      status: InvoiceStatus.PENDING,
+    });
+
+    await invoice.save();
+
+    await this.auditService.log({
+      actorId,
+      action: 'CREATE_INVOICE',
+      entityType: 'Invoice',
+      entityId: invoice._id.toString(),
+      metadata: createInvoiceDto,
+    });
+
+    return this.findById(invoice._id.toString());
   }
 
   async updatePaymentStatus(id: string, updateDto: UpdateInvoicePaymentStatusDto, actorId: string) {

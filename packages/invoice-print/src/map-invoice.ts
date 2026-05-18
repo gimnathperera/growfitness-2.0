@@ -24,7 +24,7 @@ export function invoiceToPdfViewModel(invoice: Invoice): InvoicePdfViewModel {
     issueDate: formatInvoiceDateSlash(invoice.createdAt),
     validTill: formatInvoiceDateSlash(invoice.dueDate),
     bankReference: invoice.id,
-    items: invoice.items.map(i => ({ description: i.description, amount: i.amount })),
+    items: (invoice.items ?? []).map(i => ({ description: i.description, amount: i.amount })),
     totalAmount: invoice.totalAmount,
     bankDetails: { ...DEFAULT_BANK_DETAILS },
   };

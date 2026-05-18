@@ -119,7 +119,7 @@ export class InvoicesController {
   }
 
   @Post(':id/send-email')
-  @Roles(UserRole.ADMIN, UserRole.PARENT, UserRole.COACH)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Email invoice PDF to recipient',
     description:

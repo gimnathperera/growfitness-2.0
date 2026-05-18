@@ -20,6 +20,13 @@ export class EmailProvider {
   private readonly logger = new Logger(EmailProvider.name);
   private transporter: nodemailer.Transporter | null = null;
 
+  private attachmentByteLength(content: unknown): number {
+    if (Buffer.isBuffer(content)) return content.length;
+    if (content instanceof Uint8Array) return content.length;
+    if (typeof content === 'string') return Buffer.byteLength(content);
+    return 0;
+  }
+
   constructor(private configService: ConfigService) {
     this.initializeTransporter();
   }
@@ -81,7 +88,7 @@ export class EmailProvider {
           data.attachments?.map(a => ({
             filename: a.filename,
             contentType: a.contentType,
-            byteLength: a.content.length,
+            byteLength: this.attachmentByteLength(a.content),
           })) ?? [],
         timestamp: new Date().toISOString(),
       });
@@ -94,20 +101,21 @@ export class EmailProvider {
         this.configService.get<string>('SMTP_USER', 'noreply@growfitness.com')
       );
 
+      const sanitizedAttachments =
+        data.attachments
+          ?.filter(a => a.content != null)
+          .map(a => ({
+            filename: a.filename,
+            content: a.content as Buffer,
+            contentType: a.contentType ?? 'application/octet-stream',
+          })) ?? [];
+
       const mailOptions = {
         from: smtpFrom,
         to: data.to,
         subject: data.subject,
         text: data.body,
-        ...(data.attachments?.length
-          ? {
-              attachments: data.attachments.map(a => ({
-                filename: a.filename,
-                content: a.content,
-                contentType: a.contentType ?? 'application/octet-stream',
-              })),
-            }
-          : {}),
+        ...(sanitizedAttachments.length ? { attachments: sanitizedAttachments } : {}),
       };
 
       const info = await this.transporter.sendMail(mailOptions);

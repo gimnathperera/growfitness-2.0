@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
+    "puppeteer:install-chrome": "puppeteer browsers install chrome",
     "create-admin": "ts-node -r tsconfig-paths/register scripts/create-admin.ts",
     "seed": "ts-node -r tsconfig-paths/register scripts/seed-database.ts",
     "approve-all": "ts-node --transpile-only -r tsconfig-paths/register scripts/approve-all-users.ts",

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as path from 'node:path';
 import type { Invoice } from '@grow-fitness/shared-types';
 import { InvoiceType } from '@grow-fitness/shared-types';
@@ -55,6 +55,7 @@ export class InvoicePdfService {
     actor: JwtPayload
   ): Promise<{ pdfEmailedAt: Date }> {
     const invoice = (await this.invoicesService.findByIdForActor(invoiceId, actor)) as Invoice;
+    const firstSend = invoice.pdfEmailedAt == null;
     const to = this.resolveRecipientEmail(invoice);
     if (!to) {
       throw new BadRequestException({
@@ -75,6 +76,16 @@ export class InvoicePdfService {
       filename,
     });
     const pdfEmailedAt = await this.invoicesService.markInvoicePdfEmailed(invoiceId);
+    if (firstSend) {
+      try {
+        await this.invoicesService.notifyRecipientsInvoiceDeliveredOnce(invoiceId);
+      } catch (err) {
+        this.logger.error(
+          `POST-send invoice notifications failed for ${invoiceId}`,
+          err instanceof Error ? err.stack : err
+        );
+      }
+    }
     return { pdfEmailedAt };
   }
 
@@ -97,7 +108,7 @@ export class InvoicePdfService {
 
     const puppeteer = await import('puppeteer');
 
-    const launchOpts: any = {
+    const launchOpts: Record<string, unknown> = {
       headless: true,
       args: [
         '--no-sandbox',
@@ -107,21 +118,30 @@ export class InvoicePdfService {
       ],
     };
 
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-      launchOpts.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
+    const channelEnv = process.env.PUPPETEER_CHANNEL?.trim();
+
+    if (executablePath) {
+      launchOpts.executablePath = executablePath;
+    } else if (channelEnv) {
+      launchOpts.channel = channelEnv;
+    } else if (process.platform === 'darwin' || process.platform === 'win32') {
+      // Puppeteer may not ship a downloaded Chrome; use installed Google Chrome for local dev.
+      launchOpts.channel = 'chrome';
     }
 
-    const browser = await puppeteer.launch(launchOpts);
+    let browser: Awaited<ReturnType<(typeof puppeteer)['launch']>> | undefined;
 
     try {
+      browser = await puppeteer.launch(launchOpts as Parameters<(typeof puppeteer)['launch']>[0]);
       const page = await browser.newPage();
       // A4 at ~96dpi so vw/% match the admin invoice preview (default Puppeteer viewport skews layout).
       await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
-      
-      // Use ['load', 'networkidle2'] instead of 'networkidle0' to be more resilient to slow external assets.
-      await page.setContent(html, { 
-        waitUntil: ['load', 'networkidle2'], 
-        timeout: 60_000 
+
+      // Avoid networkidle*: invoice HTML must stay self-contained (no remote fonts/assets) so PDF works offline / behind strict firewalls.
+      await page.setContent(html, {
+        waitUntil: 'domcontentloaded',
+        timeout: 60_000,
       });
 
       const pdf = await page.pdf({
@@ -131,10 +151,17 @@ export class InvoicePdfService {
       });
       return Buffer.from(pdf);
     } catch (err) {
-      this.logger.error(`Puppeteer PDF failed for invoice ${invoice.id || 'unknown'}`, err instanceof Error ? err.stack : err);
-      throw err;
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Puppeteer PDF failed for invoice ${invoice.id || 'unknown'}: ${msg}`,
+        err instanceof Error ? err.stack : err
+      );
+      throw new BadGatewayException({
+        errorCode: ErrorCode.INVALID_INPUT,
+        message: `Invoice PDF could not be generated (${msg}). Install Google Chrome, set PUPPETEER_CHANNEL (e.g. chrome), set PUPPETEER_EXECUTABLE_PATH, or run \`pnpm puppeteer:install-chrome\` from apps/api.`,
+      });
     } finally {
-      await browser.close();
+      await browser?.close().catch(() => undefined);
     }
   }
 }
