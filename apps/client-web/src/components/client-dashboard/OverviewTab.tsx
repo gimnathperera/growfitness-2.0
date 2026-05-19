@@ -34,7 +34,22 @@ export function OverviewTab({ kid }: OverviewTabProps) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-[#23B685]/10 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6 text-[#23B685]" />
+                {kid?.profilePhotoUrl ? (
+                  <img
+                    src={kid.profilePhotoUrl}
+                    alt={kid.name}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  kid?.name
+                    ? kid.name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()
+                    : '--'
+                )}
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-[#243E36]">{kid?.name ?? '-'}</h3>

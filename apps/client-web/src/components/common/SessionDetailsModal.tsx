@@ -240,325 +240,397 @@ export default function SessionDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-6xl h-[90vh] p-0 flex flex-col overflow-hidden">
-        {/* Header - Fixed */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg sm:text-2xl font-semibold truncate">
-                  {displaySession.title?.trim() ||
-                    `${formatSessionType(displaySession.type)} Session`}
-                </h2>
-                <SessionSpecialBadges session={displaySession} className="shrink-0" />
+  <DialogContent className="w-screen h-[100dvh] max-w-none sm:max-w-[95vw] lg:max-w-6xl sm:h-[92vh] p-0 flex flex-col overflow-hidden rounded-none sm:rounded-2xl">
+    {/* Header */}
+    <div className="px-4 sm:px-6 py-4 border-b bg-background/95 backdrop-blur flex-shrink-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg sm:text-2xl font-semibold leading-tight break-words">
+              {displaySession.title?.trim() ||
+                `${formatSessionType(displaySession.type)} Session`}
+            </h2>
+
+            <SessionSpecialBadges
+              session={displaySession}
+              className="shrink-0"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {formatDateTime(displaySession.dateTime)}
+            </p>
+
+            <StatusBadge status={displaySession.status} />
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+            <Calendar className="h-3 w-3 flex-shrink-0" />
+            Created{' '}
+            {new Date(displaySession.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Body */}
+    <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-full lg:w-[320px] xl:w-[360px] border-b lg:border-b-0 lg:border-r bg-muted/20 overflow-y-auto flex-shrink-0 max-h-[50vh] lg:max-h-none">
+        <div className="p-4 sm:p-6 space-y-6">
+          {/* Session Info */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm">Session Info</h3>
+
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                {displaySession.type === SessionType.GROUP ? (
+                  <Users className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                ) : (
+                  <User className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                )}
               </div>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {formatDateTime(displaySession.dateTime)}
+
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm sm:text-base truncate">
+                  {formatSessionType(displaySession.type)}
                 </p>
-                <StatusBadge status={displaySession.status} />
+
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Training Session
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <Calendar className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">
-                  Created {new Date(displaySession.createdAt).toLocaleDateString()}
-                </span>
-              </p>
             </div>
           </div>
-        </div>
 
-        {/* Content - Scrollable */}
-        <div className="flex flex-1 min-h-0 overflow-hidden flex-col lg:flex-row">
-          {/* Left Sidebar - Scrollable on mobile, fixed height on desktop */}
-          <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r bg-muted/20 overflow-y-auto flex-shrink-0">
-            <div className="p-4 sm:p-6">
-              {/* Session Info Section */}
-              <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">Session Info</h3>
+          <Separator />
+
+          {/* Details */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm">Details</h3>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Duration</p>
+
+                  <p className="text-sm font-medium">
+                    {displaySession.duration} minutes
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {displaySession.type === SessionType.GROUP ? (
-                      <Users className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                    ) : (
-                      <User className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {formatSessionType(displaySession.type)}
+              </div>
+
+              {isGroupSession && capacity > 0 && (
+                <div className="flex items-start gap-3">
+                  <Users className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Capacity</p>
+
+                    <p className="text-sm font-medium">
+                      {enrolled} / {capacity}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Training Session</p>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <Separator className="my-6" />
+              <div className="flex items-start gap-3">
+                <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
 
-              {/* Details Section */}
-              <div className="space-y-4 mb-6">
-                <h3 className="font-semibold text-sm">Details</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-muted-foreground block text-xs">Duration</span>
-                      <p className="font-medium truncate">{displaySession.duration} minutes</p>
-                    </div>
-                  </div>
-                  {isGroupSession && capacity > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-muted-foreground block text-xs">Capacity</span>
-                        <p className="font-medium truncate">
-                          {enrolled} / {capacity}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-muted-foreground block text-xs">Date & Time</span>
-                      <p className="font-medium text-xs sm:text-sm break-words">
-                        {formatDateTime(displaySession.dateTime)}
-                      </p>
-                    </div>
-                  </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    Date & Time
+                  </p>
+
+                  <p className="text-sm font-medium break-words leading-relaxed">
+                    {formatDateTime(displaySession.dateTime)}
+                  </p>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <Separator className="my-6" />
+          <Separator />
 
-              {/* Highlights Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm">Highlights</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm gap-2">
-                    <span className="text-muted-foreground">Type</span>
-                    <Badge variant="outline" className="text-xs">
-                      {formatSessionType(displaySession.type)}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm gap-2">
-                    <span className="text-muted-foreground">Status</span>
-                    <StatusBadge status={displaySession.status} />
-                  </div>
-                  <div className="flex items-center justify-between text-sm gap-2">
-                    <span className="text-muted-foreground">Free Session</span>
-                    <span className="text-muted-foreground text-xs sm:text-sm">
-                      {displaySession.isFreeSession ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm gap-2">
-                    <span className="text-muted-foreground">Extra session</span>
-                    <span className="text-muted-foreground text-xs sm:text-sm">
-                      {sessionIsExtraSession(displaySession) ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  {isGroupSession && (
-                    <div className="flex items-center justify-between text-sm gap-2">
-                      <span className="text-muted-foreground">Enrolled</span>
-                      <span className="text-muted-foreground text-xs sm:text-sm">
-                        {enrolled} kids
-                      </span>
-                    </div>
-                  )}
-                </div>
+          {/* Highlights */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm">Highlights</h3>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">Type</span>
+
+                <Badge variant="outline" className="text-xs shrink-0">
+                  {formatSessionType(displaySession.type)}
+                </Badge>
               </div>
 
-              {/* Reschedule Button */}
-              {role === 'PARENT' && (
-                <>
-                  <Separator />
-                  <Button
-                    onClick={() => setRescheduleOpen(true)}
-                    variant="outline"
-                    className="w-full mt-6 hover:bg-muted"
-                  >
-                    <CalendarClock className="h-4 w-4 mr-2 hover:bg-muted" />
-                    Reschedule Session
-                  </Button>
-                </>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">Status</span>
+
+                <StatusBadge status={displaySession.status} />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">
+                  Free Session
+                </span>
+
+                <span className="text-sm font-medium">
+                  {displaySession.isFreeSession ? 'Yes' : 'No'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">
+                  Extra Session
+                </span>
+
+                <span className="text-sm font-medium">
+                  {sessionIsExtraSession(displaySession) ? 'Yes' : 'No'}
+                </span>
+              </div>
+
+              {isGroupSession && (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    Enrolled
+                  </span>
+
+                  <span className="text-sm font-medium">
+                    {enrolled} kids
+                  </span>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Right Main Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              </div>
-            ) : (
-              <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="w-full sm:w-auto">
-                  <TabsTrigger value="overview" className="flex-1 sm:flex-none">
-                    Overview
-                  </TabsTrigger>
-                  {shouldShowKidsTab && (
-                    <TabsTrigger value="kids" className="flex-1 sm:flex-none">
-                      Kids {totalKids > 0 && `(${totalKids})`}
-                    </TabsTrigger>
-                  )}
-                </TabsList>
+          {/* Reschedule */}
+          {role === 'PARENT' && (
+            <>
+              <Separator />
 
-                <TabsContent value="overview" className="mt-6 space-y-6">
-                  {/* Session Details */}
-                  <div className="rounded-2xl border bg-card p-5 pt-12 shadow-sm">
-                    <h3 className="font-semibold text-lg mb-5">Session Information</h3>
+              <Button
+                onClick={() => setRescheduleOpen(true)}
+                variant="outline"
+                className="w-full h-11"
+              >
+                <CalendarClock className="h-4 w-4 mr-2" />
+                Reschedule Session
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Date & Time */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Date & Time
-                        </p>
-                        <p className="text-sm font-medium break-words">
-                          {formatDateTime(displaySession.dateTime)}
-                        </p>
-                      </div>
-
-                      {/* Coach */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Coach
-                        </p>
-                        <p className="text-sm font-medium break-words">{coachName}</p>
-                      </div>
-
-                      {/* Location */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1 sm:col-span-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Location
-                        </p>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium break-words">{locationName}</p>
-                            {locationData?.placeUrl && (
-                              <a
-                                href={locationData.placeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-primary hover:underline mt-1 inline-flex items-center gap-1.5 break-all"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                                Open map / place link
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Type */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Type
-                        </p>
-                        <Badge variant="outline" className="w-fit">
-                          {formatSessionType(displaySession.type)}
-                        </Badge>
-                      </div>
-
-                      {/* Duration */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Duration
-                        </p>
-                        <p className="text-sm font-medium">{displaySession.duration} minutes</p>
-                      </div>
-
-                      {/* Status */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Status
-                        </p>
-                        <StatusBadge status={displaySession.status} />
-                      </div>
-
-                      {/* Free Session */}
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Free Session
-                        </p>
-                        <p className="text-sm font-medium">
-                          {displaySession.isFreeSession ? 'Yes' : 'No'}
-                        </p>
-                      </div>
-
-                      {/* Capacity (Group only) */}
-                      {isGroupSession && capacity > 0 && (
-                        <div className="bg-muted/40 rounded-xl p-4 space-y-1 sm:col-span-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Capacity
-                          </p>
-                          <p className="text-sm font-medium">
-                            {enrolled} / {capacity}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-4 sm:p-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-sm text-muted-foreground">
+                Loading...
+              </p>
+            </div>
+          ) : (
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex">
+                <TabsTrigger
+                  value="overview"
+                  className="w-full sm:w-auto"
+                >
+                  Overview
+                </TabsTrigger>
 
                 {shouldShowKidsTab && (
-                  <TabsContent value="kids" className="mt-6">
-                    {totalKids === 0 ? (
-                      <div className="text-center py-12">
-                        <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-sm text-muted-foreground">
-                          No kids enrolled in this session
+                  <TabsTrigger
+                    value="kids"
+                    className="w-full sm:w-auto"
+                  >
+                    Kids {totalKids > 0 && `(${totalKids})`}
+                  </TabsTrigger>
+                )}
+              </TabsList>
+
+              {/* OVERVIEW */}
+              <TabsContent value="overview" className="mt-6">
+                <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-5">
+                    Session Information
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Date */}
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Date & Time
+                      </p>
+
+                      <p className="text-sm font-medium break-words leading-relaxed">
+                        {formatDateTime(displaySession.dateTime)}
+                      </p>
+                    </div>
+
+                    {/* Coach */}
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Coach
+                      </p>
+
+                      <p className="text-sm font-medium break-words">
+                        {coachName}
+                      </p>
+                    </div>
+
+                    {/* Location */}
+                    <div className="rounded-xl bg-muted/40 p-4 md:col-span-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                        Location
+                      </p>
+
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium break-words">
+                            {locationName}
+                          </p>
+
+                          {locationData?.placeUrl && (
+                            <a
+                              href={locationData.placeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline mt-2 break-all"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                              Open map / place link
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Type */}
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Type
+                      </p>
+
+                      <Badge variant="outline" className="w-fit">
+                        {formatSessionType(displaySession.type)}
+                      </Badge>
+                    </div>
+
+                    {/* Duration */}
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Duration
+                      </p>
+
+                      <p className="text-sm font-medium">
+                        {displaySession.duration} minutes
+                      </p>
+                    </div>
+
+                    {/* Status */}
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Status
+                      </p>
+
+                      <StatusBadge status={displaySession.status} />
+                    </div>
+
+                    {/* Free */}
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Free Session
+                      </p>
+
+                      <p className="text-sm font-medium">
+                        {displaySession.isFreeSession ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+
+                    {/* Capacity */}
+                    {isGroupSession && capacity > 0 && (
+                      <div className="rounded-xl bg-muted/40 p-4 md:col-span-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                          Capacity
+                        </p>
+
+                        <p className="text-sm font-medium">
+                          {enrolled} / {capacity}
                         </p>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        {kids.map(kidOrId => {
-                          const kidId =
-                            typeof kidOrId === 'string'
-                              ? kidOrId
-                              : (kidOrId as Kid | SessionKidRef).id;
-                          const kid =
-                            typeof kidOrId === 'string'
-                              ? ({
-                                  id: kidOrId,
-                                  parentId: '',
-                                  name: 'Loading...',
-                                  gender: '',
-                                  birthDate: new Date(0),
-                                  currentlyInSports: false,
-                                  medicalConditions: [],
-                                  sessionType: SessionType.GROUP,
-                                  createdAt: new Date(),
-                                  updatedAt: new Date(),
-                                } satisfies Kid)
-                              : (kidOrId as Kid | SessionKidRef);
-
-                          return (
-                            <SessionKidCard
-                              key={kidId}
-                              kid={kid}
-                              isLoading={typeof kidOrId === 'string'}
-                            />
-                          );
-                        })}
-                      </div>
                     )}
-                  </TabsContent>
-                )}
-              </Tabs>
-            )}
-          </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* KIDS */}
+              {shouldShowKidsTab && (
+                <TabsContent value="kids" className="mt-6">
+                  {totalKids === 0 ? (
+                    <div className="text-center py-16">
+                      <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+
+                      <p className="text-sm text-muted-foreground">
+                        No kids enrolled in this session
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                      {kids.map(kidOrId => {
+                        const kidId =
+                          typeof kidOrId === 'string'
+                            ? kidOrId
+                            : (kidOrId as Kid | SessionKidRef).id;
+
+                        const kid =
+                          typeof kidOrId === 'string'
+                            ? ({
+                                id: kidOrId,
+                                parentId: '',
+                                name: 'Loading...',
+                                gender: '',
+                                birthDate: new Date(0),
+                                currentlyInSports: false,
+                                medicalConditions: [],
+                                sessionType: SessionType.GROUP,
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                              } satisfies Kid)
+                            : (kidOrId as Kid | SessionKidRef);
+
+                        return (
+                          <SessionKidCard
+                            key={kidId}
+                            kid={kid}
+                            isLoading={typeof kidOrId === 'string'}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+              )}
+            </Tabs>
+          )}
         </div>
-        <RescheduleSessionDialog
-          open={rescheduleOpen}
-          onClose={() => setRescheduleOpen(false)}
-          sessionId={displaySession.id}
-        />
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
+
+    <RescheduleSessionDialog
+      open={rescheduleOpen}
+      onClose={() => setRescheduleOpen(false)}
+      sessionId={displaySession.id}
+    />
+  </DialogContent>
+</Dialog>
   );
 }
