@@ -17,7 +17,6 @@ interface SessionOption {
 }
 
 const BookAFreeSessionForm: React.FC = () => {
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionOptions, setSessionOptions] = useState<SessionOption[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -85,7 +84,6 @@ const BookAFreeSessionForm: React.FC = () => {
     data: CreateFreeSessionRequestDto
   ) => {
     try {
-      setSubmitError(null);
       setIsLoading(true);
 
       const selectedSession = sessionOptions.find(
@@ -119,15 +117,14 @@ const BookAFreeSessionForm: React.FC = () => {
         navigate('/');
       }, 5000);
     } catch (error) {
-      const appError = handleError(error);
-      setSubmitError(appError.message);
+      handleError(error);
+      navigate('/');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => navigate('/');
-  const handleRetry = () => setSubmitError(null);
 
   return (
     <div className="pt-20">
@@ -135,8 +132,6 @@ const BookAFreeSessionForm: React.FC = () => {
         onSubmit={handleCollectInfoSubmit}
         onCancel={handleCancel}
         isLoading={isLoading}
-        error={submitError}
-        onRetry={handleRetry}
         sessionOptions={sessionOptions}
       />
       <ConfettiCelebration
