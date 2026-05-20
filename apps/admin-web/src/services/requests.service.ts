@@ -33,10 +33,14 @@ export const requestsService = {
     api.get<PaginatedResponse<ExtraSessionRequest>>(
       `/requests/extra-sessions?page=${page}&limit=${limit}`
     ),
-  approveExtraSessionRequest: (id: string) =>
-    api.post<ExtraSessionRequest>(`/requests/extra-sessions/${id}/approve`),
+  approveExtraSessionRequest: (id: string, data?: { coachId: string }) =>
+    api.post<ExtraSessionRequest>(`/requests/extra-sessions/${id}/approve`, data),
   denyExtraSessionRequest: (id: string) =>
     api.post<ExtraSessionRequest>(`/requests/extra-sessions/${id}/deny`),
+  updateExtraSessionRequest: (
+    id: string,
+    data: { status?: string; preferredDateTime?: string; coachId?: string }
+  ) => api.patch<ExtraSessionRequest>(`/requests/extra-sessions/${id}`, data),
 
   // User Registration Requests
   getUserRegistrationRequests: (page: number = 1, limit: number = 10) =>

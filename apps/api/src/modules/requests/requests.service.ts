@@ -484,10 +484,17 @@ export class RequestsService {
       });
     }
 
+    const coachIdFromBody =
+      actorRole === UserRole.PARENT
+        ? undefined
+        : dto.coachId && Types.ObjectId.isValid(dto.coachId)
+          ? new Types.ObjectId(dto.coachId)
+          : undefined;
+
     const request = new this.extraSessionRequestModel({
       parentId: new Types.ObjectId(parentId),
       kidId: new Types.ObjectId(dto.kidId),
-      coachId: new Types.ObjectId(dto.coachId),
+      ...(coachIdFromBody ? { coachId: coachIdFromBody } : {}),
       sessionType: dto.sessionType,
       locationId: new Types.ObjectId(dto.locationId),
       preferredDateTime: new Date(dto.preferredDateTime),
@@ -534,7 +541,7 @@ export class RequestsService {
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
 
-  async approveExtraSessionRequest(id: string, actorId: string) {
+  async approveExtraSessionRequest(id: string, actorId: string, options?: { coachId?: string }) {
     const request = await this.extraSessionRequestModel.findById(id).exec();
 
     if (!request) {
@@ -548,6 +555,25 @@ export class RequestsService {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
         message: 'This extra session request has already been denied.',
+      });
+    }
+
+    const coachIdInput = options?.coachId?.trim();
+    if (coachIdInput) {
+      if (!Types.ObjectId.isValid(coachIdInput)) {
+        throw new BadRequestException({
+          errorCode: ErrorCode.INVALID_ID,
+          message: 'Invalid coach ID format.',
+        });
+      }
+      request.coachId = new Types.ObjectId(coachIdInput);
+    }
+
+    if (!request.coachId) {
+      throw new BadRequestException({
+        errorCode: ErrorCode.INVALID_INPUT,
+        message:
+          'A coach must be assigned to approve this request. Provide coachId in the request body.',
       });
     }
 
@@ -802,7 +828,7 @@ export class RequestsService {
 
   async updateExtraSessionRequest(
     id: string,
-    updateData: { status?: RequestStatus; preferredDateTime?: Date },
+    updateData: { status?: RequestStatus; preferredDateTime?: Date; coachId?: string },
     actorId: string
   ) {
     const request = await this.extraSessionRequestModel.findById(id).exec();
@@ -819,6 +845,15 @@ export class RequestsService {
     }
     if (updateData.preferredDateTime) {
       request.preferredDateTime = updateData.preferredDateTime;
+    }
+    if (updateData.coachId !== undefined) {
+      if (!Types.ObjectId.isValid(updateData.coachId)) {
+        throw new BadRequestException({
+          errorCode: ErrorCode.INVALID_ID,
+          message: 'Invalid coach ID',
+        });
+      }
+      request.coachId = new Types.ObjectId(updateData.coachId);
     }
 
     await request.save();

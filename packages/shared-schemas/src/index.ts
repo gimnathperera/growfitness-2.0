@@ -454,11 +454,15 @@ export const CreateRescheduleRequestSchema = z.object({
 
 export type CreateRescheduleRequestDto = z.infer<typeof CreateRescheduleRequestSchema>;
 
-// Extra Session Request Schema (parentId optional when caller is PARENT - derived from token)
+// Extra Session Request Schema (parentId optional when caller is PARENT - derived from token;
+// coachId optional for parent requests — admin assigns coach before approval)
 export const CreateExtraSessionRequestSchema = z.object({
   parentId: z.string().min(1, 'Parent ID is required').optional(),
   kidId: z.string().min(1, 'Kid ID is required'),
-  coachId: z.string().min(1, 'Coach ID is required'),
+  coachId: z
+    .string()
+    .optional()
+    .transform(val => (val && val.trim().length > 0 ? val.trim() : undefined)),
   sessionType: z.nativeEnum(SessionType),
   locationId: z.string().min(1, 'Location ID is required'),
   preferredDateTime: z.string().or(z.date()),
