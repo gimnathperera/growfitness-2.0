@@ -265,7 +265,7 @@ export default function SessionDetailsDialog({
     <Dialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-6xl h-[90vh] p-0 flex flex-col overflow-hidden">
         {/* Header - Fixed */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
+        <div className="pl-4 sm:pl-6 pr-14 sm:pr-16 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">

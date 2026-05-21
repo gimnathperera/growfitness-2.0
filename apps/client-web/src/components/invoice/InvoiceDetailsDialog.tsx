@@ -80,7 +80,7 @@ export function InvoiceDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
-        <div className="flex flex-col gap-3 border-b pl-6 pr-14 py-4 shrink-0">
+        <div className="flex flex-col gap-3 border-b pl-6 pr-16 py-4 shrink-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 sm:justify-start">
             <DialogHeader className="space-y-1 text-left m-0 p-0 flex-1 min-w-0">
               <DialogTitle>Invoice</DialogTitle>

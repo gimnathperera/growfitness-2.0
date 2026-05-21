@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { locationsService } from '@/services/locations.service';
@@ -121,11 +121,10 @@ export default function BookSessionModal({ open, onClose }: Props) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Request Extra Session</DialogTitle>
+          <DialogDescription>
+            A coach will be assigned when your request is reviewed.
+          </DialogDescription>
         </DialogHeader>
-
-        <p className="text-sm text-muted-foreground -mt-2">
-          A coach will be assigned when your request is reviewed.
-        </p>
 
         <div className="space-y-4 mt-2">
           <div>
