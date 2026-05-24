@@ -310,7 +310,7 @@ export function NotificationBell() {
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuContent align="end" className="w-96 max-w-[calc(100vw-2rem)]">
           <div className="flex flex-col gap-1 px-2 py-1.5 border-b">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Notifications</span>
@@ -360,8 +360,10 @@ export function NotificationBell() {
                     className="flex-1 min-w-0 text-left"
                     onClick={() => handleMarkAsRead(n)}
                   >
-                    <p className="font-medium truncate text-sm">{n.title}</p>
-                    <p className="text-muted-foreground text-xs line-clamp-2 mt-0.5">{n.body}</p>
+                    <p className="font-medium text-sm break-words leading-snug">{n.title}</p>
+                    <p className="text-muted-foreground text-xs break-words leading-relaxed mt-0.5">
+                      {n.body}
+                    </p>
                     <p className="text-muted-foreground text-[10px] mt-1">
                       {formatDistanceToNow(new Date(n.createdAt), {
                         addSuffix: true,

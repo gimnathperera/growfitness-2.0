@@ -89,13 +89,32 @@ export function formatInvoiceType(type: InvoiceType): string {
   return typeMap[type] || type;
 }
 
-export function formatSessionType(type: SessionType): string {
-  const typeMap: Record<SessionType, string> = {
-    INDIVIDUAL: 'Private',
-    GROUP: 'Group',
-    BOTH: 'Both',
+/** Short UI label for session **kind** (`Session.type` / kid enrolment enum). Keeps API values as INDIVIDUAL/GROUP/BOTH. */
+export function formatSessionType(
+  type: SessionType | string | undefined | null
+): string {
+  if (type === undefined || type === null || type === '') return '—';
+  const raw = String(type);
+  const typeMap: Record<string, string> = {
+    INDIVIDUAL: 'PRIVATE',
+    GROUP: 'GROUP',
+    BOTH: 'BOTH',
   };
-  return typeMap[type] || type;
+  return typeMap[raw] ?? raw;
+}
+
+/** Heading or card title (“Private Session”); avoids chaining `formatSessionType` + “ Session”. */
+export function formatSessionKindHeading(type: SessionType | string): string {
+  switch (type as SessionType) {
+    case SessionType.INDIVIDUAL:
+      return 'Private Session';
+    case SessionType.GROUP:
+      return 'Group Session';
+    case SessionType.BOTH:
+      return 'Group & Private Sessions';
+    default:
+      return 'Session';
+  }
 }
 
 export function formatBannerTargetAudience(audience: BannerTargetAudience): string {

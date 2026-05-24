@@ -3,6 +3,7 @@ import { addDays, endOfDay, startOfDay, startOfWeek, endOfWeek, format } from 'd
 import { sessionsService } from '@/services/sessions.service';
 import type { PaginatedResponse, Session } from '@grow-fitness/shared-types';
 import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
+import { formatSessionType } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar as CalendarIcon, List, CalendarDays } from 'lucide-react';
@@ -152,7 +153,9 @@ export default function ScheduleTab() {
                             {format(new Date(session.dateTime), 'dd MMM yyyy')}
                           </td>
 
-                          <td className="px-4 py-3 text-muted-foreground">{session.type}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {formatSessionType(session.type)}
+                          </td>
 
                           <td className="px-4 py-3 text-muted-foreground">
                             {format(new Date(session.dateTime), 'hh:mm a')} -{' '}

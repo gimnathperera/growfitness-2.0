@@ -6,6 +6,7 @@ import {
   type Session,
 } from '@grow-fitness/shared-types';
 import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
+import { formatSessionType } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -263,7 +264,9 @@ export default function ScheduleTab() {
                             {format(new Date(session.dateTime), 'dd MMM yyyy')}
                           </td>
 
-                          <td className="px-4 py-3 text-muted-foreground">{session.type}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {formatSessionType(session.type)}
+                          </td>
 
                           <td className="px-4 py-3 text-muted-foreground">
                             {format(new Date(session.dateTime), 'hh:mm a')} -{' '}

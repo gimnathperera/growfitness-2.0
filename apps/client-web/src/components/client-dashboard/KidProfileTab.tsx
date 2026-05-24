@@ -369,8 +369,8 @@ export function KidProfileTab() {
                   <SelectValue placeholder="Select session type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INDIVIDUAL">Private</SelectItem>
-                  <SelectItem value="GROUP">Group</SelectItem>
+                  <SelectItem value="INDIVIDUAL">PRIVATE (one-on-one)</SelectItem>
+                  <SelectItem value="GROUP">GROUP</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Calendar } from 'lucide-react';
 import { differenceInYears } from 'date-fns';
 import { type Kid } from '@grow-fitness/shared-types';
+import { formatSessionType } from '@/lib/formatters';
 import { UpcomingSessions } from '../common/UpcomingSessions';
 
 interface OverviewTabProps {
@@ -74,8 +75,8 @@ export function OverviewTab({ kid }: OverviewTabProps) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <div className="flex min-h-[5rem] flex-col justify-center gap-1 rounded-xl bg-[#23B685]/5 px-4 py-3">
               <p className="text-xs font-medium text-gray-600">Session Type</p>
-              <p className="text-sm font-semibold capitalize text-[#243E36]">
-                {kid?.sessionType?.replace('_', ' ').toLowerCase() ?? '-'}
+              <p className="text-sm font-semibold text-[#243E36]">
+                {kid?.sessionType ? formatSessionType(kid.sessionType) : '-'}
               </p>
             </div>
             <div className="flex min-h-[5rem] flex-col justify-center gap-1 rounded-xl bg-[#23B685]/5 px-4 py-3">

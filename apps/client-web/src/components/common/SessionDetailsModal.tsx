@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { type Kid, type Session, type SessionKidRef, SessionType, sessionIsExtraSession } from '@grow-fitness/shared-types';
 import { SessionKidCard } from '@/components/common/SessionKidCard';
 import { SessionSpecialBadges } from '@/components/common/SessionSpecialBadges';
-import { formatDateTime, formatSessionType } from '@/lib/formatters';
+import { formatDateTime, formatSessionKindHeading, formatSessionType } from '@/lib/formatters';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { sessionsService } from '@/services/sessions.service';
 import { usersService } from '@/services/users.service';
@@ -271,7 +271,7 @@ export default function SessionDetailsDialog({
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg sm:text-2xl font-semibold truncate">
                   {displaySession.title?.trim() ||
-                    `${formatSessionType(displaySession.type)} Session`}
+                    formatSessionKindHeading(displaySession.type)}
                 </h2>
                 <SessionSpecialBadges session={displaySession} className="shrink-0" />
               </div>

@@ -163,7 +163,7 @@ export const UpcomingSessions = ({
 
                     <div className="flex items-center gap-1">
                       <Tag size={14} />
-                      <span>{session.type}</span>
+                      <span>{formatSessionType(session.type)}</span>
                     </div>
                   </div>
                 </div>
