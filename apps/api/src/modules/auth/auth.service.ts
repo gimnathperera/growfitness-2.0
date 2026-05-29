@@ -18,6 +18,7 @@ import {
 import { UserRole, UserStatus } from '@grow-fitness/shared-types';
 import { LoginDto } from '@grow-fitness/shared-schemas';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
+import { getPasswordResetTokenExpirySeconds } from '../../common/utils/password-reset-config.util';
 import { NotificationService } from '../notifications/notifications.service';
 
 export interface JwtPayload {
@@ -175,13 +176,10 @@ export class AuthService {
     // Generate secure random token
     const token = crypto.randomBytes(32).toString('hex');
 
-    // Calculate expiry time (default: 1 hour)
-    const expirySeconds = parseInt(
-      this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY', '3600'),
-      10
+    const expirySeconds = getPasswordResetTokenExpirySeconds(
+      this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY')
     );
-    const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds);
+    const expiresAt = new Date(Date.now() + expirySeconds * 1000);
 
     // Invalidate any existing tokens for this user
     await this.passwordResetTokenModel

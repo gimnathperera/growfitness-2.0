@@ -12,6 +12,7 @@ import {
 import { NotificationType } from '@grow-fitness/shared-types';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
+import { getPasswordResetTokenExpirySeconds } from '../../common/utils/password-reset-config.util';
 
 export interface CreateInAppNotificationDto {
   userId: string;
@@ -415,8 +416,10 @@ Grow Fitness Team`;
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const userName = user.parentProfile?.name || user.coachProfile?.name || 'User';
-    const expiryHours =
-      parseInt(this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY', '3600'), 10) / 3600;
+    const expirySeconds = getPasswordResetTokenExpirySeconds(
+      this.configService.get<string>('PASSWORD_RESET_TOKEN_EXPIRY')
+    );
+    const expiryHours = expirySeconds / 3600;
 
     const subject = 'Reset Your Password';
     const body = `Hello ${userName},
