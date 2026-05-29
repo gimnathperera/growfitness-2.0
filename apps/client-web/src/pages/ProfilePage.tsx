@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { googleCalendarService } from '@/services/google-calendar.service';
 import { profileService } from '@/services/profile.service';
 import { uploadFileViaGcs } from '@/services/uploads.service';
@@ -9,9 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileDropzone } from '@/components/common/FileDropzone';
 import { FieldError } from '@/components/common/FieldError';
+import { ProfilePhotoEditor } from '@/components/common/ProfilePhotoEditor';
 import {
   parseParentProfileForm,
   zodFieldErrorMap,
@@ -37,9 +36,6 @@ import { ReadOnlyProfilePhoto } from '@/components/common/ReadOnlyProfilePhoto';
 import { useToast } from '@/hooks/use-toast';
 import type { CoachProfileAvailableTime, User } from '@grow-fitness/shared-types';
 import { UploadKind } from '@grow-fitness/shared-types';
-
-const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 type ParentFieldKey = 'firstName' | 'phone' | 'address';
 
@@ -76,6 +72,7 @@ export default function ProfilePage() {
   const [savingParent, setSavingParent] = useState(false);
   const [uploadingParentPhoto, setUploadingParentPhoto] = useState(false);
   const [parentPhotoFile, setParentPhotoFile] = useState<File | null>(null);
+  const [parentPhotoRemoved, setParentPhotoRemoved] = useState(false);
   const [parentFieldErrors, setParentFieldErrors] = useState<
     Partial<Record<ParentFieldKey, string>>
   >({});
@@ -103,6 +100,8 @@ export default function ProfilePage() {
       address: data.parentProfile?.location || '',
       parentPhotoUrl: data.parentProfile?.photoUrl || '',
     }));
+    setParentPhotoFile(null);
+    setParentPhotoRemoved(false);
     setParentFieldErrors({});
     setLoading(false);
   }, [user?.id, user?.role, parentCtx.isLoading, parentCtx.profile]);
@@ -244,9 +243,11 @@ export default function ProfilePage() {
         name: fullName,
         phone: parsed.data.phone,
         location: parsed.data.address || undefined,
+        ...(parentPhotoRemoved && !parentPhotoFile ? { photoUrl: '' } : {}),
       });
 
       setParentPhotoFile(null);
+      setParentPhotoRemoved(false);
       await parentCtx.refresh();
 
       toast({
@@ -271,19 +272,6 @@ export default function ProfilePage() {
 
   const parentStatus =
     parentCtx.profile?.status ?? user?.status ?? 'ACTIVE';
-
-  const parentPhotoObjectUrl = useMemo(() => {
-    if (!parentPhotoFile) return null;
-    return URL.createObjectURL(parentPhotoFile);
-  }, [parentPhotoFile]);
-
-  useEffect(() => {
-    return () => {
-      if (parentPhotoObjectUrl) URL.revokeObjectURL(parentPhotoObjectUrl);
-    };
-  }, [parentPhotoObjectUrl]);
-
-  const parentAvatarSrc = parentPhotoObjectUrl ?? form.parentPhotoUrl ?? undefined;
 
   const coachProfileLoading = user?.role === 'COACH' && coachCtx.isLoading;
 
@@ -351,29 +339,17 @@ export default function ProfilePage() {
                 onSubmit={handleParentSubmit}
                 className="space-y-6 border-t pt-6"
               >
-                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
-                  <Avatar className="h-24 w-24 border-2 border-background shadow-sm">
-                    {parentAvatarSrc ? (
-                      <AvatarImage src={parentAvatarSrc} alt="" className="object-cover" />
-                    ) : null}
-                    <AvatarFallback className="text-lg">
-                      {(form.firstName || user.email || '?').slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-2 w-full sm:w-auto">
-                    <Label>Profile photo</Label>
-                    <FileDropzone
-                      value={parentPhotoFile}
-                      onChange={setParentPhotoFile}
-                      accept={IMAGE_UPLOAD_TYPES}
-                      maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
-                      preview="image"
-                      label="Drop photo here or browse"
-                      description="JPEG, PNG, or WebP up to 5MB"
-                      disabled={savingParent || uploadingParentPhoto}
-                    />
-                  </div>
-                </div>
+                <ProfilePhotoEditor
+                  savedPhotoUrl={form.parentPhotoUrl}
+                  pendingFile={parentPhotoFile}
+                  onPendingFileChange={setParentPhotoFile}
+                  photoRemoved={parentPhotoRemoved}
+                  onPhotoRemovedChange={setParentPhotoRemoved}
+                  fallbackLabel={form.firstName || user.email || '?'}
+                  disabled={savingParent}
+                  uploading={uploadingParentPhoto}
+                  helperText="The selected photo uploads when you save changes."
+                />
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">

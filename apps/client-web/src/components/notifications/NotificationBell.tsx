@@ -15,6 +15,8 @@ import { notificationsService, type Notification } from '@/services/notification
 import { NotificationBubble } from './NotificationBubble';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/contexts/useAuth';
+import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvider';
 import { NotificationType } from '@grow-fitness/shared-types';
 
 const INVOICE_NOTIFICATION_TYPES = new Set<NotificationType>([
@@ -92,6 +94,8 @@ function playNotificationSound() {
 export function NotificationBell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const parentProfile = useParentProfile();
   const [open, setOpen] = useState(false);
   const [bubbleVisible, setBubbleVisible] = useState(false);
   const [bubbleMessage, setBubbleMessage] = useState('');
@@ -170,24 +174,38 @@ export function NotificationBell() {
       return;
     }
 
-    const hasNewSessionAffectingNotification = notifications.some(n => {
+    let hasNewSessionAffectingNotification = false;
+    let hasNewProfileUpdatedNotification = false;
+
+    for (const n of notifications) {
       const isSeen = seenNotificationIdsRef.current.has(n.id);
       if (!isSeen) {
         seenNotificationIdsRef.current.add(n.id);
       }
       if (isSeen) {
-        return false;
+        continue;
       }
 
-      const isSessionEntityType = n.entityType === 'Session' || n.entityType === 'SessionRecurringGroup';
-      return sessionNotificationTypes.has(n.type) || isSessionEntityType;
-    });
+      if (n.type === NotificationType.PROFILE_UPDATED) {
+        hasNewProfileUpdatedNotification = true;
+      }
+
+      const isSessionEntityType =
+        n.entityType === 'Session' || n.entityType === 'SessionRecurringGroup';
+      if (sessionNotificationTypes.has(n.type) || isSessionEntityType) {
+        hasNewSessionAffectingNotification = true;
+      }
+    }
 
     if (hasNewSessionAffectingNotification) {
       void queryClient.invalidateQueries({ queryKey: ['sessions'] });
       void queryClient.invalidateQueries({ queryKey: ['upcoming-sessions'] });
     }
-  }, [listData?.data, queryClient]);
+
+    if (hasNewProfileUpdatedNotification && role === 'PARENT') {
+      void parentProfile.refresh();
+    }
+  }, [listData?.data, queryClient, role, parentProfile]);
 
   const markReadMutation = useApiMutation((id: string) => notificationsService.markAsRead(id), {
     invalidateQueries: [
@@ -257,6 +275,12 @@ export function NotificationBell() {
     if (sessionNotificationTypes.includes(n.type) || isSessionEntityType) {
       navigate('/dashboard?tab=schedule');
       setOpen(false); // Close dropdown
+      return;
+    }
+
+    if (n.type === NotificationType.PROFILE_UPDATED) {
+      navigate('/profile');
+      setOpen(false);
     }
   };
 

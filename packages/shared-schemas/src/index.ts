@@ -161,6 +161,7 @@ export const UpdateParentSelfSchema = z.object({
     )
     .optional(),
   location: z.string().optional(),
+  photoUrl: z.union([z.string().url(), z.literal('')]).optional(),
 });
 
 export type UpdateParentSelfDto = z.infer<typeof UpdateParentSelfSchema>;

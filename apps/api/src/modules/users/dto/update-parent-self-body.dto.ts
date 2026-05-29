@@ -10,4 +10,7 @@ export class UpdateParentSelfBodyDto {
 
   @Allow()
   location?: string;
+
+  @Allow()
+  photoUrl?: string;
 }
