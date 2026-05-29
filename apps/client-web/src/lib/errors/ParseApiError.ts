@@ -53,6 +53,80 @@ export function parseApiError(error: unknown): AppError {
     };
   }
 
+  // Client fetch helper throws { statusCode, message, errorCode } (see api.ts).
+  function isFetchApiShape(
+    e: unknown,
+  ): e is { statusCode: number; message: unknown; errorCode?: unknown; errors?: unknown } {
+    return (
+      typeof e === 'object' &&
+      e !== null &&
+      'statusCode' in e &&
+      typeof (e as { statusCode: unknown }).statusCode === 'number'
+    );
+  }
+
+  if (isFetchApiShape(error)) {
+    const status = error.statusCode;
+    const fallback = 'There was an error with your request.';
+    const resolvedMessage =
+      typeof error.message === 'string' && error.message.trim().length > 0
+        ? error.message
+        : fallback;
+    const errorCode = typeof error.errorCode === 'string' ? error.errorCode : undefined;
+
+    if (status === 401) {
+      return {
+        message: 'Your session has expired. Please log in again.',
+        isUnauthorized: true,
+        isAuthError: true,
+        status,
+        code: errorCode,
+      };
+    }
+    if (status === 403) {
+      return {
+        message: 'You do not have permission to perform this action.',
+        isForbidden: true,
+        status,
+        code: errorCode,
+      };
+    }
+    if (status === 404) {
+      return {
+        message: 'The requested resource was not found.',
+        isNotFound: true,
+        status,
+        code: errorCode,
+      };
+    }
+
+    if (
+      status === 422 &&
+      error.errors !== undefined &&
+      typeof error.errors === 'object' &&
+      error.errors !== null
+    ) {
+      return {
+        message: 'Please check your entries and try again.',
+        validationErrors: error.errors,
+        status,
+        code: errorCode,
+      };
+    }
+
+    if (status >= 400 && status < 500) {
+      return { message: resolvedMessage, status, code: errorCode };
+    }
+    if (status >= 500) {
+      return {
+        message: 'The server encountered an error. Please try again later.',
+        isServerError: true,
+        status,
+        code: errorCode,
+      };
+    }
+  }
+
   // Handle error objects with status codes
   if (isErrorWithStatus(error) && typeof error.status === 'number') {
     const status = error.status;

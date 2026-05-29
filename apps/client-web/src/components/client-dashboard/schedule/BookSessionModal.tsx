@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { usersService } from '@/services/users.service';
 import { locationsService } from '@/services/locations.service';
 import { requestsService } from '@/services/requests.service';
 import { useKid } from '@/contexts/kid/useKid';
-import { SessionType, type User, type Location } from '@grow-fitness/shared-types';
+import { SessionType, type Location } from '@grow-fitness/shared-types';
 import { useAuth } from '@/contexts/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,9 +23,7 @@ export default function BookSessionModal({ open, onClose }: Props) {
   const kidId = selectedKid?.id;
   const parentId = user?.role === 'PARENT' ? user.id : null;
 
-  const [coaches, setCoaches] = useState<User[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedCoachId, setSelectedCoachId] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
   const [preferredDateTime, setPreferredDateTime] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,23 +31,16 @@ export default function BookSessionModal({ open, onClose }: Props) {
   const requestSessionType: SessionType =
     selectedKid?.sessionType === SessionType.GROUP ? SessionType.GROUP : SessionType.INDIVIDUAL;
 
-  /* ---------------- Fetch Coaches & Locations ---------------- */
   useEffect(() => {
     if (!open) return;
 
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        const [coachRes, locationRes] = await Promise.all([
-          usersService.getCoaches(1, 100),
-          locationsService.getLocations(1, 100),
-        ]);
-
-        setCoaches(coachRes.data);
+        const locationRes = await locationsService.getLocations(1, 100);
         setLocations(locationRes.data);
       } catch (error) {
-        console.error('Error loading dropdown data', error);
+        console.error('Error loading locations', error);
       } finally {
         setLoading(false);
       }
@@ -59,7 +49,6 @@ export default function BookSessionModal({ open, onClose }: Props) {
     fetchData();
   }, [open]);
 
-  /* ---------------- Submit ---------------- */
   const handleSubmit = async () => {
     if (!kidId) {
       toast({
@@ -75,10 +64,10 @@ export default function BookSessionModal({ open, onClose }: Props) {
       return;
     }
 
-    if (!selectedCoachId || !selectedLocationId || !preferredDateTime) {
+    if (!selectedLocationId || !preferredDateTime) {
       toast({
         title: 'Missing information',
-        description: 'Please select a coach, a location, and your preferred date and time.',
+        description: 'Please select a location and your preferred date and time.',
         variant: 'destructive',
       });
       return;
@@ -89,7 +78,6 @@ export default function BookSessionModal({ open, onClose }: Props) {
 
       await requestsService.createExtraSessionRequest({
         kidId,
-        coachId: selectedCoachId,
         sessionType: requestSessionType,
         locationId: selectedLocationId,
         preferredDateTime: new Date(preferredDateTime).toISOString(),
@@ -102,10 +90,6 @@ export default function BookSessionModal({ open, onClose }: Props) {
         queryClient.invalidateQueries({ queryKey: ['upcoming-sessions'] }),
       ]);
 
-      console.log('Extra session request sent successfully');
-
-      // Reset form
-      setSelectedCoachId('');
       setSelectedLocationId('');
       setPreferredDateTime('');
 
@@ -127,7 +111,6 @@ export default function BookSessionModal({ open, onClose }: Props) {
     }
   };
 
-  /* ---------------- UI ---------------- */
   return (
     <Dialog
       open={open}
@@ -138,28 +121,12 @@ export default function BookSessionModal({ open, onClose }: Props) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Request Extra Session</DialogTitle>
+          <DialogDescription>
+            A coach will be assigned when your request is reviewed.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          {/* Coach Dropdown */}
-          <div>
-            <label className="text-sm font-medium">Select Coach</label>
-            <select
-              className="w-full border rounded-md p-2 mt-1"
-              value={selectedCoachId}
-              onChange={e => setSelectedCoachId(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Select a coach</option>
-              {coaches.map(coach => (
-                <option key={coach.id} value={coach.id}>
-                  {coach.coachProfile?.name || 'Coach'}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Location Dropdown */}
+        <div className="space-y-4 mt-2">
           <div>
             <label className="text-sm font-medium">Select Location</label>
             <select
@@ -177,7 +144,6 @@ export default function BookSessionModal({ open, onClose }: Props) {
             </select>
           </div>
 
-          {/* DateTime */}
           <div>
             <label className="text-sm font-medium">Preferred Date & Time</label>
             <Input

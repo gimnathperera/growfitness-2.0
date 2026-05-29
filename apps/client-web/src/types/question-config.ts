@@ -27,4 +27,6 @@ export type QuestionConfig<T extends string> = {
     | 'boolean';
   options?: QuestionOption[] | (() => Promise<QuestionOption[]>);
   required?: boolean;
+  /** When true, phone input strips non-digits (for sign-up 10–15 digit policy). */
+  digitsOnlyPhone?: boolean;
 };

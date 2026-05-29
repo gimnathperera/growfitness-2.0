@@ -212,7 +212,10 @@ export class UsersService {
     }
 
     const hasChanges =
-      dto.phone !== undefined || dto.name !== undefined || dto.location !== undefined;
+      dto.phone !== undefined ||
+      dto.name !== undefined ||
+      dto.location !== undefined ||
+      dto.photoUrl !== undefined;
 
     if (!hasChanges) {
       return parent;
@@ -222,12 +225,17 @@ export class UsersService {
       parent.phone = dto.phone;
     }
 
-    if (dto.name !== undefined || dto.location !== undefined) {
+    if (dto.name !== undefined || dto.location !== undefined || dto.photoUrl !== undefined) {
       parent.parentProfile = {
         name: dto.name !== undefined ? dto.name : (parent.parentProfile?.name ?? ''),
         location:
           dto.location !== undefined ? dto.location : parent.parentProfile?.location,
-        photoUrl: parent.parentProfile?.photoUrl,
+        photoUrl:
+          dto.photoUrl !== undefined
+            ? dto.photoUrl === ''
+              ? undefined
+              : dto.photoUrl
+            : parent.parentProfile?.photoUrl,
       };
     }
 
@@ -392,6 +400,15 @@ export class UsersService {
       });
     }
 
+    const previousProfile = {
+      email: parent.email,
+      phone: parent.phone,
+      status: parent.status,
+      name: parent.parentProfile?.name ?? '',
+      location: parent.parentProfile?.location,
+      photoUrl: parent.parentProfile?.photoUrl,
+    };
+
     if (updateParentDto.email && updateParentDto.email !== parent.email) {
       const existingUser = await this.userModel
         .findOne({ email: updateParentDto.email.toLowerCase() })
@@ -439,6 +456,34 @@ export class UsersService {
       entityId: id,
       metadata: updateParentDto,
     });
+
+    const updatedProfile = {
+      email: parent.email,
+      phone: parent.phone,
+      status: parent.status,
+      name: parent.parentProfile?.name ?? '',
+      location: parent.parentProfile?.location,
+      photoUrl: parent.parentProfile?.photoUrl,
+    };
+
+    const profileChanged =
+      previousProfile.email !== updatedProfile.email ||
+      previousProfile.phone !== updatedProfile.phone ||
+      previousProfile.status !== updatedProfile.status ||
+      previousProfile.name !== updatedProfile.name ||
+      previousProfile.location !== updatedProfile.location ||
+      previousProfile.photoUrl !== updatedProfile.photoUrl;
+
+    if (profileChanged) {
+      await this.notificationService.createNotification({
+        userId: id,
+        type: NotificationType.PROFILE_UPDATED,
+        title: 'Profile updated',
+        body: 'An administrator updated your profile information.',
+        entityType: 'User',
+        entityId: id,
+      });
+    }
 
     return parent;
   }

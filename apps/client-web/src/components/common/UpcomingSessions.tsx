@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { sessionsService } from '@/services/sessions.service';
-import { SessionStatus, type Session } from '@grow-fitness/shared-types';
+import {
+  SessionStatus,
+  type Session,
+  type SessionType,
+} from '@grow-fitness/shared-types';
 import SessionDetailsModal from './SessionDetailsModal';
 import { SessionSpecialBadges } from './SessionSpecialBadges';
 import { useApiQuery } from '@/hooks/useApiQuery';
@@ -11,10 +15,17 @@ import { formatSessionType } from '@/lib/formatters';
 type UpcomingSessionsProps = {
   kidId?: string;
   coachId?: string;
+  /** Parent dashboard: enrolment profile for reschedule gating in session details. */
+  parentKidSessionType?: SessionType;
   limit?: number;
 };
 
-export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessionsProps) => {
+export const UpcomingSessions = ({
+  kidId,
+  coachId,
+  parentKidSessionType,
+  limit = 3,
+}: UpcomingSessionsProps) => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   const { startDate, endDate } = useMemo(() => {
@@ -152,7 +163,7 @@ export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessions
 
                     <div className="flex items-center gap-1">
                       <Tag size={14} />
-                      <span>{session.type}</span>
+                      <span>{formatSessionType(session.type)}</span>
                     </div>
                   </div>
                 </div>
@@ -167,6 +178,7 @@ export const UpcomingSessions = ({ kidId, coachId, limit = 3 }: UpcomingSessions
         session={selectedSession || undefined}
         onClose={() => setSelectedSession(null)}
         kidId={kidId}
+        parentKidSessionType={parentKidSessionType}
         onReschedule={() => { }}
       />
     </div>

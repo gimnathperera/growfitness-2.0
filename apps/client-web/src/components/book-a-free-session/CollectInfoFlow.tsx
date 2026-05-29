@@ -43,6 +43,7 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   const {
     control,
     getValues,
+    watch,
     setError,
     clearErrors,
     formState: { errors },
@@ -62,6 +63,8 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   const isLastStep = currentStep === collectInfoQuestions.length - 1;
   const isFirstStep = currentStep === 0;
   const progress = ((currentStep + 1) / collectInfoQuestions.length) * 100;
+  const selectedSessionId = watch('selectedSessionId');
+  const hasSessionSelected = Boolean(selectedSessionId?.trim());
 
   const goToNext = useCallback(async () => {
     const field = currentQuestion.id as FreeSessionStepField;
@@ -133,26 +136,47 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
             </motion.div>
           )}
 
-          <div className="flex justify-between items-center py-4 border-t border-amber-100 bg-white/70 backdrop-blur rounded-t-2xl shadow-md">
-            <Button type="button" variant="outline" onClick={goToPrevious} disabled={isFirstStep} className="flex items-center gap-2">
-              <ChevronLeft className="w-4 h-4" /> Back
-            </Button>
+          <div className="flex items-center gap-3 border-t border-amber-100 bg-white/70 backdrop-blur rounded-t-2xl shadow-md px-4 sm:px-6 py-4 sm:py-5">
+            <div className="flex min-w-0 flex-1 justify-start">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goToPrevious}
+                disabled={isFirstStep}
+                className="flex shrink-0 items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" /> Back
+              </Button>
+            </div>
 
-            <div className="text-sm text-gray-500">{currentStep + 1} / {collectInfoQuestions.length}</div>
+            <div className="flex shrink-0 items-center justify-center px-2 text-sm tabular-nums text-gray-500">
+              {currentStep + 1} / {collectInfoQuestions.length}
+            </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading || isSubmitting}
-              className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 mr-5 !bg-emerald-500 !text-white hover:!bg-emerald-600 !border-0"
-            >
-              {isLoading || isSubmitting ? (
-                <motion.div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
-              ) : isLastStep ? (
-                <><Check className="w-4 h-4" /> Submit</>
-              ) : (
-                <><span>Next</span><ChevronRight className="w-4 h-4" /></>
-              )}
-            </Button>
+            <div className="flex min-w-0 flex-1 justify-end">
+              <Button
+                type="submit"
+                disabled={
+                  isLoading ||
+                  isSubmitting ||
+                  (isLastStep && !hasSessionSelected)
+                }
+                className="flex shrink-0 items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 !border-0 !bg-emerald-500 !text-white hover:!bg-emerald-600"
+              >
+                {isLoading || isSubmitting ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : isLastStep ? (
+                  <>
+                    <Check className="h-4 w-4" /> Submit
+                  </>
+                ) : (
+                  <>
+                    <span>Next</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </motion.div>
       </form>

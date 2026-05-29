@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import { googleCalendarService } from '@/services/google-calendar.service';
+import { useEffect, useState } from 'react';
 import { profileService } from '@/services/profile.service';
 import { uploadFileViaGcs } from '@/services/uploads.service';
 
@@ -9,9 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileDropzone } from '@/components/common/FileDropzone';
 import { FieldError } from '@/components/common/FieldError';
+import { ProfilePhotoEditor } from '@/components/common/ProfilePhotoEditor';
 import {
   parseParentProfileForm,
   zodFieldErrorMap,
@@ -35,11 +33,10 @@ import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvide
 import { useCoachProfile } from '@/contexts/coach-profile/CoachProfileProvider';
 import { ReadOnlyProfilePhoto } from '@/components/common/ReadOnlyProfilePhoto';
 import { useToast } from '@/hooks/use-toast';
+import { useGoogleCalendarSync } from '@/hooks/useGoogleCalendarSync';
+import { isGmailAccount } from '@/lib/google-calendar';
 import type { CoachProfileAvailableTime, User } from '@grow-fitness/shared-types';
 import { UploadKind } from '@grow-fitness/shared-types';
-
-const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 type ParentFieldKey = 'firstName' | 'phone' | 'address';
 
@@ -61,9 +58,6 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [calendarLoading, setCalendarLoading] = useState(false);
-  const [calendarBusy, setCalendarBusy] = useState(false);
-  const [calendarConnected, setCalendarConnected] = useState(false);
   const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
@@ -76,11 +70,13 @@ export default function ProfilePage() {
   const [savingParent, setSavingParent] = useState(false);
   const [uploadingParentPhoto, setUploadingParentPhoto] = useState(false);
   const [parentPhotoFile, setParentPhotoFile] = useState<File | null>(null);
+  const [parentPhotoRemoved, setParentPhotoRemoved] = useState(false);
   const [parentFieldErrors, setParentFieldErrors] = useState<
     Partial<Record<ParentFieldKey, string>>
   >({});
 
-  const isGmail = Boolean(user?.email && /@(gmail|googlemail)\.com$/i.test(user.email));
+  const isGmail = isGmailAccount(user?.email);
+  const calendarSync = useGoogleCalendarSync({ enabled: isGmail });
 
   useEffect(() => {
     if (!user?.id || user.role !== 'PARENT') return;
@@ -103,6 +99,8 @@ export default function ProfilePage() {
       address: data.parentProfile?.location || '',
       parentPhotoUrl: data.parentProfile?.photoUrl || '',
     }));
+    setParentPhotoFile(null);
+    setParentPhotoRemoved(false);
     setParentFieldErrors({});
     setLoading(false);
   }, [user?.id, user?.role, parentCtx.isLoading, parentCtx.profile]);
@@ -138,34 +136,23 @@ export default function ProfilePage() {
   }, [user?.id, user?.role, coachCtx.isLoading, coachCtx.profile]);
 
   useEffect(() => {
-    if (!user?.id || !isGmail) return;
+    if (!calendarSync.oauthResult) return;
 
-    let active = true;
-    const load = async () => {
-      setCalendarLoading(true);
-      try {
-        const status = await googleCalendarService.getStatus();
-        if (active) setCalendarConnected(status.connected);
-      } catch {
-        if (active) setCalendarConnected(false);
-      } finally {
-        if (active) setCalendarLoading(false);
-      }
-    };
-
-    void load();
-
-    const url = new URL(window.location.href);
-    if (url.searchParams.has('connected') || url.searchParams.has('error')) {
-      url.searchParams.delete('connected');
-      url.searchParams.delete('error');
-      window.history.replaceState({}, '', url.toString());
+    if (calendarSync.oauthResult === 'success') {
+      toast({
+        variant: 'success',
+        title: 'Google Calendar connected',
+        description: 'Your sessions will sync to Google Calendar automatically.',
+      });
+    } else {
+      toast({
+        title: 'Could not connect Google Calendar',
+        description: 'Please try again or use a Google account that granted calendar access.',
+        variant: 'destructive',
+      });
     }
-
-    return () => {
-      active = false;
-    };
-  }, [user?.id, isGmail]);
+    calendarSync.clearOAuthResult();
+  }, [calendarSync.oauthResult, calendarSync.clearOAuthResult, toast]);
 
   const DAYS_OF_WEEK = [
     'Monday',
@@ -176,30 +163,6 @@ export default function ProfilePage() {
     'Saturday',
     'Sunday',
   ];
-
-  const onConnectGoogleCalendar = async () => {
-    setCalendarBusy(true);
-    try {
-      const redirectUri = new URL(window.location.href);
-      redirectUri.searchParams.delete('connected');
-      redirectUri.searchParams.delete('error');
-      const { url } = await googleCalendarService.getAuthUrl(redirectUri.toString());
-      window.location.href = url;
-    } finally {
-      setCalendarBusy(false);
-    }
-  };
-
-  const onDisconnectGoogleCalendar = async () => {
-    setCalendarBusy(true);
-    try {
-      await googleCalendarService.disconnect();
-      const status = await googleCalendarService.getStatus();
-      setCalendarConnected(status.connected);
-    } finally {
-      setCalendarBusy(false);
-    }
-  };
 
   const handleParentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,9 +207,11 @@ export default function ProfilePage() {
         name: fullName,
         phone: parsed.data.phone,
         location: parsed.data.address || undefined,
+        ...(parentPhotoRemoved && !parentPhotoFile ? { photoUrl: '' } : {}),
       });
 
       setParentPhotoFile(null);
+      setParentPhotoRemoved(false);
       await parentCtx.refresh();
 
       toast({
@@ -271,19 +236,6 @@ export default function ProfilePage() {
 
   const parentStatus =
     parentCtx.profile?.status ?? user?.status ?? 'ACTIVE';
-
-  const parentPhotoObjectUrl = useMemo(() => {
-    if (!parentPhotoFile) return null;
-    return URL.createObjectURL(parentPhotoFile);
-  }, [parentPhotoFile]);
-
-  useEffect(() => {
-    return () => {
-      if (parentPhotoObjectUrl) URL.revokeObjectURL(parentPhotoObjectUrl);
-    };
-  }, [parentPhotoObjectUrl]);
-
-  const parentAvatarSrc = parentPhotoObjectUrl ?? form.parentPhotoUrl ?? undefined;
 
   const coachProfileLoading = user?.role === 'COACH' && coachCtx.isLoading;
 
@@ -351,29 +303,17 @@ export default function ProfilePage() {
                 onSubmit={handleParentSubmit}
                 className="space-y-6 border-t pt-6"
               >
-                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
-                  <Avatar className="h-24 w-24 border-2 border-background shadow-sm">
-                    {parentAvatarSrc ? (
-                      <AvatarImage src={parentAvatarSrc} alt="" className="object-cover" />
-                    ) : null}
-                    <AvatarFallback className="text-lg">
-                      {(form.firstName || user.email || '?').slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-2 w-full sm:w-auto">
-                    <Label>Profile photo</Label>
-                    <FileDropzone
-                      value={parentPhotoFile}
-                      onChange={setParentPhotoFile}
-                      accept={IMAGE_UPLOAD_TYPES}
-                      maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
-                      preview="image"
-                      label="Drop photo here or browse"
-                      description="JPEG, PNG, or WebP up to 5MB"
-                      disabled={savingParent || uploadingParentPhoto}
-                    />
-                  </div>
-                </div>
+                <ProfilePhotoEditor
+                  savedPhotoUrl={form.parentPhotoUrl}
+                  pendingFile={parentPhotoFile}
+                  onPendingFileChange={setParentPhotoFile}
+                  photoRemoved={parentPhotoRemoved}
+                  onPhotoRemovedChange={setParentPhotoRemoved}
+                  fallbackLabel={form.firstName || user.email || '?'}
+                  disabled={savingParent}
+                  uploading={uploadingParentPhoto}
+                  helperText="The selected photo uploads when you save changes."
+                />
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
@@ -615,9 +555,9 @@ export default function ProfilePage() {
                   <p className="text-sm">
                     Status:{' '}
                     <span className="font-medium">
-                      {calendarLoading
+                      {calendarSync.loading
                         ? 'Checking…'
-                        : calendarConnected
+                        : calendarSync.connected
                           ? 'Connected'
                           : 'Not connected'}
                     </span>
@@ -631,16 +571,16 @@ export default function ProfilePage() {
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  onClick={onConnectGoogleCalendar}
-                  disabled={calendarLoading || calendarBusy}
+                  onClick={() => void calendarSync.connect()}
+                  disabled={calendarSync.loading || calendarSync.busy}
                   className="sm:w-auto"
                 >
-                  {calendarConnected ? 'Reconnect Google Calendar' : 'Connect Google Calendar'}
+                  {calendarSync.connected ? 'Reconnect Google Calendar' : 'Connect Google Calendar'}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={onDisconnectGoogleCalendar}
-                  disabled={!calendarConnected || calendarLoading || calendarBusy}
+                  onClick={() => void calendarSync.disconnect()}
+                  disabled={!calendarSync.connected || calendarSync.loading || calendarSync.busy}
                   className="sm:w-auto"
                 >
                   Disconnect

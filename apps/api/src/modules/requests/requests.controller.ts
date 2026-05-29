@@ -62,7 +62,11 @@ export class RequestsController {
     },
   })
   @ApiResponse({ status: 201, description: 'Free session request created successfully' })
-  @ApiResponse({ status: 409, description: 'Email already has a free session request' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Conflict: email blocked for free-session promo—for example registered & approved user, inactive account, registration pending approval, a request already awaiting review, or an upcoming free session already booked. Prior DENIED/NOT_SELECTED rows may retry.',
+  })
   createFreeSessionRequest(@Body() createDto: CreateFreeSessionRequestDto) {
     return this.requestsService.createFreeSessionRequest(createDto);
   }
@@ -202,7 +206,11 @@ export class RequestsController {
           example: '507f1f77bcf86cd799439011',
         },
         kidId: { type: 'string', description: 'Kid ID', example: '507f1f77bcf86cd799439011' },
-        coachId: { type: 'string', description: 'Coach ID', example: '507f1f77bcf86cd799439011' },
+        coachId: {
+          type: 'string',
+          description: 'Coach ID (optional for parent; admin assigns via PATCH if omitted)',
+          example: '507f1f77bcf86cd799439011',
+        },
         sessionType: { type: 'string', enum: ['INDIVIDUAL', 'GROUP'] },
         locationId: {
           type: 'string',
@@ -211,7 +219,7 @@ export class RequestsController {
         },
         preferredDateTime: { type: 'string', format: 'date-time' },
       },
-      required: ['kidId', 'coachId', 'sessionType', 'locationId', 'preferredDateTime'],
+      required: ['kidId', 'sessionType', 'locationId', 'preferredDateTime'],
     },
   })
   @ApiResponse({ status: 201, description: 'Extra session request created successfully' })
@@ -331,9 +339,26 @@ export class RequestsController {
 
   @Post('extra-sessions/:id/approve')
   @ApiOperation({ summary: 'Approve an extra session request' })
+  @ApiBody({
+    required: false,
+    schema: {
+      type: 'object',
+      properties: {
+        coachId: {
+          type: 'string',
+          description:
+            'Coach to assign for this session. Required if the request has no coach yet; optional otherwise (overwrites assigned coach).',
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Extra session request approved successfully' })
-  approveExtraSessionRequest(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
-    return this.requestsService.approveExtraSessionRequest(id, actorId);
+  approveExtraSessionRequest(
+    @Param('id') id: string,
+    @CurrentUser('sub') actorId: string,
+    @Body() body?: { coachId?: string }
+  ) {
+    return this.requestsService.approveExtraSessionRequest(id, actorId, body);
   }
 
   @Post('extra-sessions/:id/deny')
@@ -362,6 +387,10 @@ export class RequestsController {
           format: 'date-time',
           description: 'Preferred date and time (ISO format)',
         },
+        coachId: {
+          type: 'string',
+          description: 'Assign or update coach (ObjectId)',
+        },
       },
     },
   })
@@ -369,7 +398,12 @@ export class RequestsController {
   @ApiResponse({ status: 404, description: 'Request not found' })
   updateExtraSessionRequest(
     @Param('id', ObjectIdValidationPipe) id: string,
-    @Body() updateData: { status?: RequestStatus; preferredDateTime?: string },
+    @Body()
+    updateData: {
+      status?: RequestStatus;
+      preferredDateTime?: string;
+      coachId?: string;
+    },
     @CurrentUser('sub') actorId: string
   ) {
     return this.requestsService.updateExtraSessionRequest(

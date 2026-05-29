@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { type Kid, type Session, type SessionKidRef, SessionType, sessionIsExtraSession } from '@grow-fitness/shared-types';
 import { SessionKidCard } from '@/components/common/SessionKidCard';
 import { SessionSpecialBadges } from '@/components/common/SessionSpecialBadges';
-import { formatDateTime, formatSessionType } from '@/lib/formatters';
+import { formatDateTime, formatSessionKindHeading, formatSessionType } from '@/lib/formatters';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { sessionsService } from '@/services/sessions.service';
 import { usersService } from '@/services/users.service';
@@ -14,6 +14,7 @@ import { locationsService } from '@/services/locations.service';
 import { kidsService } from '@/services/kids.service';
 import { useModalParams } from '@/hooks/useModalParams';
 import { useAuth } from '@/contexts/useAuth';
+import { useKidOptional } from '@/contexts/kid/useKid';
 import {
   Calendar,
   Clock,
@@ -34,6 +35,8 @@ interface SessionDetailsDialogProps {
   session?: Session;
   kidId?: string;
   coachId?: string;
+  /** When set (e.g. from parent dashboard), gates reschedule vs kid enrolment profile. */
+  parentKidSessionType?: SessionType;
   onReschedule?: (session: Session) => void;
 }
 
@@ -66,14 +69,30 @@ function getName(value: NameableType, fallback: string = 'N/A'): string {
   return fallback;
 }
 
+function parentCanRescheduleSession(
+  kidSessionType: SessionType | undefined,
+  sessionType: SessionType | undefined,
+): boolean {
+  // Group-class rows: never parent-reschedulable.
+  if (sessionType === SessionType.GROUP) return false;
+  // Private/individual session: always allow (even for group-only enrolment when a private slot exists).
+  if (sessionType === SessionType.INDIVIDUAL) return true;
+  if (kidSessionType === SessionType.GROUP) return false;
+  return true;
+}
+
 export default function SessionDetailsDialog({
   open,
   onClose,
   session: sessionProp,
   kidId: kidIdProp,
+  parentKidSessionType,
 }: SessionDetailsDialogProps) {
   const { entityId } = useModalParams('sessionId');
   const { role } = useAuth();
+  const kidContext = useKidOptional();
+  const effectiveKidSessionType =
+    parentKidSessionType ?? kidContext?.selectedKid?.sessionType ?? undefined;
   // Fetch session from URL if prop not provided
   const { data: sessionFromUrl } = useApiQuery<Session>(
     ['sessions', entityId || 'no-id'],
@@ -108,6 +127,10 @@ export default function SessionDetailsDialog({
 
   const displaySession = sessionData || session;
   const isGroupSession = displaySession?.type === SessionType.GROUP;
+
+  const showParentReschedule =
+    role === 'PARENT' &&
+    parentCanRescheduleSession(effectiveKidSessionType, displaySession?.type);
 
   // Hide Kids tab if kidId prop is provided
   const shouldShowKidsTab = !kidIdProp;
@@ -242,13 +265,13 @@ export default function SessionDetailsDialog({
     <Dialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-6xl h-[90vh] p-0 flex flex-col overflow-hidden">
         {/* Header - Fixed */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
+        <div className="pl-4 sm:pl-6 pr-14 sm:pr-16 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg sm:text-2xl font-semibold truncate">
                   {displaySession.title?.trim() ||
-                    `${formatSessionType(displaySession.type)} Session`}
+                    formatSessionKindHeading(displaySession.type)}
                 </h2>
                 <SessionSpecialBadges session={displaySession} className="shrink-0" />
               </div>
@@ -371,7 +394,7 @@ export default function SessionDetailsDialog({
               </div>
 
               {/* Reschedule Button */}
-              {role === 'PARENT' && (
+              {showParentReschedule && (
                 <>
                   <Separator />
                   <Button

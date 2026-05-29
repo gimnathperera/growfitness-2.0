@@ -9,3 +9,8 @@ export function useKid(): KidContextType {
   }
   return context;
 }
+
+/** Same as useKid when inside KidProvider; returns null outside (e.g. coach routes) without throwing. */
+export function useKidOptional(): KidContextType | null {
+  return useContext(KidContext);
+}

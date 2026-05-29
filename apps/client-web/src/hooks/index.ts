@@ -4,3 +4,4 @@ export { usePagination } from './usePagination';
 export { useToast } from './useToast';
 export { useConfirm } from './useConfirm';
 export { useModalParams } from './useModalParams';
+export { useGoogleCalendarSync, type GoogleCalendarOAuthResult } from './useGoogleCalendarSync';

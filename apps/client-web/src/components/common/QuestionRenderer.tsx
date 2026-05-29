@@ -235,10 +235,15 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   {...field}
                   value={val as string}
                   type="tel"
-                  inputMode="tel"
+                  inputMode={question.digitsOnlyPhone ? 'numeric' : 'tel'}
                   autoComplete="tel"
                   placeholder={question.placeholder}
-                  onChange={e => onChange(e.target.value)}
+                  onChange={e => {
+                    const v = question.digitsOnlyPhone
+                      ? e.target.value.replace(/\D/g, '')
+                      : e.target.value;
+                    onChange(v);
+                  }}
                   onBlur={onBlur}
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? `${questionPath}-error` : undefined}

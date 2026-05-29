@@ -34,7 +34,7 @@ export const requestsService = {
   createExtraSessionRequest: (data: {
     parentId: string;
     kidId: string;
-    coachId: string;
+    coachId?: string;
     sessionType: string;
     locationId: string;
     preferredDateTime: string;

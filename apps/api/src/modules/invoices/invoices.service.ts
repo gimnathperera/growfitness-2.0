@@ -315,7 +315,13 @@ export class InvoicesService {
 
     await invoice.save();
 
-    if (invoice.type === InvoiceType.PARENT_INVOICE && invoice.parentId) {
+    const invoiceWasSentToRecipient = invoice.pdfEmailedAt != null;
+
+    if (
+      invoiceWasSentToRecipient &&
+      invoice.type === InvoiceType.PARENT_INVOICE &&
+      invoice.parentId
+    ) {
       const parentIdStr = invoice.parentId.toString();
       const parent = await this.userModel.findById(parentIdStr).select('email phone').lean().exec();
       const email = parent ? (parent as any).email : undefined;
@@ -337,7 +343,11 @@ export class InvoicesService {
       });
     }
 
-    if (invoice.type === InvoiceType.COACH_PAYOUT && invoice.coachId) {
+    if (
+      invoiceWasSentToRecipient &&
+      invoice.type === InvoiceType.COACH_PAYOUT &&
+      invoice.coachId
+    ) {
       const coachIdStr = invoice.coachId.toString();
       await this.notificationService.createNotification({
         userId: coachIdStr,

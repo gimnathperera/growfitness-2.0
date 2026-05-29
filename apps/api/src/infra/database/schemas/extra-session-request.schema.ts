@@ -12,8 +12,8 @@ export class ExtraSessionRequest {
   @Prop({ type: Types.ObjectId, ref: 'Kid', required: true })
   kidId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  coachId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  coachId?: Types.ObjectId;
 
   @Prop({ required: true, type: String, enum: SessionType })
   sessionType: SessionType;

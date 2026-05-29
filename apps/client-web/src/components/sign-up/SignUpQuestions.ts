@@ -16,7 +16,9 @@ interface BaseQuestion {
   placeholder?: string;
   required: boolean;
   options?: QuestionOption[];
-  booleanOptions?: boolean; 
+  booleanOptions?: boolean;
+  /** Strip formatting on phone field; use with strict digit-only schema. */
+  digitsOnlyPhone?: boolean;
 }
 
 interface ParentQuestion extends BaseQuestion {
@@ -66,9 +68,10 @@ export const parentQuestions: ParentQuestion[] = [
     section: 'parent',
     type: 'phone',
     title: "What's your phone number?",
-    subtitle: 'So we can reach you quickly if needed',
-    placeholder: '+1 (555) 000-0000',
+    subtitle: 'Digits only — 10 to 15 characters',
+    placeholder: 'e.g. 15551234567',
     required: true,
+    digitsOnlyPhone: true,
   },
   {
     id: 'location',
@@ -77,14 +80,14 @@ export const parentQuestions: ParentQuestion[] = [
     title: 'Where are you located?',
     subtitle: 'This helps us find the best sessions near you',
     placeholder: 'City, State or ZIP code',
-    required: false,
+    required: true,
   },
   {
     id: 'password',
     section: 'parent',
     type: 'password',
     title: 'Create a secure password',
-    subtitle: 'Must be at least 6 characters',
+    subtitle: 'At least 8 characters with upper & lower case, a number, and a special character',
     placeholder: 'Enter a strong password',
     required: true,
   },
@@ -183,9 +186,9 @@ export const kidAttributeQuestions: KidQuestion[] = [
     perChildLabel: 'Preferred session type',
     required: true,
     options: [
-      { value: SessionType.INDIVIDUAL, label: 'Private (One-on-one training)' },
-      { value: SessionType.GROUP, label: 'Group (Train with others)' },
-      { value: SessionType.BOTH, label: 'Both (Private & Group)' },
+      { value: SessionType.INDIVIDUAL, label: 'PRIVATE (one-on-one training)' },
+      { value: SessionType.GROUP, label: 'GROUP (train with others)' },
+      { value: SessionType.BOTH, label: 'BOTH (PRIVATE & GROUP)' },
     ],
   },
 ];

@@ -15,6 +15,8 @@ import { notificationsService, type Notification } from '@/services/notification
 import { NotificationBubble } from './NotificationBubble';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/contexts/useAuth';
+import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvider';
 import { NotificationType } from '@grow-fitness/shared-types';
 
 const INVOICE_NOTIFICATION_TYPES = new Set<NotificationType>([
@@ -92,6 +94,8 @@ function playNotificationSound() {
 export function NotificationBell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const parentProfile = useParentProfile();
   const [open, setOpen] = useState(false);
   const [bubbleVisible, setBubbleVisible] = useState(false);
   const [bubbleMessage, setBubbleMessage] = useState('');
@@ -170,24 +174,38 @@ export function NotificationBell() {
       return;
     }
 
-    const hasNewSessionAffectingNotification = notifications.some(n => {
+    let hasNewSessionAffectingNotification = false;
+    let hasNewProfileUpdatedNotification = false;
+
+    for (const n of notifications) {
       const isSeen = seenNotificationIdsRef.current.has(n.id);
       if (!isSeen) {
         seenNotificationIdsRef.current.add(n.id);
       }
       if (isSeen) {
-        return false;
+        continue;
       }
 
-      const isSessionEntityType = n.entityType === 'Session' || n.entityType === 'SessionRecurringGroup';
-      return sessionNotificationTypes.has(n.type) || isSessionEntityType;
-    });
+      if (n.type === NotificationType.PROFILE_UPDATED) {
+        hasNewProfileUpdatedNotification = true;
+      }
+
+      const isSessionEntityType =
+        n.entityType === 'Session' || n.entityType === 'SessionRecurringGroup';
+      if (sessionNotificationTypes.has(n.type) || isSessionEntityType) {
+        hasNewSessionAffectingNotification = true;
+      }
+    }
 
     if (hasNewSessionAffectingNotification) {
       void queryClient.invalidateQueries({ queryKey: ['sessions'] });
       void queryClient.invalidateQueries({ queryKey: ['upcoming-sessions'] });
     }
-  }, [listData?.data, queryClient]);
+
+    if (hasNewProfileUpdatedNotification && role === 'PARENT') {
+      void parentProfile.refresh();
+    }
+  }, [listData?.data, queryClient, role, parentProfile]);
 
   const markReadMutation = useApiMutation((id: string) => notificationsService.markAsRead(id), {
     invalidateQueries: [
@@ -257,6 +275,12 @@ export function NotificationBell() {
     if (sessionNotificationTypes.includes(n.type) || isSessionEntityType) {
       navigate('/dashboard?tab=schedule');
       setOpen(false); // Close dropdown
+      return;
+    }
+
+    if (n.type === NotificationType.PROFILE_UPDATED) {
+      navigate('/profile');
+      setOpen(false);
     }
   };
 
@@ -310,7 +334,7 @@ export function NotificationBell() {
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuContent align="end" className="w-96 max-w-[calc(100vw-2rem)]">
           <div className="flex flex-col gap-1 px-2 py-1.5 border-b">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Notifications</span>
@@ -360,8 +384,10 @@ export function NotificationBell() {
                     className="flex-1 min-w-0 text-left"
                     onClick={() => handleMarkAsRead(n)}
                   >
-                    <p className="font-medium truncate text-sm">{n.title}</p>
-                    <p className="text-muted-foreground text-xs line-clamp-2 mt-0.5">{n.body}</p>
+                    <p className="font-medium text-sm break-words leading-snug">{n.title}</p>
+                    <p className="text-muted-foreground text-xs break-words leading-relaxed mt-0.5">
+                      {n.body}
+                    </p>
                     <p className="text-muted-foreground text-[10px] mt-1">
                       {formatDistanceToNow(new Date(n.createdAt), {
                         addSuffix: true,

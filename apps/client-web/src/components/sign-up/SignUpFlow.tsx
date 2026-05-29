@@ -159,6 +159,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
               placeholder: question.placeholder,
               options: question.options,
               required: question.required,
+              ...(question.digitsOnlyPhone ? { digitsOnlyPhone: true } : {}),
             }}
             control={control}
             error={errors[question.id] as FieldError | undefined}

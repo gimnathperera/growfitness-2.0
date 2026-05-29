@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { SessionType, UploadKind } from "@grow-fitness/shared-types";
 import type { UpdateKidDto } from "@grow-fitness/shared-schemas";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,25 +25,23 @@ import { useToast } from "@/hooks/use-toast";
 import { kidsService } from "@/services/kids.service";
 import { uploadFileViaGcs } from "@/services/uploads.service";
 import { useKid } from "@/contexts/kid/useKid";
-import { FileDropzone } from "@/components/common/FileDropzone";
+import { ProfilePhotoEditor } from "@/components/common/ProfilePhotoEditor";
 import { FieldError } from "@/components/common/FieldError";
 import { kidProfileFormSchema, zodFieldErrorMap } from "@/lib/profile-form-schemas";
 
 import { User, Calendar, Award, Heart, Loader2, Save } from "lucide-react";
 
-const IMAGE_UPLOAD_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
-
 type KidFieldKey = "name" | "gender" | "birthDate" | "goal";
 
 export function KidProfileTab() {
   const { toast } = useToast();
-  const { selectedKid, isLoading: isKidLoading } = useKid();
+  const { selectedKid, isLoading: isKidLoading, setSelectedKid } = useKid();
   const kidId = selectedKid?.id;
 
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
   const [kidFieldErrors, setKidFieldErrors] = useState<Partial<Record<KidFieldKey, string>>>({});
 
   const [formData, setFormData] = useState<Partial<UpdateKidDto>>({
@@ -84,6 +80,7 @@ export function KidProfileTab() {
           sessionType: fullKidData.sessionType || "INDIVIDUAL",
         });
         setProfilePhotoFile(null);
+        setPhotoRemoved(false);
         setKidFieldErrors({});
       } catch (error: unknown) {
         setFormData((prev) => ({
@@ -148,7 +145,7 @@ export function KidProfileTab() {
 
     try {
       setSaving(true);
-      let profilePhotoUrl = formData.profilePhotoUrl?.trim() || undefined;
+      let profilePhotoUrl: string | undefined = formData.profilePhotoUrl?.trim() || undefined;
 
       if (profilePhotoFile) {
         try {
@@ -166,6 +163,8 @@ export function KidProfileTab() {
         } finally {
           setUploadingPhoto(false);
         }
+      } else if (photoRemoved) {
+        profilePhotoUrl = '';
       }
 
       const payload: UpdateKidDto = {
@@ -191,7 +190,18 @@ export function KidProfileTab() {
         sessionType: updatedKid.sessionType || SessionType.INDIVIDUAL,
       });
       setProfilePhotoFile(null);
+      setPhotoRemoved(false);
       setKidFieldErrors({});
+
+      setSelectedKid(prev =>
+        prev && prev.id === kidId
+          ? {
+              ...prev,
+              name: updatedKid.name,
+              profilePhotoUrl: updatedKid.profilePhotoUrl,
+            }
+          : prev
+      );
 
       toast({
         variant: 'success',
@@ -240,42 +250,17 @@ export function KidProfileTab() {
 
       <CardContent>
         <form noValidate onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start rounded-lg border bg-muted/30 p-4">
-            <Avatar className="h-24 w-24 border-2 border-background shadow-sm">
-              {formData.profilePhotoUrl ? (
-                <AvatarImage
-                  src={formData.profilePhotoUrl}
-                  alt=""
-                  className="object-cover"
-                />
-              ) : null}
-              <AvatarFallback className="text-lg">
-                {(selectedKid.name || "?").slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-2 w-full sm:w-auto">
-              <Label>Profile photo</Label>
-              <FileDropzone
-                value={profilePhotoFile}
-                onChange={setProfilePhotoFile}
-                accept={IMAGE_UPLOAD_TYPES}
-                maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
-                preview="image"
-                label="Drop photo here or browse"
-                description="JPEG, PNG, or WebP up to 5MB"
-                disabled={saving || uploadingPhoto || !kidId}
-              />
-              <p className="text-xs text-muted-foreground">
-                The selected photo uploads when you save changes.
-              </p>
-              {uploadingPhoto && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Uploading…
-                </div>
-              )}
-            </div>
-          </div>
+          <ProfilePhotoEditor
+            savedPhotoUrl={formData.profilePhotoUrl}
+            pendingFile={profilePhotoFile}
+            onPendingFileChange={setProfilePhotoFile}
+            photoRemoved={photoRemoved}
+            onPhotoRemovedChange={setPhotoRemoved}
+            fallbackLabel={selectedKid.name || "?"}
+            disabled={saving || !kidId}
+            uploading={uploadingPhoto}
+            helperText="The selected photo uploads when you save changes."
+          />
 
           {/* Grid layout for most fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -369,8 +354,8 @@ export function KidProfileTab() {
                   <SelectValue placeholder="Select session type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INDIVIDUAL">Private</SelectItem>
-                  <SelectItem value="GROUP">Group</SelectItem>
+                  <SelectItem value="INDIVIDUAL">PRIVATE (one-on-one)</SelectItem>
+                  <SelectItem value="GROUP">GROUP</SelectItem>
                 </SelectContent>
               </Select>
             </div>

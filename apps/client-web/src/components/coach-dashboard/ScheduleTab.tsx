@@ -3,13 +3,18 @@ import { addDays, endOfDay, startOfDay, startOfWeek, endOfWeek, format } from 'd
 import { sessionsService } from '@/services/sessions.service';
 import type { PaginatedResponse, Session } from '@grow-fitness/shared-types';
 import { SessionsCalendar, sessionToCalendarEvent } from '@grow-fitness/schedule-calendar';
+import { formatSessionType } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar as CalendarIcon, List, CalendarDays } from 'lucide-react';
 import SessionDetailsModal from '@/components/common/SessionDetailsModal';
 import { SessionSpecialBadges } from '@/components/common/SessionSpecialBadges';
 import { useApiQuery } from '@/hooks/useApiQuery';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/useAuth';
+import { GoogleCalendarSyncButton } from '@/components/common/GoogleCalendarSyncButton';
+import { isGmailAccount } from '@/lib/google-calendar';
+import type { GoogleCalendarOAuthResult } from '@/hooks/useGoogleCalendarSync';
 import { StatusBadge } from '../common/StatusBadge';
 
 type ScheduleView = 'list' | 'calendar';
@@ -29,7 +34,25 @@ const LIST_VIEW_DAYS = 90;
 
 export default function ScheduleTab() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const coachId = user?.id;
+  const showGoogleCalendarSync = isGmailAccount(user?.email);
+
+  const handleGoogleCalendarOAuthResult = (result: GoogleCalendarOAuthResult) => {
+    if (result === 'success') {
+      toast({
+        variant: 'success',
+        title: 'Google Calendar connected',
+        description: 'Your sessions will sync to Google Calendar automatically.',
+      });
+    } else {
+      toast({
+        title: 'Could not connect Google Calendar',
+        description: 'Please try again or use a Google account that granted calendar access.',
+        variant: 'destructive',
+      });
+    }
+  };
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [view, setView] = useState<ScheduleView>('list');
 
@@ -152,7 +175,9 @@ export default function ScheduleTab() {
                             {format(new Date(session.dateTime), 'dd MMM yyyy')}
                           </td>
 
-                          <td className="px-4 py-3 text-muted-foreground">{session.type}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {formatSessionType(session.type)}
+                          </td>
 
                           <td className="px-4 py-3 text-muted-foreground">
                             {format(new Date(session.dateTime), 'hh:mm a')} -{' '}
@@ -181,7 +206,13 @@ export default function ScheduleTab() {
               )}
             </TabsContent>
 
-            <TabsContent value="calendar" className="mt-0">
+            <TabsContent value="calendar" className="mt-0 space-y-4">
+              {showGoogleCalendarSync && (
+                <GoogleCalendarSyncButton
+                  enabled
+                  onOAuthResult={handleGoogleCalendarOAuthResult}
+                />
+              )}
               <SessionsCalendar
                 events={events}
                 onSessionClick={setSelectedSession}
