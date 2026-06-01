@@ -1,4 +1,5 @@
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { SessionSpecialBadges } from '@/components/sessions/SessionSpecialBadges';
 import { Session, SessionType, sessionIsExtraSession } from '@grow-fitness/shared-types';
 import { formatDateTime, formatSessionType } from '@/lib/formatters';
+import { canAdminRescheduleSession } from '@/components/sessions/RescheduleSessionDialog';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { sessionsService } from '@/services/sessions.service';
 import { usersService } from '@/services/users.service';
@@ -28,12 +30,16 @@ import {
   AlertCircle,
   Baby,
   ExternalLink,
+  CalendarClock,
+  Pencil,
 } from 'lucide-react';
 
 interface SessionDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session?: Session;
+  onReschedule?: (session: Session) => void;
+  onEdit?: (session: Session) => void;
 }
 
 // Helper to get name from populated object or return ID
@@ -52,7 +58,13 @@ function getName(value: any, fallback: string = 'N/A'): string {
   return fallback;
 }
 
-export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp }: SessionDetailsDialogProps) {
+export function SessionDetailsDialog({
+  open,
+  onOpenChange,
+  session: sessionProp,
+  onReschedule,
+  onEdit,
+}: SessionDetailsDialogProps) {
   const { entityId, closeModal } = useModalParams('sessionId');
   
   // Fetch session from URL if prop not provided
@@ -199,7 +211,7 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
         <div className="flex flex-col flex-1 min-h-0">
           {/* Header */}
           <div className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-2xl font-semibold">
@@ -215,6 +227,30 @@ export function SessionDetailsDialog({ open, onOpenChange, session: sessionProp 
                   <Calendar className="h-3 w-3" />
                   Created {new Date(displaySession.createdAt).toLocaleDateString()}
                 </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {canAdminRescheduleSession(displaySession) && onReschedule ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onReschedule(displaySession)}
+                  >
+                    <CalendarClock className="h-4 w-4 mr-2" />
+                    Reschedule
+                  </Button>
+                ) : null}
+                {onEdit ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(displaySession)}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>

@@ -23,6 +23,7 @@ import {
   Eye,
   LayoutList,
   Calendar as CalendarIcon,
+  CalendarClock,
   Repeat,
 } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
@@ -33,6 +34,10 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { CreateSessionDialog } from '@/components/sessions/CreateSessionDialog';
 import { EditSessionDialog } from '@/components/sessions/EditSessionDialog';
 import { SessionDetailsDialog } from '@/components/sessions/SessionDetailsDialog';
+import {
+  RescheduleSessionDialog,
+  canAdminRescheduleSession,
+} from '@/components/sessions/RescheduleSessionDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useModalParams } from '@/hooks/useModalParams';
@@ -137,6 +142,7 @@ export function SessionsPage() {
   const detailsDialogOpen = modal === 'details' && isOpen;
   const editDialogOpen = modal === 'edit' && isOpen;
   const createDialogOpen = modal === 'create' && isOpen;
+  const rescheduleDialogOpen = modal === 'reschedule' && isOpen;
 
   const { data: coachesData } = useApiQuery(['users', 'coaches', 'all'], () =>
     usersService.getCoaches(1, 100)
@@ -255,6 +261,22 @@ export function SessionsPage() {
               }}
             >
               <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={!canAdminRescheduleSession(session)}
+              title={
+                canAdminRescheduleSession(session)
+                  ? 'Reschedule session'
+                  : 'Cannot reschedule cancelled or completed sessions'
+              }
+              onClick={() => {
+                setSelectedSession(session);
+                openModal(session.id, 'reschedule');
+              }}
+            >
+              <CalendarClock className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -422,6 +444,19 @@ export function SessionsPage() {
           />
           <SessionDetailsDialog
             open={detailsDialogOpen}
+            onOpenChange={closeModal}
+            session={selectedSession || undefined}
+            onReschedule={session => {
+              setSelectedSession(session);
+              openModal(session.id, 'reschedule');
+            }}
+            onEdit={session => {
+              setSelectedSession(session);
+              openModal(session.id, 'edit');
+            }}
+          />
+          <RescheduleSessionDialog
+            open={rescheduleDialogOpen}
             onOpenChange={closeModal}
             session={selectedSession || undefined}
           />

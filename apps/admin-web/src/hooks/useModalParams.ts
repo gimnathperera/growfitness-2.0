@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 
-export type ModalType = 'details' | 'edit' | 'create';
+export type ModalType = 'details' | 'edit' | 'create' | 'reschedule';
 
 interface UseModalParamsReturn {
   /**
@@ -51,7 +51,12 @@ export function useModalParams(
 
   const modal = useMemo(() => {
     const modalValue = searchParams.get(modalParam);
-    if (modalValue === 'details' || modalValue === 'edit' || modalValue === 'create') {
+    if (
+      modalValue === 'details' ||
+      modalValue === 'edit' ||
+      modalValue === 'create' ||
+      modalValue === 'reschedule'
+    ) {
       return modalValue as ModalType;
     }
     return null;
