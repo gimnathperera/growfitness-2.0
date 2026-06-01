@@ -7,6 +7,7 @@ import { locationsService } from '@/services/locations.service';
 import { Session, SessionStatus } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { FilterBar } from '@/components/common/FilterBar';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +53,14 @@ export function SessionsPage() {
   const [coachFilter, setCoachFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<SessionStatus | ''>('');
+
+  const hasActiveFilters = Boolean(coachFilter || locationFilter || statusFilter);
+
+  const clearAllFilters = () => {
+    setCoachFilter('');
+    setLocationFilter('');
+    setStatusFilter('');
+  };
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('sessionId');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const { toast } = useToast();
@@ -359,6 +368,8 @@ export function SessionsPage() {
           </SelectContent>
         </Select>
       </div>
+
+      <ClearFiltersButton onClear={clearAllFilters} disabled={!hasActiveFilters} />
     </FilterBar>
   );
 

@@ -5,6 +5,7 @@ import { usersService } from '@/services/users.service';
 import { User, UserRole } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
@@ -24,6 +25,12 @@ export function CoachesTable() {
   const { user: currentUser } = useAuth();
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [search, setSearch] = useState('');
+  const [searchInputKey, setSearchInputKey] = useState(0);
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setSearchInputKey(key => key + 1);
+  };
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('userId');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
@@ -161,8 +168,16 @@ export function CoachesTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <SearchInput placeholder="Search coaches..." onSearch={setSearch} className="max-w-sm" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <SearchInput
+            key={`coach-search-${searchInputKey}`}
+            placeholder="Search coaches..."
+            onSearch={setSearch}
+            className="max-w-sm"
+          />
+          <ClearFiltersButton onClear={clearAllFilters} disabled={!search} />
+        </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />

@@ -5,6 +5,7 @@ import { kidsService } from '@/services/kids.service';
 import { Kid } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Eye, Link2, Unlink } from 'lucide-react';
@@ -25,6 +26,12 @@ import { useSearchParams } from 'react-router-dom';
 export function KidsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [search, setSearch] = useState('');
+  const [searchInputKey, setSearchInputKey] = useState(0);
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setSearchInputKey(key => key + 1);
+  };
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('kidId');
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedKid, setSelectedKid] = useState<Kid | null>(null);
@@ -188,8 +195,16 @@ export function KidsPage() {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <SearchInput placeholder="Search kids..." onSearch={setSearch} className="max-w-sm" />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <SearchInput
+              key={`kid-search-${searchInputKey}`}
+              placeholder="Search kids..."
+              onSearch={setSearch}
+              className="max-w-sm"
+            />
+            <ClearFiltersButton onClear={clearAllFilters} disabled={!search} />
+          </div>
           <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Add Kid

@@ -5,6 +5,7 @@ import { usersService } from '@/services/users.service';
 import { User } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
@@ -33,6 +34,17 @@ export function ParentsTable() {
   const [search, setSearch] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
+  const [searchInputKey, setSearchInputKey] = useState(0);
+
+  const hasActiveFilters =
+    Boolean(search) || Boolean(locationFilter) || statusFilter !== 'ALL';
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setLocationFilter('');
+    setStatusFilter('ALL');
+    setSearchInputKey(key => key + 1);
+  };
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('userId');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
@@ -202,11 +214,13 @@ export function ParentsTable() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1">
           <SearchInput
+            key={`parent-search-${searchInputKey}`}
             placeholder="Search parents..."
             onSearch={setSearch}
             className="w-[250px]"
           />
           <SearchInput
+            key={`parent-location-${searchInputKey}`}
             placeholder="Filter location..."
             onSearch={setLocationFilter}
             className="w-[200px]"
@@ -224,6 +238,7 @@ export function ParentsTable() {
               <SelectItem value={UserStatus.INACTIVE}>Inactive</SelectItem>
             </SelectContent>
           </Select>
+          <ClearFiltersButton onClear={clearAllFilters} disabled={!hasActiveFilters} />
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => openModal(null, 'create')}>

@@ -2,6 +2,7 @@ export { DataTable } from './DataTable';
 export { Pagination } from './Pagination';
 export { SearchInput } from './SearchInput';
 export { FilterBar } from './FilterBar';
+export { ClearFiltersButton } from './ClearFiltersButton';
 export { LoadingSpinner } from './LoadingSpinner';
 export { ErrorState } from './ErrorState';
 export { EmptyState } from './EmptyState';
