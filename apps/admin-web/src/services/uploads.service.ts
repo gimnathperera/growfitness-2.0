@@ -61,3 +61,15 @@ export async function uploadFileViaGcs(
     publicUrl: presign.publicUrl,
   });
 }
+
+export async function deleteUploadedFileViaGcs(
+  kind: UploadKind,
+  entityId: string,
+  publicUrl: string
+): Promise<{ objectKey: string }> {
+  return api.post<{ objectKey: string }>('/uploads/delete', {
+    kind,
+    entityId,
+    publicUrl,
+  });
+}

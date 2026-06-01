@@ -143,7 +143,7 @@ export const UpdateParentSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().min(1).optional(),
   location: z.string().optional(),
-  photoUrl: z.string().url().optional(),
+  photoUrl: z.union([z.string().url(), z.literal('')]).optional(),
   status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
 });
 
@@ -322,6 +322,17 @@ export const UploadFinalizeSchema = z.object({
 });
 
 export type UploadFinalizeDto = z.infer<typeof UploadFinalizeSchema>;
+
+export const UploadDeleteSchema = z.object({
+  kind: z.nativeEnum(UploadKind),
+  entityId: z
+    .string()
+    .min(1)
+    .regex(OBJECT_ID_REGEX, 'Invalid id'),
+  publicUrl: z.string().url(),
+});
+
+export type UploadDeleteDto = z.infer<typeof UploadDeleteSchema>;
 
 // Session Schemas
 export const CreateSessionSchema = z

@@ -20,7 +20,7 @@ import {
 import { FormField as CustomFormField } from '@/components/common/FormField';
 import { UpdateKidSchema, UpdateKidDto } from '@grow-fitness/shared-schemas';
 import { Kid, SessionType, UploadKind } from '@grow-fitness/shared-types';
-import { uploadFileViaGcs } from '@/services/uploads.service';
+import { deleteUploadedFileViaGcs, uploadFileViaGcs } from '@/services/uploads.service';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { kidsService } from '@/services/kids.service';
 import { useToast } from '@/hooks/useToast';
@@ -195,6 +195,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
                   description="JPEG, PNG, or WebP up to 5MB"
                   disabled={uploadingPhoto || updateMutation.isPending}
                 />
+                <div className="flex flex-wrap items-center gap-3">
                 <Button
                   type="button"
                   variant="link"
@@ -203,6 +204,38 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
                 >
                   {showProfilePhotoUrl ? 'Hide photo URL field' : 'Paste photo URL instead'}
                 </Button>
+                  {form.watch('profilePhotoUrl') ? (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs text-destructive"
+                      disabled={uploadingPhoto || updateMutation.isPending}
+                      onClick={async () => {
+                        const url = form.watch('profilePhotoUrl')?.trim() || '';
+                        if (!url) return;
+                        // Only delete from storage for Grow-managed uploads.
+                        if (!url.includes('/public/avatars/')) {
+                          form.setValue('profilePhotoUrl', '');
+                          toast.success('Photo removed from profile');
+                          return;
+                        }
+                        try {
+                          await deleteUploadedFileViaGcs(UploadKind.KID_AVATAR, kid.id, url);
+                          form.setValue('profilePhotoUrl', '');
+                          setProfilePhotoFile(null);
+                          toast.success('Photo deleted');
+                        } catch (err) {
+                          toast.error(
+                            'Failed to delete photo',
+                            err instanceof Error ? err.message : 'Could not delete photo'
+                          );
+                        }
+                      }}
+                    >
+                      Delete photo
+                    </Button>
+                  ) : null}
+                </div>
                 {showProfilePhotoUrl && (
                   <Input type="url" placeholder="https://..." {...form.register('profilePhotoUrl')} />
                 )}

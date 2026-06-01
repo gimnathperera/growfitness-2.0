@@ -11,7 +11,7 @@ import { Model } from 'mongoose';
 import { Storage } from '@google-cloud/storage';
 import { randomUUID } from 'crypto';
 import { UploadKind, UserRole } from '@grow-fitness/shared-types';
-import type { UploadPresignDto, UploadFinalizeDto } from '@grow-fitness/shared-schemas';
+import type { UploadPresignDto, UploadFinalizeDto, UploadDeleteDto } from '@grow-fitness/shared-schemas';
 import type { JwtPayload } from '../auth/auth.service';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
@@ -226,5 +226,78 @@ export class UploadsService {
     });
 
     return { publicUrl, objectKey: dto.objectKey };
+  }
+
+  private objectKeyFromPublicUrl(publicUrl: string): string | null {
+    const base = this.publicBase || `https://storage.googleapis.com/${this.bucketName}`;
+    const normalizedBase = base.replace(/\/$/, '');
+    const normalizedUrl = publicUrl.replace(/\/$/, '');
+    if (!normalizedUrl.startsWith(`${normalizedBase}/`)) {
+      return null;
+    }
+    const rawKey = normalizedUrl.slice(normalizedBase.length + 1);
+    if (!rawKey) return null;
+    // Decode each path segment (GCS public URLs are encoded segment-by-segment).
+    return rawKey
+      .split('/')
+      .map(seg => decodeURIComponent(seg))
+      .join('/');
+  }
+
+  async delete(dto: UploadDeleteDto, user: JwtPayload) {
+    this.ensureBucket();
+
+    // Auth checks mirror presign/finalize.
+    if (dto.kind === UploadKind.KID_AVATAR) {
+      await this.assertKidAvatarAuth(dto.entityId, user);
+    } else if (dto.kind === UploadKind.PARENT_AVATAR) {
+      await this.assertParentAvatarAuth(dto.entityId, user);
+    } else {
+      if (user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can delete coach files');
+      }
+      await this.assertCoachEntity(dto.entityId);
+    }
+
+    const objectKey = this.objectKeyFromPublicUrl(dto.publicUrl);
+    if (!objectKey) {
+      throw new BadRequestException('publicUrl is not a recognized Grow Fitness upload URL');
+    }
+
+    const prefix = this.expectedKeyPrefix(dto.kind, dto.entityId);
+    if (!objectKey.startsWith(prefix)) {
+      throw new BadRequestException('publicUrl does not match the expected upload path');
+    }
+
+    const bucket = this.storage.bucket(this.bucketName);
+    await bucket.file(objectKey).delete({ ignoreNotFound: true });
+
+    if (dto.kind === UploadKind.KID_AVATAR) {
+      await this.kidModel
+        .findByIdAndUpdate(dto.entityId, { $unset: { profilePhotoUrl: '' } })
+        .exec();
+    } else if (dto.kind === UploadKind.PARENT_AVATAR) {
+      await this.userModel
+        .findByIdAndUpdate(dto.entityId, { $unset: { 'parentProfile.photoUrl': '' } })
+        .exec();
+    } else if (dto.kind === UploadKind.COACH_PHOTO) {
+      await this.userModel
+        .findByIdAndUpdate(dto.entityId, { $unset: { 'coachProfile.photoUrl': '' } })
+        .exec();
+    } else {
+      await this.userModel
+        .findByIdAndUpdate(dto.entityId, { $unset: { 'coachProfile.cvUrl': '' } })
+        .exec();
+    }
+
+    await this.auditService.log({
+      actorId: user.sub,
+      action: 'UPLOAD_DELETE',
+      entityType: 'Upload',
+      entityId: dto.entityId,
+      metadata: { kind: dto.kind, objectKey },
+    });
+
+    return { objectKey };
   }
 }

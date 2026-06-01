@@ -28,12 +28,13 @@ import {
 import { User, UserStatus, EmploymentType, UploadKind } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { usersService } from '@/services/users.service';
-import { uploadFileViaGcs } from '@/services/uploads.service';
+import { deleteUploadedFileViaGcs, uploadFileViaGcs } from '@/services/uploads.service';
 import { useToast } from '@/hooks/useToast';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useModalParams } from '@/hooks/useModalParams';
 import { Plus, Trash2 } from 'lucide-react';
 import { FileDropzone } from '@/components/common/FileDropzone';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -107,7 +108,7 @@ export function EditUserDialog({
         : usersService.getCoachById(resolvedId);
     },
     {
-      enabled: open && !!resolvedId && (userType === 'coach' || !userProp),
+      enabled: open && !!resolvedId,
     }
   );
 
@@ -131,6 +132,11 @@ export function EditUserDialog({
   const [uploadingCoachFiles, setUploadingCoachFiles] = useState(false);
   const [showCoachPhotoUrl, setShowCoachPhotoUrl] = useState(false);
   const [showCoachCvUrl, setShowCoachCvUrl] = useState(false);
+
+  const [parentPhotoFile, setParentPhotoFile] = useState<File | null>(null);
+  const [uploadingParentPhoto, setUploadingParentPhoto] = useState(false);
+  const [showParentPhotoUrl, setShowParentPhotoUrl] = useState(false);
+  const [parentPhotoPreviewUrl, setParentPhotoPreviewUrl] = useState<string | null>(null);
 
   const coachDefaults =
     userType === 'coach'
@@ -163,6 +169,7 @@ export function EditUserDialog({
         userType === 'parent'
           ? parentStatusForEdit(user.status)
           : coachStatusForEdit(user.status),
+      ...(userType === 'parent' ? { photoUrl: user.parentProfile?.photoUrl ?? undefined } : {}),
       ...coachDefaults,
     },
   });
@@ -192,15 +199,7 @@ export function EditUserDialog({
               employmentType: (user as User).coachProfile?.employmentType ?? undefined,
               cvUrl: (user as User).coachProfile?.cvUrl ?? '',
             }
-          : {
-              dateOfBirth: undefined,
-              photoUrl: undefined,
-              homeAddress: undefined,
-              school: undefined,
-              availableTimes: undefined,
-              employmentType: undefined,
-              cvUrl: undefined,
-            };
+          : {};
       form.reset({
         name: userType === 'parent' ? user.parentProfile?.name : user.coachProfile?.name,
         email: user.email,
@@ -210,15 +209,31 @@ export function EditUserDialog({
           userType === 'parent'
             ? parentStatusForEdit(user.status)
             : coachStatusForEdit(user.status),
-        ...coachReset,
+        ...(userType === 'parent'
+          ? { photoUrl: user.parentProfile?.photoUrl ?? undefined }
+          : coachReset),
       });
       setCoachPhotoFile(null);
       setCoachCvFile(null);
+      setParentPhotoFile(null);
+      setParentPhotoPreviewUrl(null);
+      setUploadingParentPhoto(false);
       setUploadingCoachFiles(false);
       setShowCoachPhotoUrl(false);
       setShowCoachCvUrl(false);
+      setShowParentPhotoUrl(false);
     }
   }, [open, user, userType, form]);
+
+  useEffect(() => {
+    if (!parentPhotoFile) {
+      setParentPhotoPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(parentPhotoFile);
+    setParentPhotoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [parentPhotoFile]);
 
   const updateMutation = useApiMutation(
     (data: UpdateParentDto | UpdateCoachDto) => {
@@ -246,12 +261,44 @@ export function EditUserDialog({
   );
 
   const onSubmit = async (data: UpdateParentDto | UpdateCoachDto) => {
+    if (userType === 'parent') {
+      const parentData = data as UpdateParentDto;
+      const existingPhoto = (user as User).parentProfile?.photoUrl;
+      let photoUrl =
+        parentData.photoUrl !== undefined
+          ? parentData.photoUrl.trim()
+          : existingPhoto;
+      try {
+        setUploadingParentPhoto(true);
+        if (parentPhotoFile) {
+          const r = await uploadFileViaGcs(UploadKind.PARENT_AVATAR, user.id, parentPhotoFile);
+          photoUrl = r.publicUrl;
+          form.setValue('photoUrl', photoUrl);
+        }
+      } catch (err) {
+        toast.error(
+          'Upload failed',
+          err instanceof Error ? err.message : 'Could not upload photo'
+        );
+        return;
+      } finally {
+        setUploadingParentPhoto(false);
+      }
+
+      updateMutation.mutate({
+        ...parentData,
+        photoUrl: photoUrl === '' ? '' : photoUrl || undefined,
+      });
+      return;
+    }
+
     if (userType === 'coach') {
       const coachData = data as UpdateCoachDto;
       const existingPhoto = (user as User).coachProfile?.photoUrl;
       const existingCv = (user as User).coachProfile?.cvUrl;
-      let photoUrl = coachData.photoUrl?.trim() || existingPhoto;
-      let cvUrl = coachData.cvUrl?.trim() || existingCv;
+      let photoUrl =
+        coachData.photoUrl !== undefined ? coachData.photoUrl.trim() : existingPhoto;
+      let cvUrl = coachData.cvUrl !== undefined ? coachData.cvUrl.trim() : existingCv;
       try {
         setUploadingCoachFiles(true);
         if (coachPhotoFile) {
@@ -277,13 +324,29 @@ export function EditUserDialog({
       updateMutation.mutate({
         ...coachData,
         availableTimes: normalizeAvailableTimes(coachData.availableTimes),
-        photoUrl: photoUrl || undefined,
-        cvUrl: cvUrl || undefined,
+        photoUrl: photoUrl === '' ? '' : photoUrl || undefined,
+        cvUrl: cvUrl === '' ? '' : cvUrl || undefined,
       });
       return;
     }
 
     updateMutation.mutate(data);
+  };
+
+  const isGrowManagedPhotoUrl = (url: string): boolean => url.includes('/public/avatars/');
+
+  const handleDeleteCurrentPhoto = async (kind: UploadKind, entityId: string, url: string) => {
+    try {
+      await deleteUploadedFileViaGcs(kind, entityId, url);
+      toast.success('Photo deleted');
+      return true;
+    } catch (err) {
+      toast.error(
+        'Failed to delete photo',
+        err instanceof Error ? err.message : 'Could not delete photo'
+      );
+      return false;
+    }
   };
 
   return (
@@ -314,12 +377,90 @@ export function EditUserDialog({
             </CustomFormField>
 
             {userType === 'parent' && (
-              <CustomFormField
-                label="Location"
-                error={(form.formState.errors as { location?: { message?: string } }).location?.message}
-              >
-                <Input {...form.register('location')} />
-              </CustomFormField>
+              <>
+                <div className="flex flex-col sm:flex-row gap-4 items-start rounded-lg border bg-muted/30 p-4">
+                  <Avatar className="h-20 w-20 border-2 border-background">
+                    {((parentPhotoPreviewUrl ?? (form.watch('photoUrl') as string | undefined)) ||
+                      '').trim() ? (
+                      <AvatarImage
+                        src={
+                          parentPhotoPreviewUrl ??
+                          ((form.watch('photoUrl') as string) || undefined)
+                        }
+                        alt=""
+                        className="object-cover"
+                      />
+                    ) : null}
+                    <AvatarFallback>
+                      {(form.watch('name') || user.parentProfile?.name || 'P')
+                        .toString()
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-2 flex-1 w-full">
+                    <label className="text-sm font-medium">Profile photo</label>
+                    <FileDropzone
+                      value={parentPhotoFile}
+                      onChange={setParentPhotoFile}
+                      existingUrl={(form.watch('photoUrl') as string | undefined) || undefined}
+                      accept={IMAGE_UPLOAD_TYPES}
+                      maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                      preview="image"
+                      label="Drop photo here or browse"
+                      description="JPEG, PNG, or WebP up to 5MB"
+                      disabled={uploadingParentPhoto || updateMutation.isPending}
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 text-xs text-muted-foreground"
+                        onClick={() => setShowParentPhotoUrl(v => !v)}
+                      >
+                        {showParentPhotoUrl ? 'Hide photo URL field' : 'Paste photo URL instead'}
+                      </Button>
+                      {(form.watch('photoUrl') as string | undefined) ? (
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0 text-xs text-destructive"
+                          disabled={uploadingParentPhoto || updateMutation.isPending}
+                          onClick={async () => {
+                            const url = (form.watch('photoUrl') as string | undefined)?.trim() || '';
+                            if (!url) return;
+                            if (!isGrowManagedPhotoUrl(url)) {
+                              form.setValue('photoUrl', '');
+                              setParentPhotoFile(null);
+                              toast.success('Photo removed from profile');
+                              return;
+                            }
+                            const ok = await handleDeleteCurrentPhoto(UploadKind.PARENT_AVATAR, user.id, url);
+                            if (ok) {
+                              form.setValue('photoUrl', '');
+                              setParentPhotoFile(null);
+                            }
+                          }}
+                        >
+                          Delete photo
+                        </Button>
+                      ) : null}
+                    </div>
+                    {showParentPhotoUrl && (
+                      <Input type="url" placeholder="https://..." {...form.register('photoUrl')} />
+                    )}
+                  </div>
+                </div>
+
+                <CustomFormField
+                  label="Location"
+                  error={
+                    (form.formState.errors as { location?: { message?: string } }).location?.message
+                  }
+                >
+                  <Input {...form.register('location')} />
+                </CustomFormField>
+              </>
             )}
 
             {userType === 'coach' && (
@@ -346,14 +487,41 @@ export function EditUserDialog({
                     disabled={updateMutation.isPending || uploadingCoachFiles}
                   />
                 </CustomFormField>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0 text-xs text-muted-foreground"
-                  onClick={() => setShowCoachPhotoUrl(v => !v)}
-                >
-                  {showCoachPhotoUrl ? 'Hide image URL field' : 'Paste image URL instead'}
-                </Button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-xs text-muted-foreground"
+                    onClick={() => setShowCoachPhotoUrl(v => !v)}
+                  >
+                    {showCoachPhotoUrl ? 'Hide image URL field' : 'Paste image URL instead'}
+                  </Button>
+                  {(form.watch('photoUrl') as string | undefined)?.trim() ? (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs text-destructive"
+                      disabled={updateMutation.isPending || uploadingCoachFiles}
+                      onClick={async () => {
+                        const url = (form.watch('photoUrl') as string | undefined)?.trim() || '';
+                        if (!url) return;
+                        if (!isGrowManagedPhotoUrl(url)) {
+                          form.setValue('photoUrl', '');
+                          setCoachPhotoFile(null);
+                          toast.success('Photo removed from profile');
+                          return;
+                        }
+                        const ok = await handleDeleteCurrentPhoto(UploadKind.COACH_PHOTO, user.id, url);
+                        if (ok) {
+                          form.setValue('photoUrl', '');
+                          setCoachPhotoFile(null);
+                        }
+                      }}
+                    >
+                      Delete photo
+                    </Button>
+                  ) : null}
+                </div>
                 {showCoachPhotoUrl && (
                   <CustomFormField
                     label="Photo URL"
@@ -521,8 +689,16 @@ export function EditUserDialog({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" form="edit-user-form" disabled={updateMutation.isPending || uploadingCoachFiles}>
-                {updateMutation.isPending || uploadingCoachFiles ? 'Updating...' : 'Update'}
+              <Button
+                type="submit"
+                form="edit-user-form"
+                disabled={
+                  updateMutation.isPending || uploadingCoachFiles || uploadingParentPhoto
+                }
+              >
+                {updateMutation.isPending || uploadingCoachFiles || uploadingParentPhoto
+                  ? 'Updating...'
+                  : 'Update'}
               </Button>
             </div>
           </div>

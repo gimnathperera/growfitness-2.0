@@ -4,8 +4,10 @@ import { UserRole } from '@grow-fitness/shared-types';
 import {
   UploadPresignSchema,
   UploadFinalizeSchema,
+  UploadDeleteSchema,
   UploadPresignDto,
   UploadFinalizeDto,
+  UploadDeleteDto,
 } from '@grow-fitness/shared-schemas';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -40,5 +42,15 @@ export class UploadsController {
     @CurrentUser() user: JwtPayload
   ) {
     return this.uploadsService.finalize(body, user);
+  }
+
+  @Post('delete')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete an uploaded file from GCS and clear its DB reference' })
+  delete(
+    @Body(new ZodValidationPipe(UploadDeleteSchema)) body: UploadDeleteDto,
+    @CurrentUser() user: JwtPayload
+  ) {
+    return this.uploadsService.delete(body, user);
   }
 }

@@ -171,9 +171,11 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                   <h3 className="font-semibold text-sm">Profile</h3>
                 </div>
                 <div className="flex items-center gap-3">
-                  {isCoach && coachProfile?.photoUrl ? (
+                  {(isCoach && coachProfile?.photoUrl) || (isParent && displayUser.parentProfile?.photoUrl) ? (
                     <img
-                      src={coachProfile.photoUrl}
+                      src={
+                        (isCoach ? coachProfile?.photoUrl : displayUser.parentProfile?.photoUrl) as string
+                      }
                       alt=""
                       className="h-16 w-16 rounded-full object-cover flex-shrink-0"
                     />
