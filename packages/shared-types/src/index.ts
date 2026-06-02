@@ -178,8 +178,10 @@ export interface Kid {
   sessionType: SessionType;
   achievements?: string[];
   milestones?: string[];
+  mealPlan?: string;
   createdAt: Date;
   updatedAt: Date;
+  stage?: string;
 }
 
 /** Kid summary when session.kids is populated */
@@ -195,8 +197,10 @@ export type SessionKidRef = Pick<
   | 'currentlyInSports'
   | 'medicalConditions'
   | 'sessionType'
+  | 'mealPlan'
   | 'createdAt'
   | 'updatedAt'
+  | 'stage'
 >;
 
 /** Populated coach reference (when coachId is expanded) */

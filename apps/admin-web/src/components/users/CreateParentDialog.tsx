@@ -203,7 +203,7 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                 </CustomFormField>
 
                 <CustomFormField
-                  label="Location"
+                  label="Address"
                   required
                   error={form.formState.errors.location?.message}
                 >

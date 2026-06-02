@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Eye, Link2, Unlink } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
-import { formatDate } from '@/lib/formatters';
 import { formatSessionType } from '@/lib/formatters';
 import { CreateKidDialog } from '@/components/kids/CreateKidDialog';
 import { EditKidDialog } from '@/components/kids/EditKidDialog';
@@ -129,8 +128,23 @@ export function KidsPage() {
     },
     {
       accessorKey: 'birthDate',
-      header: 'Birth Date',
-      cell: ({ row }) => formatDate(row.original.birthDate),
+      header: 'Age',
+      cell: ({ row }) => {
+        const birthDate = new Date(row.original.birthDate);
+        const today = new Date();
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < birthDate.getDate())
+        ) {
+          age--;
+        }
+
+        return age;
+      },
     },
     {
       accessorKey: 'sessionType',

@@ -140,7 +140,7 @@ export function ParentsTable() {
     },
     {
       accessorKey: 'parentProfile.location',
-      header: 'Location',
+      header: 'Address',
       cell: ({ row }) => row.original.parentProfile?.location || 'N/A',
     },
     {

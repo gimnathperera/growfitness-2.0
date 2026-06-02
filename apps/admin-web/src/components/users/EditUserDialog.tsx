@@ -368,26 +368,11 @@ export function EditUserDialog({
               <Input {...form.register('name')} />
             </CustomFormField>
 
-            <CustomFormField
-              label="Email"
-              required={userType === 'parent'}
-              error={
-                userType === 'parent'
-                  ? (form.formState.errors as { email?: { message?: string } }).email?.message
-                  : undefined
-              }
-            >
-              <Input
-                type="email"
-                {...form.register('email')}
-                disabled={userType === 'coach'}
-                readOnly={userType === 'coach'}
-                className={userType === 'coach' ? 'bg-muted text-muted-foreground' : undefined}
-              />
-              {userType === 'coach' ? (
-                <p className="text-xs text-muted-foreground">Coach email cannot be changed here.</p>
-              ) : null}
-            </CustomFormField>
+             <CustomFormField label="Email" required>
+            <div className="text-sm text-muted-foreground py-2">
+              {user.email}
+            </div>
+          </CustomFormField>
 
             <CustomFormField label="Phone" required error={form.formState.errors.phone?.message}>
               <Input {...form.register('phone')} />
@@ -470,7 +455,7 @@ export function EditUserDialog({
                 </div>
 
                 <CustomFormField
-                  label="Location"
+                  label="Address"
                   error={
                     (form.formState.errors as { location?: { message?: string } }).location?.message
                   }

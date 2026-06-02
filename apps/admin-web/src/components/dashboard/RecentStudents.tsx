@@ -10,7 +10,7 @@ import { formatSessionType } from '@/lib/formatters';
 export function RecentStudents() {
   const navigate = useNavigate();
   const { data, isLoading } = useApiQuery(['kids', 'recent'], () =>
-    kidsService.getKids(1, 5)
+    kidsService.getKids(1, 6)
   );
 
   const students = data?.data || [];

@@ -9,10 +9,6 @@ import {
   MapPin,
   Image,
   MessageCircle,
-  Shield,
-  Code,
-  HelpCircle,
-  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,11 +22,11 @@ const menuItems = [
   { path: '/locations', label: 'Locations', icon: MapPin },
   { path: '/banners', label: 'Banners', icon: Image },
   { path: '/testimonials', label: 'Testimonials', icon: MessageCircle },
-  { path: '/audit', label: 'Audit', icon: Shield },
-  { path: '/codes', label: 'Codes', icon: Code },
-  { path: '/quizzes', label: 'Quizzes', icon: HelpCircle },
-  { path: '/reports', label: 'Reports', icon: BarChart3 },
-  { path: '/chat', label: 'Support Chat', icon: MessageCircle },
+  // { path: '/audit', label: 'Audit', icon: Shield },
+  // { path: '/codes', label: 'Codes', icon: Code },
+  // { path: '/quizzes', label: 'Quizzes', icon: HelpCircle },
+  // { path: '/reports', label: 'Reports', icon: BarChart3 },
+  // { path: '/chat', label: 'Support Chat', icon: MessageCircle },
 ];
 
 export function Sidebar() {

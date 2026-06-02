@@ -5,7 +5,6 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorState } from '@/components/common/ErrorState';
 import { DashboardStatsCards } from '@/components/dashboard/DashboardStatsCards';
 import { WeeklySessionsChart } from '@/components/dashboard/WeeklySessionsChart';
-import { FinanceSummary } from '@/components/dashboard/FinanceSummary';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { TodaysSessions } from '@/components/dashboard/TodaysSessions';
 import { RecentStudents } from '@/components/dashboard/RecentStudents';
@@ -20,10 +19,6 @@ export function DashboardPage() {
   const { data: weeklySessions, isLoading: weeklyLoading } = useApiQuery(
     ['dashboard', 'weekly-sessions'],
     () => dashboardService.getWeeklySessions()
-  );
-
-  const { data: finance, isLoading: financeLoading } = useApiQuery(['dashboard', 'finance'], () =>
-    dashboardService.getFinanceSummary()
   );
 
   if (statsLoading) {
@@ -59,7 +54,6 @@ export function DashboardPage() {
         </div>
         <div className="space-y-6">
           <RecentStudents />
-          <FinanceSummary data={finance} isLoading={financeLoading} />
         </div>
       </div>
 

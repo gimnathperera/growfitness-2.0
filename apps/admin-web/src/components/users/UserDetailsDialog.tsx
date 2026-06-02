@@ -402,7 +402,7 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                           {isParent && user.parentProfile?.location && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Location
+                                Address
                               </h4>
                               <p className="text-sm">{user.parentProfile.location}</p>
                             </div>
