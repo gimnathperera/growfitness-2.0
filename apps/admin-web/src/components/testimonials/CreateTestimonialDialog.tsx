@@ -40,7 +40,7 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
     authorName: '',
     content: '',
     childName: '',
-    childAge: undefined,
+    childAge: 0,
     membershipDuration: '',
     rating: 5,
     order: 0,
@@ -70,18 +70,21 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
         }, 100);
       },
       onError: error => {
+        if (error.errorCode === 'DUPLICATE_TESTIMONIAL_ORDER') {
+          form.setError('order', {
+            type: 'server',
+            message: 'A testimonial with this order already exists',
+          });
+          return;
+        }
+
         toast.error('Failed to create testimonial', error.message || 'An error occurred');
       },
     }
   );
 
   const onSubmit = (data: CreateTestimonialDto) => {
-    createMutation.mutate({
-      ...data,
-      childName: data.childName || undefined,
-      childAge: data.childAge ?? undefined,
-      membershipDuration: data.membershipDuration || undefined,
-    });
+    createMutation.mutate(data);
   };
 
   return (
@@ -113,6 +116,7 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
 
               <CustomFormField
                 label="Child Name"
+                required
                 error={form.formState.errors.childName?.message}
               >
                 <Input {...form.register('childName')} placeholder="e.g. Emma" />
@@ -134,6 +138,7 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
 
               <CustomFormField
                 label="Child Age"
+                required
                 error={form.formState.errors.childAge?.message}
               >
                 <Input
@@ -147,6 +152,7 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
 
               <CustomFormField
                 label="Membership Duration"
+                required
                 error={form.formState.errors.membershipDuration?.message}
               >
                 <Input
@@ -155,7 +161,11 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
                 />
               </CustomFormField>
 
-              <CustomFormField label="Rating" error={form.formState.errors.rating?.message}>
+              <CustomFormField
+                label="Rating"
+                required
+                error={form.formState.errors.rating?.message}
+              >
                 <Input
                   type="number"
                   min={1}
@@ -164,12 +174,13 @@ export function CreateTestimonialDialog({ open, onOpenChange }: CreateTestimonia
                 />
               </CustomFormField>
 
-              <CustomFormField label="Order" error={form.formState.errors.order?.message}>
+              <CustomFormField label="Order" required error={form.formState.errors.order?.message}>
                 <Input type="number" min={0} {...form.register('order', { valueAsNumber: true })} />
               </CustomFormField>
 
               <CustomFormField
                 label="Active"
+                required
                 error={form.formState.errors.isActive?.message}
                 className="col-span-2"
               >

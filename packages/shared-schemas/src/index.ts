@@ -652,11 +652,11 @@ export type ReorderBannersDto = z.infer<typeof ReorderBannersSchema>;
 export const CreateTestimonialSchema = z.object({
   authorName: z.string().min(1, 'Author name is required'),
   content: z.string().min(1, 'Content is required'),
-  childName: z.string().optional(),
-  childAge: z.coerce.number().min(0).max(18).optional(),
-  membershipDuration: z.string().optional(),
-  rating: z.coerce.number().min(1).max(5).default(5),
-  order: z.coerce.number().min(0).default(0),
+  childName: z.string().min(1, 'Child name is required'),
+  childAge: z.coerce.number().min(0).max(18),
+  membershipDuration: z.string().min(1, 'Membership duration is required'),
+  rating: z.coerce.number().min(1).max(5),
+  order: z.coerce.number().min(0),
   isActive: z.boolean().default(true),
 });
 

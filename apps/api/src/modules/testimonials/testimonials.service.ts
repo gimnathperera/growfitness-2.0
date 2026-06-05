@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Testimonial, TestimonialDocument } from '../../infra/database/schemas/testimonial.schema';
@@ -45,6 +45,18 @@ export class TestimonialsService {
   }
 
   async create(createDto: CreateTestimonialDto, actorId: string) {
+    const existingOrder = await this.testimonialModel
+      .exists({ order: createDto.order })
+      .lean()
+      .exec();
+
+    if (existingOrder) {
+      throw new ConflictException({
+        errorCode: ErrorCode.DUPLICATE_TESTIMONIAL_ORDER,
+        message: 'A testimonial with this order already exists',
+      });
+    }
+
     const testimonial = new this.testimonialModel({
       ...createDto,
       order: createDto.order ?? 0,
