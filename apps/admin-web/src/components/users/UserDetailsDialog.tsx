@@ -280,8 +280,8 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                   <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     {!isCoach && (
-                      <TabsTrigger value="children">
-                        Children {totalKids > 0 && `(${totalKids})`}
+                      <TabsTrigger value="kids">
+                        Kids {totalKids > 0 && `(${totalKids})`}
                       </TabsTrigger>
                     )}
                   </TabsList>

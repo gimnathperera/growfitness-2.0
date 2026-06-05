@@ -96,6 +96,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
     resolver: zodResolver(CreateSessionSchema),
     defaultValues,
     shouldUnregister: true,
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -205,6 +206,26 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
 
   const isSubmitting = createMutation.isPending || createRecurringMutation.isPending;
   const sessionType = form.watch('type');
+
+  const isRecurringValid = repeatMode === 'none' || (() => {
+    if (repeatMode === 'WEEKLY' && daysOfWeek.length === 0) return false;
+    if (endType === 'never') return false;
+    if (endType === 'on' && !endDate) return false;
+    if (endType === 'after' && (!occurrences || occurrences < 1 || occurrences > 52)) return false;
+    return true;
+  })();
+
+const watched = form.watch();
+
+const isFormReady =
+  !isSubmitting &&
+  isRecurringValid &&
+  !!watched.title?.trim() &&
+  !!watched.coachId &&
+  !!watched.locationId &&
+  !!watched.dateTime &&
+  (watched.duration ?? 0) > 0 &&
+  (sessionType === SessionType.INDIVIDUAL ? (watched.kids?.length ?? 0) > 0 : true);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -545,7 +566,7 @@ export function CreateSessionDialog({ open, onOpenChange }: CreateSessionDialogP
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" form="create-session-form" disabled={isSubmitting}>
+              <Button type="submit" form="create-session-form" disabled={!isFormReady}>
                 {isSubmitting ? 'Creating...' : 'Create Session'}
               </Button>
             </div>

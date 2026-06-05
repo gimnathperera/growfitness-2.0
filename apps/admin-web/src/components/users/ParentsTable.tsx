@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
-import { formatDate, formatSessionType } from '@/lib/formatters';
+import { formatDate } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { CreateParentDialog } from './CreateParentDialog';
 import { EditUserDialog } from './EditUserDialog';
@@ -19,7 +19,6 @@ import { UserDetailsDialog } from './UserDetailsDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useModalParams } from '@/hooks/useModalParams';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -27,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SessionType, UserStatus } from '@grow-fitness/shared-types';
+import { UserStatus } from '@grow-fitness/shared-types';
 
 export function ParentsTable() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
@@ -88,7 +87,7 @@ export function ParentsTable() {
       page.toString(),
       pageSize.toString(),
       search,
-      locationFilter,
+      // locationFilter,
       statusFilter,
     ],
     () =>
@@ -96,7 +95,7 @@ export function ParentsTable() {
         page,
         pageSize,
         search || undefined,
-        locationFilter || undefined,
+        // locationFilter || undefined,
         statusFilter === 'ALL' ? undefined : statusFilter
       )
   );
@@ -138,31 +137,11 @@ export function ParentsTable() {
       accessorKey: 'phone',
       header: 'Phone',
     },
-    {
-      accessorKey: 'parentProfile.location',
-      header: 'Address',
-      cell: ({ row }) => row.original.parentProfile?.location || 'N/A',
-    },
-    {
-      id: 'sessionTypes',
-      header: 'Session Type',
-      cell: ({ row }) => {
-        const types = row.original.sessionTypes || [];
-        return (
-          <div className="flex gap-1 flex-wrap">
-            {types.length > 0 ? (
-              types.map(type => (
-                <Badge key={type} variant="secondary" className="text-xs">
-                  {formatSessionType(type as SessionType)}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-muted-foreground text-sm">-</span>
-            )}
-          </div>
-        );
-      },
-    },
+    // {
+    //   accessorKey: 'parentProfile.location',
+    //   header: 'Address',
+    //   cell: ({ row }) => row.original.parentProfile?.location || 'N/A',
+    // },
     {
       accessorKey: 'status',
       header: 'Status',
@@ -218,12 +197,6 @@ export function ParentsTable() {
             placeholder="Search parents..."
             onSearch={setSearch}
             className="w-[250px]"
-          />
-          <SearchInput
-            key={`parent-location-${searchInputKey}`}
-            placeholder="Filter location..."
-            onSearch={setLocationFilter}
-            className="w-[200px]"
           />
           <Select
             value={statusFilter}

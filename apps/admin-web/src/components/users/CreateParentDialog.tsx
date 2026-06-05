@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FormField as CustomFormField } from '@/components/common/FormField';
-import { CreateParentSchema, CreateParentDto } from '@grow-fitness/shared-schemas';
+import { CreateParentSchema, CreateParentBaseSchema, CreateParentDto } from '@grow-fitness/shared-schemas';
 import { SessionType } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { usersService } from '@/services/users.service';
@@ -75,6 +75,17 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
     name: 'kids',
   });
 
+  const [name, email, phone, location, password, confirmPassword] = form.watch([
+  'name',
+  'email',
+  'phone',
+  'location',
+  'password',
+  'confirmPassword',
+]);
+
+const kids = form.watch('kids');
+
   const defaultValues = {
     name: '',
     email: '',
@@ -94,6 +105,42 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
       },
     ],
   };
+
+  const requiredParentFieldsSchema = CreateParentBaseSchema.pick({
+  name: true,
+  email: true,
+  phone: true,
+  location: true,
+  password: true,
+  confirmPassword: true,
+});
+
+const requiredKidFieldsSchema = CreateParentBaseSchema.shape.kids.element.pick({
+  name: true,
+  gender: true,
+  birthDate: true,
+  sessionType: true,
+});
+
+const canGoNext = requiredParentFieldsSchema.safeParse({
+  name,
+  email,
+  phone,
+  location,
+  password,
+  confirmPassword,
+}).success;
+
+const canCreateParent =
+  kids.length > 0 &&
+  kids.every(kid =>
+    requiredKidFieldsSchema.safeParse({
+      name: kid.name,
+      gender: kid.gender,
+      birthDate: kid.birthDate,
+      sessionType: kid.sessionType,
+    }).success
+  );
 
   // Reset form and step when dialog opens/closes
   useEffect(() => {
@@ -371,11 +418,15 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                   Cancel
                 </Button>
                 {step === 1 ? (
-                  <Button type="button" onClick={handleNext}>
+                  <Button type="button" onClick={handleNext} disabled={!canGoNext}>
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit" form="create-parent-form" disabled={createMutation.isPending}>
+                 <Button
+                    type="submit"
+                    form="create-parent-form"
+                    disabled={!canCreateParent || createMutation.isPending}
+                  >
                     {createMutation.isPending ? 'Creating...' : 'Create Parent'}
                   </Button>
                 )}

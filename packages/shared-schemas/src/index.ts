@@ -93,48 +93,50 @@ const kidBirthDateSchema = z.union([z.string(), z.date()]).superRefine((val, ctx
 });
 
 // User Schemas
-export const CreateParentSchema = z
-  .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, 'Enter your name.')
-      .min(3, 'Full name must be at least 3 characters.'),
-    email: z
-      .string()
-      .trim()
-      .min(1, 'Enter your email address.')
-      .email('Enter a valid email address.'),
-    phone: signupPhoneSchema,
-    location: z.string().trim().min(1, 'Enter your location.'),
-    password: signupPasswordSchema,
-    confirmPassword: signupPasswordSchema,
-    kids: z
-      .array(
-        z.object({
-          name: z
-            .string()
-            .trim()
-            .min(1, 'Enter the child\'s name.'),
-          gender: z.string().min(1, 'Select a gender.'),
-          birthDate: kidBirthDateSchema,
-          goal: z.string().optional(),
-          currentlyInSports: z.boolean(),
-          medicalConditions: z.array(z.string()).default([]),
-          sessionType: z.nativeEnum(SessionType),
-        })
-      )
-      .min(1, 'Add at least one child.'),
-  })
-  .superRefine((data, ctx) => {
-    if (data.password !== data.confirmPassword) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Passwords don't match. Enter the same password in both fields.",
-        path: ['confirmPassword'],
-      });
-    }
-  });
+const CreateParentBaseSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Enter your name.')
+    .min(3, 'Full name must be at least 3 characters.'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Enter your email address.')
+    .email('Enter a valid email address.'),
+  phone: signupPhoneSchema,
+  location: z.string().trim().min(1, 'Enter your location.'),
+  password: signupPasswordSchema,
+  confirmPassword: signupPasswordSchema,
+  kids: z
+    .array(
+      z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, 'Enter the child\'s name.'),
+        gender: z.string().min(1, 'Select a gender.'),
+        birthDate: kidBirthDateSchema,
+        goal: z.string().optional(),
+        currentlyInSports: z.boolean(),
+        medicalConditions: z.array(z.string()).default([]),
+        sessionType: z.nativeEnum(SessionType),
+      })
+    )
+    .min(1, 'Add at least one child.'),
+});
+
+export const CreateParentSchema = CreateParentBaseSchema.superRefine((data, ctx) => {
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Passwords don't match. Enter the same password in both fields.",
+      path: ['confirmPassword'],
+    });
+  }
+});
+
+export { CreateParentBaseSchema };
 
 export type CreateParentDto = z.infer<typeof CreateParentSchema>;
 
@@ -337,27 +339,59 @@ export type UploadDeleteDto = z.infer<typeof UploadDeleteSchema>;
 export const CreateSessionSchema = z
   .object({
     title: z.string().min(1, 'Title is required'),
+
     type: z.nativeEnum(SessionType),
+
     coachId: z.string().min(1, 'Coach ID is required'),
+
     locationId: z.string().min(1, 'Location ID is required'),
-    dateTime: z.string().or(z.date()),
-    duration: z.number().min(1, 'Duration must be at least 1 minute'),
-    capacity: z.number().min(1, 'Capacity must be at least 1').optional(),
-    kids: z.array(z.string()).optional(),
+
+    dateTime: z
+      .string()
+      .or(z.date())
+      .refine(val => {
+        const d = new Date(val);
+        return !isNaN(d.getTime());
+      }, 'Invalid date & time'),
+
+    duration: z
+      .number()
+      .min(1, 'Duration must be at least 1 minute')
+      .max(480, 'Max duration is 480 minutes'),
+
+    capacity: z.number().min(1).optional(),
+
+    kids: z.array(z.string()).default([]),
+
     kidId: z.string().optional(),
+
     isFreeSession: z.boolean().default(false),
+
     isExtraSession: z.boolean().default(false),
   })
-  .refine(
-    data => {
-      if (data.type === SessionType.GROUP) return true;
-      return Array.isArray(data.kids) && data.kids.length >= 1;
-    },
-    {
-      message: 'Individual sessions require at least one kid',
-      path: ['kids'],
+  .superRefine((data, ctx) => {
+    // 👇 INDIVIDUAL session must have kids
+    if (data.type === SessionType.INDIVIDUAL) {
+      if (!data.kids || data.kids.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['kids'],
+          message: 'Select at least one kid',
+        });
+      }
     }
-  );
+
+    // 👇 GROUP session must have capacity
+    if (data.type === SessionType.GROUP) {
+      if (!data.capacity || data.capacity < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['capacity'],
+          message: 'Capacity is required for group sessions',
+        });
+      }
+    }
+  });
 
 export type CreateSessionDto = z.infer<typeof CreateSessionSchema>;
 

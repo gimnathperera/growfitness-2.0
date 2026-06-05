@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Download, Eye, Pencil } from 'lucide-react';
+import { Plus, Download, Eye, Pencil, Mail } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -73,6 +73,16 @@ export function InvoicesPage() {
   const updateDialogOpen = modal === 'edit' && isOpen;
   const createDialogOpen = modal === 'create' && isOpen;
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  const recipientEmailFor = (inv: Invoice) =>
+    inv.type === InvoiceType.PARENT_INVOICE
+      ? inv.parent?.email?.trim()
+      : inv.coach?.email?.trim();
+
+  const pdfAlreadySentFor = (inv: Invoice) => Boolean(inv.pdfEmailedAt);
+
   const { data, isLoading, error } = useApiQuery(
     ['invoices', page.toString(), pageSize.toString(), typeFilter, statusFilter, pdfSentFilter],
     () =>
@@ -99,6 +109,43 @@ export function InvoicesPage() {
       toast.success('Invoices exported successfully');
     } catch (error: any) {
       toast.error('Failed to export invoices', error.message);
+    }
+  };
+
+  const handleDownload = async (invoice: Invoice) => {
+    setIsDownloading(true);
+    try {
+      const blob = await invoicesService.downloadInvoicePdf(invoice.id);
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoice.id}.pdf`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+      toast.success('Invoice downloaded');
+    } catch {
+      toast.error('Download failed');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleSendEmail = async (invoice: Invoice) => {
+    const email = recipientEmailFor(invoice);
+    const alreadySent = pdfAlreadySentFor(invoice);
+    
+    if (!email || alreadySent) return;
+
+    setIsSending(true);
+    try {
+      await invoicesService.sendInvoicePdfEmail(invoice.id);
+      toast.success('Invoice sent');
+    } catch (err: any) {
+      toast.error(err?.message || 'Send failed');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -177,6 +224,24 @@ export function InvoicesPage() {
         const invoice = row.original;
         return (
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!recipientEmailFor(invoice) || isSending || isDownloading || pdfAlreadySentFor(invoice)}
+              onClick={() => handleSendEmail(invoice)}
+            >
+              <Mail className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => handleDownload(invoice)}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+
             <Button
               variant="ghost"
               size="icon"
