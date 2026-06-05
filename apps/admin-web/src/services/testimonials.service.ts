@@ -12,8 +12,8 @@ export const testimonialsService = {
     return api.get<PaginatedResponse<Testimonial>>(`/testimonials?${params.toString()}`);
   },
   getTestimonialById: (id: string) => api.get<Testimonial>(`/testimonials/${id}`),
-  createTestimonial: (data: CreateTestimonialDto) =>
-    api.post<Testimonial>('/testimonials', data),
+  createTestimonial: (data: CreateTestimonialDto) => api.post<Testimonial>('/testimonials', data),
   updateTestimonial: (id: string, data: UpdateTestimonialDto) =>
     api.patch<Testimonial>(`/testimonials/${id}`, data),
+  deleteTestimonial: (id: string) => api.delete<void>(`/testimonials/${id}`),
 };

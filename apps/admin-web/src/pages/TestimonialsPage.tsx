@@ -7,7 +7,7 @@ import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDate } from '@/lib/formatters';
@@ -15,12 +15,15 @@ import { CreateTestimonialDialog } from '@/components/testimonials/CreateTestimo
 import { EditTestimonialDialog } from '@/components/testimonials/EditTestimonialDialog';
 import { ErrorState } from '@/components/common/ErrorState';
 import { useModalParams } from '@/hooks/useModalParams';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { useConfirm } from '@/hooks/useConfirm';
 
 export function TestimonialsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('testimonialId');
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
   const { toast } = useToast();
+  const { confirm, confirmState } = useConfirm();
 
   const editDialogOpen = modal === 'edit' && isOpen;
   const createDialogOpen = modal === 'create' && isOpen;
@@ -57,6 +60,29 @@ export function TestimonialsPage() {
     }
   );
 
+  const deleteMutation = useApiMutation((id: string) => testimonialsService.deleteTestimonial(id), {
+    invalidateQueries: [['testimonials']],
+    onSuccess: () => {
+      toast.success('Testimonial deleted successfully');
+    },
+    onError: err => {
+      toast.error('Failed to delete testimonial', err.message);
+    },
+  });
+
+  const handleDelete = async (testimonial: Testimonial) => {
+    const confirmed = await confirm({
+      title: 'Delete Testimonial',
+      description: `Permanently delete the testimonial from ${testimonial.authorName}? This cannot be undone.`,
+      variant: 'destructive',
+      confirmText: 'Delete',
+    });
+
+    if (confirmed) {
+      deleteMutation.mutate(testimonial.id);
+    }
+  };
+
   const columns: ColumnDef<Testimonial>[] = [
     {
       accessorKey: 'authorName',
@@ -82,11 +108,7 @@ export function TestimonialsPage() {
     {
       accessorKey: 'rating',
       header: 'Rating',
-      cell: ({ row }) => (
-        <span>
-          {row.original.rating ?? 5}/5
-        </span>
-      ),
+      cell: ({ row }) => <span>{row.original.rating ?? 5}/5</span>,
     },
     {
       accessorKey: 'order',
@@ -118,16 +140,21 @@ export function TestimonialsPage() {
       cell: ({ row }) => {
         const testimonial = row.original;
         return (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              setSelectedTestimonial(testimonial);
-              openModal(testimonial.id, 'edit');
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setSelectedTestimonial(testimonial);
+                openModal(testimonial.id, 'edit');
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => handleDelete(testimonial)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
         );
       },
     },
@@ -137,7 +164,9 @@ export function TestimonialsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Testimonials</h1>
-        <p className="text-muted-foreground mt-1">Manage customer testimonials displayed on the website</p>
+        <p className="text-muted-foreground mt-1">
+          Manage customer testimonials displayed on the website
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -174,6 +203,19 @@ export function TestimonialsPage() {
           testimonial={selectedTestimonial || undefined}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmState.open}
+        onOpenChange={open => {
+          if (!open) confirmState.onCancel();
+        }}
+        title={confirmState.options?.title || ''}
+        description={confirmState.options?.description || ''}
+        confirmText={confirmState.options?.confirmText}
+        cancelText={confirmState.options?.cancelText}
+        variant={confirmState.options?.variant}
+        onConfirm={confirmState.onConfirm}
+      />
     </div>
   );
 }

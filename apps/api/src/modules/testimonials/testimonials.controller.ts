@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -139,5 +149,18 @@ export class TestimonialsController {
     @CurrentUser('sub') actorId: string
   ) {
     return this.testimonialsService.update(id, updateDto, actorId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a testimonial',
+    description: 'Admin only. Requires JWT.',
+  })
+  @ApiResponse({ status: 200, description: 'Testimonial deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Admin JWT required' })
+  @ApiResponse({ status: 404, description: 'Testimonial not found' })
+  @ApiResponse({ status: 400, description: 'Invalid ID format' })
+  delete(@Param('id', ObjectIdValidationPipe) id: string, @CurrentUser('sub') actorId: string) {
+    return this.testimonialsService.delete(id, actorId);
   }
 }

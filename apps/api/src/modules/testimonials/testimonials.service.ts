@@ -87,4 +87,26 @@ export class TestimonialsService {
 
     return this.findById(id);
   }
+
+  async delete(id: string, actorId: string) {
+    const testimonial = await this.testimonialModel.findByIdAndDelete(id).lean().exec();
+
+    if (!testimonial) {
+      throw new NotFoundException({
+        errorCode: ErrorCode.NOT_FOUND,
+        message: 'Testimonial not found',
+      });
+    }
+
+    await this.auditService.log({
+      actorId,
+      action: 'DELETE_TESTIMONIAL',
+      entityType: 'Testimonial',
+      entityId: id,
+      metadata: {
+        authorName: testimonial.authorName,
+        content: testimonial.content,
+      },
+    });
+  }
 }
