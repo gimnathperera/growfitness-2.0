@@ -48,6 +48,7 @@ const defaultValues = {
       birthDate: '',
       goal: '',
       currentlyInSports: false,
+      hasMedicalConditions: 'no',
       medicalConditions: [],
       sessionType: SessionType.INDIVIDUAL,
     },
@@ -279,7 +280,20 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                       label="Goal"
                       error={form.formState.errors.kids?.[index]?.goal?.message}
                     >
-                      <Input {...form.register(`kids.${index}.goal`)} />
+                       <Select
+                        value={form.watch(`kids.${index}.goal`)}
+                        onValueChange={value => form.setValue(`kids.${index}.goal`, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a goal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Build strength">Build strength</SelectItem>
+                          <SelectItem value="Improve coordination">Improve coordination</SelectItem>
+                          <SelectItem value="Make friends">Make friends</SelectItem>
+                          <SelectItem value="I don't know/ Basic fitness">I don't know/ Basic fitness</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </CustomFormField>
 
                     <CustomFormField
@@ -299,6 +313,7 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                         <SelectContent>
                           <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                           <SelectItem value={SessionType.GROUP}>Group</SelectItem>
+                          <SelectItem value={SessionType.BOTH}>Both</SelectItem>
                         </SelectContent>
                       </Select>
                     </CustomFormField>
@@ -313,6 +328,59 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                         Currently in sports
                       </label>
                     </div>
+
+                    <CustomFormField
+                      label="Medical Conditions (Optional)"
+                      error={form.formState.errors.kids?.[index]?.medicalConditions?.message}
+                    >
+                      <div className="space-y-3">
+                        {[
+                          'Asthma',
+                          'Allergies',
+                          'Diabetes',
+                          'Heart conditions',
+                          'Joint issues',
+                          'Others',
+                        ].map(condition => {
+                          const selectedConditions =
+                            form.watch(`kids.${index}.medicalConditions`) || [];
+
+                          return (
+                            <div
+                              key={condition}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`medical-condition-${index}-${condition}`}
+                                checked={selectedConditions.includes(condition)}
+                                onCheckedChange={checked => {
+                                  if (checked === true) {
+                                    form.setValue(`kids.${index}.medicalConditions`, [
+                                      ...selectedConditions,
+                                      condition,
+                                    ]);
+                                  } else {
+                                    form.setValue(
+                                      `kids.${index}.medicalConditions`,
+                                      selectedConditions.filter(
+                                        item => item !== condition
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+
+                              <label
+                                htmlFor={`medical-condition-${index}-${condition}`}
+                                className="text-sm font-normal leading-none"
+                              >
+                                {condition}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CustomFormField>
                   </div>
                 ))}
 
