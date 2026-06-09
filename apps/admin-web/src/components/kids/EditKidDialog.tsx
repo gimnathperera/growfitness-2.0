@@ -284,8 +284,24 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
               />
             </CustomFormField>
 
-            <CustomFormField label="Goal" error={form.formState.errors.goal?.message}>
-              <Input {...form.register('goal')} />
+            <CustomFormField
+                      label="Goal"
+                      error={form.formState.errors.goal?.message}
+                    >
+                       <Select
+                        value={form.watch(`goal`)}
+                        onValueChange={value => form.setValue(`goal`, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a goal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Build strength">Build strength</SelectItem>
+                          <SelectItem value="Improve coordination">Improve coordination</SelectItem>
+                          <SelectItem value="Make friends">Make friends</SelectItem>
+                          <SelectItem value="I don't know/ Basic fitness">I don't know/ Basic fitness</SelectItem>
+                        </SelectContent>
+                      </Select>
             </CustomFormField>
 
             <CustomFormField
@@ -303,6 +319,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
                 <SelectContent>
                   <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
                   <SelectItem value={SessionType.GROUP}>Group</SelectItem>
+                  <SelectItem value={SessionType.BOTH}>Both</SelectItem>
                 </SelectContent>
               </Select>
             </CustomFormField>
@@ -317,6 +334,59 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
                 Currently in sports
               </label>
             </div>
+
+             <CustomFormField
+                      label="Medical Conditions (Optional)"
+                      error={form.formState.errors.medicalConditions?.message}
+                    >
+                      <div className="space-y-3">
+                        {[
+                          'Asthma',
+                          'Allergies',
+                          'Diabetes',
+                          'Heart conditions',
+                          'Joint issues',
+                          'Others',
+                        ].map(condition => {
+                          const selectedConditions =
+                            form.watch('medicalConditions') || [];
+
+                          return (
+                            <div
+                              key={condition}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`medical-condition-${condition}`}
+                                checked={selectedConditions.includes(condition)}
+                                onCheckedChange={checked => {
+                                  if (checked === true) {
+                                    form.setValue('medicalConditions', [
+                                      ...selectedConditions,
+                                      condition,
+                                    ]);
+                                  } else {
+                                    form.setValue(
+                                      'medicalConditions',
+                                      selectedConditions.filter(
+                                        item => item !== condition
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+
+                              <label
+                                htmlFor={`medical-condition-${condition}`}
+                                className="text-sm font-normal leading-none"
+                              >
+                                {condition}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+            </CustomFormField>
 
             </form>
           </div>

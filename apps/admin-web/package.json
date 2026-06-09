@@ -40,6 +40,7 @@
     "@tanstack/react-table": "^8.11.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "cmdk": "1.0.0",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.309.0",
     "react": "^19.0.0",
