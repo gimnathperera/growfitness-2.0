@@ -167,7 +167,7 @@ export interface CoachProfile {
 }
 
 export interface Kid {
-  parent: any;
+  parent?: any;
   id: string;
   parentId: string;
   parentProfile?: ParentProfile;
