@@ -3,7 +3,14 @@ import { Kid, PaginatedResponse, SessionType } from '@grow-fitness/shared-types'
 import { CreateKidDto, UpdateKidDto } from '@grow-fitness/shared-schemas';
 
 export const kidsService = {
-  getKids: (page: number = 1, limit: number = 10, parentId?: string, sessionType?: SessionType, search?: string) => {
+  getKids: (
+    page: number = 1,
+    limit: number = 10,
+    parentId?: string,
+    sessionType?: SessionType,
+    search?: string,
+    filters?: { gender?: string; minAge?: string; maxAge?: string },
+  ) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -11,6 +18,9 @@ export const kidsService = {
     if (parentId) params.append('parentId', parentId);
     if (sessionType) params.append('sessionType', sessionType);
     if (search) params.append('search', search);
+    if (filters?.gender) params.append('gender', filters.gender);
+    if (filters?.minAge) params.append('minAge', filters.minAge);
+    if (filters?.maxAge) params.append('maxAge', filters.maxAge);
     return api.get<PaginatedResponse<Kid>>(`/kids?${params.toString()}`);
   },
   getKidById: (id: string) => api.get<Kid>(`/kids/${id}`),

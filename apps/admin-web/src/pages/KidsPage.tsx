@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
 import { kidsService } from '@/services/kids.service';
-import { Kid } from '@grow-fitness/shared-types';
+import { Kid, SessionType } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
@@ -22,13 +22,26 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { useModalParams } from '@/hooks/useModalParams';
 import { useSearchParams } from 'react-router-dom';
 
+const AGE_MIN = 0;
+const AGE_MAX = 18;
+
 export function KidsPage() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const [search, setSearch] = useState('');
+  const [gender, setGender] = useState('');
+  const [ageRange, setAgeRange] = useState<[number, number]>([AGE_MIN, AGE_MAX]);
+  const [sessionTypeFilter, setSessionTypeFilter] = useState<SessionType | ''>('');
   const [searchInputKey, setSearchInputKey] = useState(0);
+  const [minAge, maxAge] = ageRange;
+  const hasCustomAgeRange = minAge !== AGE_MIN || maxAge !== AGE_MAX;
+
+  const hasActiveFilters = !!(search || gender || hasCustomAgeRange || sessionTypeFilter);
 
   const clearAllFilters = () => {
     setSearch('');
+    setGender('');
+    setAgeRange([AGE_MIN, AGE_MAX]);
+    setSessionTypeFilter('');
     setSearchInputKey(key => key + 1);
   };
   const { modal, entityId, isOpen, openModal, closeModal } = useModalParams('kidId');
@@ -40,12 +53,12 @@ export function KidsPage() {
   // Handle link dialog separately (it uses a different param)
   const linkDialogOpen = searchParams.get('linkKid') === entityId;
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     if (page !== 1) {
       setPage(1);
     }
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search, gender, minAge, maxAge, sessionTypeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync selectedKid with URL params
   useEffect(() => {
@@ -90,8 +103,22 @@ export function KidsPage() {
   };
 
   const { data, isLoading, error } = useApiQuery(
-    ['kids', page.toString(), pageSize.toString(), search],
-    () => kidsService.getKids(page, pageSize, undefined, undefined, search || undefined)
+    [
+      'kids',
+      page.toString(),
+      pageSize.toString(),
+      search,
+      gender,
+      minAge.toString(),
+      maxAge.toString(),
+      sessionTypeFilter,
+    ],
+    () =>
+      kidsService.getKids(page, pageSize, undefined, sessionTypeFilter || undefined, search || undefined, {
+        gender: gender || undefined,
+        minAge: hasCustomAgeRange ? minAge.toString() : undefined,
+        maxAge: hasCustomAgeRange ? maxAge.toString() : undefined,
+      })
   );
 
   const deleteMutation = useApiMutation((id: string) => kidsService.unlinkFromParent(id), {
@@ -219,15 +246,76 @@ export function KidsPage() {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <SearchInput
               key={`kid-search-${searchInputKey}`}
               placeholder="Search kids..."
               onSearch={setSearch}
               className="max-w-sm"
             />
-            <ClearFiltersButton onClear={clearAllFilters} disabled={!search} />
+            {/* Gender filter */}
+            <select
+              value={gender}
+              onChange={e => setGender(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">All Genders</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            <div className="flex h-9 min-w-[240px] items-center gap-3 rounded-md border border-input bg-background px-3 shadow-sm">
+              <span className="whitespace-nowrap text-sm text-muted-foreground">
+                Age {minAge} - {maxAge}
+              </span>
+              <div className="relative h-5 flex-1">
+                <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
+                <div
+                  className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
+                  style={{
+                    left: `${(minAge / AGE_MAX) * 100}%`,
+                    right: `${100 - (maxAge / AGE_MAX) * 100}%`,
+                  }}
+                />
+                <input
+                  type="range"
+                  min={AGE_MIN}
+                  max={AGE_MAX}
+                  value={minAge}
+                  aria-label="Minimum age"
+                  onChange={e => {
+                    const nextMinAge = Math.min(Number(e.target.value), maxAge);
+                    setAgeRange([nextMinAge, maxAge]);
+                  }}
+                  className="pointer-events-none absolute inset-0 h-5 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:shadow-sm [&::-moz-range-track]:bg-transparent [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-sm"
+                />
+                <input
+                  type="range"
+                  min={AGE_MIN}
+                  max={AGE_MAX}
+                  value={maxAge}
+                  aria-label="Maximum age"
+                  onChange={e => {
+                    const nextMaxAge = Math.max(Number(e.target.value), minAge);
+                    setAgeRange([minAge, nextMaxAge]);
+                  }}
+                  className="pointer-events-none absolute inset-0 h-5 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:shadow-sm [&::-moz-range-track]:bg-transparent [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-sm"
+                />
+              </div>
+            </div>
+            {/* Session type filter */}
+            <select
+              value={sessionTypeFilter}
+              onChange={e => setSessionTypeFilter(e.target.value as SessionType | '')}
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">All Session Types</option>
+              <option value={SessionType.INDIVIDUAL}>Private</option>
+              <option value={SessionType.GROUP}>Group</option>
+              <option value={SessionType.BOTH}>Both</option>
+            </select>
+            <ClearFiltersButton onClear={clearAllFilters} disabled={!hasActiveFilters} />
           </div>
           <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
