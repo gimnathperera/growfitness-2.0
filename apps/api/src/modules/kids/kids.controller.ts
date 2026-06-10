@@ -54,8 +54,26 @@ export class KidsController {
   @ApiQuery({
     name: 'sessionType',
     required: false,
-    enum: ['INDIVIDUAL', 'GROUP'],
+    enum: SessionType,
     description: 'Filter by session type',
+  })
+  @ApiQuery({
+    name: 'gender',
+    required: false,
+    type: String,
+    description: 'Filter by exact gender',
+  })
+  @ApiQuery({
+    name: 'minAge',
+    required: false,
+    type: Number,
+    description: 'Minimum age in years',
+  })
+  @ApiQuery({
+    name: 'maxAge',
+    required: false,
+    type: Number,
+    description: 'Maximum age in years',
   })
   @ApiQuery({
     name: 'search',
@@ -65,8 +83,12 @@ export class KidsController {
   })
   @ApiResponse({ status: 200, description: 'List of kids' })
   findAll(@Query() query: FindKidsQueryDto) {
-    const { parentId, sessionType, search, ...pagination } = query;
-    return this.kidsService.findAll(pagination, parentId, sessionType, search);
+    const { parentId, sessionType, search, gender, minAge, maxAge, ...pagination } = query;
+    return this.kidsService.findAll(pagination, parentId, sessionType, search, {
+      gender,
+      minAge,
+      maxAge,
+    });
   }
 
   @Post()

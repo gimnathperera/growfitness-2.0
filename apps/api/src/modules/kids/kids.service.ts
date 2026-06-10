@@ -4,11 +4,17 @@ import { Model, Types } from 'mongoose';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
 import { CreateKidDto, UpdateKidDto } from '@grow-fitness/shared-schemas';
-import { UserRole } from '@grow-fitness/shared-types';
+import { SessionType, UserRole } from '@grow-fitness/shared-types';
 import type { JwtPayload } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
+
+interface KidFilters {
+  gender?: string;
+  minAge?: number;
+  maxAge?: number;
+}
 
 @Injectable()
 export class KidsService {
@@ -21,8 +27,9 @@ export class KidsService {
   async findAll(
     pagination: PaginationDto,
     parentId?: string,
-    sessionType?: string,
-    search?: string
+    sessionType?: SessionType,
+    search?: string,
+    filters: KidFilters = {}
   ) {
     const query: Record<string, unknown> = { isApproved: true };
 
@@ -32,6 +39,32 @@ export class KidsService {
 
     if (sessionType) {
       query.sessionType = sessionType;
+    }
+
+    if (filters.gender) {
+      query.gender = filters.gender;
+    }
+
+    const birthDateFilter: Record<string, Date> = {};
+    const today = new Date();
+
+    if (filters.minAge !== undefined) {
+      const latestBirthDate = new Date(today);
+      latestBirthDate.setFullYear(today.getFullYear() - filters.minAge);
+      latestBirthDate.setHours(23, 59, 59, 999);
+      birthDateFilter.$lte = latestBirthDate;
+    }
+
+    if (filters.maxAge !== undefined) {
+      const earliestBirthDate = new Date(today);
+      earliestBirthDate.setFullYear(today.getFullYear() - filters.maxAge - 1);
+      earliestBirthDate.setDate(earliestBirthDate.getDate() + 1);
+      earliestBirthDate.setHours(0, 0, 0, 0);
+      birthDateFilter.$gte = earliestBirthDate;
+    }
+
+    if (Object.keys(birthDateFilter).length > 0) {
+      query.birthDate = birthDateFilter;
     }
 
     // Add search functionality - search by name or goal
