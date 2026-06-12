@@ -186,8 +186,8 @@ export function SessionsPage() {
         coachId: coachFilter || undefined,
         locationId: locationFilter || undefined,
         status: statusFilter || undefined,
-        sortBy: sortBy || 'createdAt',
-        sortOrder: (sortOrder || 'desc') as SortOrder,
+        sortBy,
+        sortOrder: sortOrder as SortOrder | undefined,
       }),
     {
       enabled: currentTab === 'list',

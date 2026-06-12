@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { Session, SessionDocument } from '../../infra/database/schemas/session.schema';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
@@ -229,8 +229,46 @@ export class SessionsService {
       query.dateTime = dateTimeFilter;
     }
 
-    const sort = buildSessionSort(filters?.sortBy, filters?.sortOrder);
     const skip = (pagination.page - 1) * pagination.limit;
+
+    if (!filters?.sortBy) {
+      const now = new Date();
+      const defaultSortPipeline: PipelineStage[] = [
+        { $match: query },
+        {
+          $addFields: {
+            __isPastSession: { $lt: ['$dateTime', now] },
+            __sortDateTime: {
+              $cond: [
+                { $lt: ['$dateTime', now] },
+                { $multiply: [{ $toLong: '$dateTime' }, -1] },
+                { $toLong: '$dateTime' },
+              ],
+            },
+          },
+        },
+        { $sort: { __isPastSession: 1, __sortDateTime: 1, _id: 1 } },
+        { $skip: skip },
+        { $limit: pagination.limit },
+        { $project: { __isPastSession: 0, __sortDateTime: 0 } },
+      ];
+
+      const [data, total] = await Promise.all([
+        this.sessionModel.aggregate(defaultSortPipeline).exec(),
+        this.sessionModel.countDocuments(query).exec(),
+      ]);
+
+      const populatedData = await this.sessionModel.populate(data, [
+        { path: 'coachId', select: 'email coachProfile' },
+        { path: 'locationId' },
+        { path: 'kids' },
+      ]);
+
+      const transformedData = (populatedData as any[]).map(s => this.toSessionResponse(s));
+      return new PaginatedResponseDto(transformedData, total, pagination.page, pagination.limit);
+    }
+
+    const sort = buildSessionSort(filters.sortBy, filters.sortOrder);
     const [data, total] = await Promise.all([
       this.sessionModel
         .find(query)
