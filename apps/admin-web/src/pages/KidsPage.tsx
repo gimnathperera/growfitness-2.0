@@ -349,19 +349,19 @@ export function KidsPage() {
 
       <CreateKidDialog open={createDialogOpen} onOpenChange={closeModal} />
 
-      {(selectedKid || entityId) && (
+      {selectedKid && (
         <>
-          <EditKidDialog
-            open={editDialogOpen}
-            onOpenChange={closeModal}
-            kid={selectedKid || undefined}
-          />
-          <KidDetailsDialog
-            open={detailsDialogOpen}
-            onOpenChange={closeModal}
-            kid={selectedKid || undefined}
-          />
-          {selectedKid && (
+          {editDialogOpen && (
+            <EditKidDialog open={editDialogOpen} onOpenChange={closeModal} kid={selectedKid} />
+          )}
+          {detailsDialogOpen && (
+            <KidDetailsDialog
+              open={detailsDialogOpen}
+              onOpenChange={closeModal}
+              kid={selectedKid}
+            />
+          )}
+          {linkDialogOpen && (
             <LinkParentDialog
               open={linkDialogOpen}
               onOpenChange={handleCloseLinkDialog}
