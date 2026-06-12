@@ -12,6 +12,9 @@ interface CreateRecurringSessionsResponse {
   sessions: Session[];
 }
 
+export type SessionSortField = 'title' | 'dateTime' | 'type' | 'duration' | 'status' | 'createdAt';
+export type SortOrder = 'asc' | 'desc';
+
 export const sessionsService = {
   getSessions: (
     page: number = 1,
@@ -22,8 +25,8 @@ export const sessionsService = {
       status?: SessionStatus;
       startDate?: string;
       endDate?: string;
-      sortBy?: 'dateTime' | 'createdAt';
-      sortOrder?: 'asc' | 'desc';
+      sortBy?: SessionSortField;
+      sortOrder?: SortOrder;
     }
   ) => {
     const params = new URLSearchParams({

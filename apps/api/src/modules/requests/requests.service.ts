@@ -48,9 +48,24 @@ import { SessionsService } from '../sessions/sessions.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { Types } from 'mongoose';
+import type { RequestSortField } from './dto/list-requests-query.dto';
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildRequestSort(
+  sortBy: RequestSortField | undefined,
+  sortOrder: 'asc' | 'desc' | undefined,
+  fields: Partial<Record<RequestSortField, string>>
+): Record<string, 1 | -1> {
+  const direction = sortOrder === 'asc' ? 1 : -1;
+  const sortField = sortBy ? fields[sortBy] : undefined;
+  if (!sortField) {
+    return { createdAt: -1, _id: 1 };
+  }
+
+  return { [sortField]: direction, _id: 1 };
 }
 
 @Injectable()
@@ -211,15 +226,28 @@ export class RequestsService {
     return saved;
   }
 
-  async findFreeSessionRequests(pagination: PaginationDto) {
+  async findFreeSessionRequests(
+    pagination: PaginationDto,
+    sortBy?: RequestSortField,
+    sortOrder?: 'asc' | 'desc'
+  ) {
     const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
+    const sort = buildRequestSort(sortBy, sortOrder, {
+      parentName: 'parentName',
+      kidName: 'kidName',
+      email: 'email',
+      phone: 'phone',
+      preferredDateTime: 'preferredDateTime',
+      status: 'status',
+      createdAt: 'createdAt',
+    });
     const [data, total] = await Promise.all([
       this.freeSessionRequestModel
         .find(filter)
         .populate('selectedSessionId')
         .populate('locationId')
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(pagination.limit)
         .exec(),
@@ -365,15 +393,26 @@ export class RequestsService {
     return saved.populate(['sessionId', 'requestedBy']);
   }
 
-  async findRescheduleRequests(pagination: PaginationDto) {
+  async findRescheduleRequests(
+    pagination: PaginationDto,
+    sortBy?: RequestSortField,
+    sortOrder?: 'asc' | 'desc'
+  ) {
     const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
+    const sort = buildRequestSort(sortBy, sortOrder, {
+      sessionId: 'sessionId',
+      newDateTime: 'newDateTime',
+      reason: 'reason',
+      status: 'status',
+      createdAt: 'createdAt',
+    });
     const [data, total] = await Promise.all([
       this.rescheduleRequestModel
         .find(filter)
         .populate('sessionId')
         .populate('requestedBy', 'email')
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(pagination.limit)
         .exec(),
@@ -416,9 +455,7 @@ export class RequestsService {
       });
     }
     const sessionId =
-      sessionRef instanceof Types.ObjectId
-        ? sessionRef.toString()
-        : sessionRef._id?.toString?.();
+      sessionRef instanceof Types.ObjectId ? sessionRef.toString() : sessionRef._id?.toString?.();
     if (!sessionId) {
       throw new NotFoundException({
         errorCode: ErrorCode.NOT_FOUND,
@@ -596,22 +633,100 @@ export class RequestsService {
     return saved.populate(['parentId', 'kidId', 'coachId', 'locationId']);
   }
 
-  async findExtraSessionRequests(pagination: PaginationDto) {
+  async findExtraSessionRequests(
+    pagination: PaginationDto,
+    sortBy?: RequestSortField,
+    sortOrder?: 'asc' | 'desc'
+  ) {
     const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
-    const [data, total] = await Promise.all([
-      this.extraSessionRequestModel
-        .find(filter)
-        .populate('parentId', 'email parentProfile')
-        .populate('kidId')
-        .populate('coachId', 'email coachProfile')
-        .populate('locationId')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(pagination.limit)
-        .exec(),
-      this.extraSessionRequestModel.countDocuments(filter).exec(),
-    ]);
+    const sort = buildRequestSort(sortBy, sortOrder, {
+      parent: 'parent.parentProfile.name',
+      kid: 'kid.name',
+      coach: 'coach.coachProfile.name',
+      preferredDateTime: 'preferredDateTime',
+      sessionType: 'sessionType',
+      status: 'status',
+      createdAt: 'createdAt',
+    });
+
+    const pipeline: any[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'parentId',
+          foreignField: '_id',
+          as: 'parent',
+        },
+      },
+      {
+        $lookup: {
+          from: 'kids',
+          localField: 'kidId',
+          foreignField: '_id',
+          as: 'kid',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'coachId',
+          foreignField: '_id',
+          as: 'coach',
+        },
+      },
+      {
+        $lookup: {
+          from: 'locations',
+          localField: 'locationId',
+          foreignField: '_id',
+          as: 'location',
+        },
+      },
+      { $unwind: { path: '$parent', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$kid', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$coach', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$location', preserveNullAndEmptyArrays: true } },
+      {
+        $facet: {
+          data: [
+            { $sort: sort },
+            { $skip: skip },
+            { $limit: pagination.limit },
+            {
+              $project: {
+                parentId: 0,
+                kidId: 0,
+                coachId: 0,
+                locationId: 0,
+                'parent.passwordHash': 0,
+                'parent.googleCalendarRefreshToken': 0,
+                'parent.__v': 0,
+                'coach.passwordHash': 0,
+                'coach.googleCalendarRefreshToken': 0,
+                'coach.__v': 0,
+                'kid.__v': 0,
+                'location.__v': 0,
+              },
+            },
+            {
+              $addFields: {
+                parentId: '$parent',
+                kidId: '$kid',
+                coachId: '$coach',
+                locationId: '$location',
+              },
+            },
+          ],
+          total: [{ $count: 'count' }],
+        },
+      },
+    ];
+
+    const [result] = await this.extraSessionRequestModel.aggregate(pipeline).exec();
+    const data = result.data;
+    const total = result.total[0]?.count || 0;
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }
@@ -945,20 +1060,74 @@ export class RequestsService {
   }
 
   // User Registration Requests
-  async findUserRegistrationRequests(pagination: PaginationDto) {
+  async findUserRegistrationRequests(
+    pagination: PaginationDto,
+    sortBy?: RequestSortField,
+    sortOrder?: 'asc' | 'desc'
+  ) {
     const filter = { status: RequestStatus.PENDING };
     const skip = (pagination.page - 1) * pagination.limit;
-    const [data, total] = await Promise.all([
-      this.userRegistrationRequestModel
-        .find(filter)
-        .populate('parentId', 'email phone parentProfile status')
-        .populate('processedBy', 'email')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(pagination.limit)
-        .exec(),
-      this.userRegistrationRequestModel.countDocuments(filter).exec(),
-    ]);
+    const sort = buildRequestSort(sortBy, sortOrder, {
+      parent: 'parent.parentProfile.name',
+      email: 'parent.email',
+      phone: 'parent.phone',
+      status: 'status',
+      createdAt: 'createdAt',
+    });
+
+    const pipeline: any[] = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'parentId',
+          foreignField: '_id',
+          as: 'parent',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'processedBy',
+          foreignField: '_id',
+          as: 'processedByUser',
+        },
+      },
+      { $unwind: { path: '$parent', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$processedByUser', preserveNullAndEmptyArrays: true } },
+      {
+        $facet: {
+          data: [
+            { $sort: sort },
+            { $skip: skip },
+            { $limit: pagination.limit },
+            {
+              $project: {
+                parentId: 0,
+                processedBy: 0,
+                'parent.passwordHash': 0,
+                'parent.googleCalendarRefreshToken': 0,
+                'parent.__v': 0,
+                'processedByUser.passwordHash': 0,
+                'processedByUser.googleCalendarRefreshToken': 0,
+                'processedByUser.__v': 0,
+              },
+            },
+            {
+              $addFields: {
+                parentId: '$parent',
+                processedBy: '$processedByUser',
+              },
+            },
+          ],
+          total: [{ $count: 'count' }],
+        },
+      },
+    ];
+
+    const [result] = await this.userRegistrationRequestModel.aggregate(pipeline).exec();
+    const data = result.data;
+    const total = result.total[0]?.count || 0;
 
     return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
   }

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Res } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -57,10 +47,10 @@ export class InvoicesController {
   })
   @ApiResponse({ status: 400, description: 'Validation error (e.g. invalid query params)' })
   findAll(@Query() query: GetInvoicesQueryDto, @CurrentUser() user: JwtPayload) {
-    const { page, limit, type, parentId, coachId, status, pdfSent } = query;
+    const { page, limit, type, parentId, coachId, status, pdfSent, sortBy, sortOrder } = query;
     return this.invoicesService.findAllForActor(
       { page, limit },
-      { type, parentId, coachId, status, pdfSent },
+      { type, parentId, coachId, status, pdfSent, sortBy, sortOrder },
       user
     );
   }

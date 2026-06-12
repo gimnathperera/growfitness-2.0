@@ -20,15 +20,15 @@ import { useApiQuery } from '@/hooks';
 import { useModalParams } from '@/hooks/useModalParams';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
+import { formatCurrency, formatDate, formatDateTime, formatInvoiceType } from '@/lib/formatters';
 import {
-  formatCurrency,
-  formatDate,
-  formatDateTime,
-  formatInvoiceType,
-} from '@/lib/formatters';
-import { invoicesService, type InvoicePdfSentFilter } from '@/services/invoices.service';
+  invoicesService,
+  type InvoicePdfSentFilter,
+  type InvoiceSortField,
+  type SortOrder,
+} from '@/services/invoices.service';
 import { Invoice, InvoiceStatus, InvoiceType } from '@grow-fitness/shared-types';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Download, Eye, Mail, Pencil, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -37,6 +37,9 @@ export function InvoicesPage() {
   const [typeFilter, setTypeFilter] = useState<InvoiceType | ''>('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | ''>('');
   const [pdfSentFilter, setPdfSentFilter] = useState<InvoicePdfSentFilter | ''>('');
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const sortBy = sorting[0]?.id as InvoiceSortField | undefined;
+  const sortOrder = sorting[0]?.desc ? 'desc' : sorting[0] ? 'asc' : undefined;
 
   const hasActiveFilters = Boolean(typeFilter || statusFilter || pdfSentFilter);
 
@@ -76,24 +79,37 @@ export function InvoicesPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [typeFilter, statusFilter, pdfSentFilter, sorting]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const recipientEmailFor = (inv: Invoice) =>
-    inv.type === InvoiceType.PARENT_INVOICE
-      ? inv.parent?.email?.trim()
-      : inv.coach?.email?.trim();
+    inv.type === InvoiceType.PARENT_INVOICE ? inv.parent?.email?.trim() : inv.coach?.email?.trim();
 
   const pdfAlreadySentFor = (inv: Invoice) => Boolean(inv.pdfEmailedAt);
 
   const { data, isLoading, error } = useApiQuery(
-    ['invoices', page.toString(), pageSize.toString(), typeFilter, statusFilter, pdfSentFilter],
+    [
+      'invoices',
+      page.toString(),
+      pageSize.toString(),
+      typeFilter,
+      statusFilter,
+      pdfSentFilter,
+      sortBy || '',
+      sortOrder || '',
+    ],
     () =>
       invoicesService.getInvoices(page, pageSize, {
         type: typeFilter || undefined,
         status: statusFilter || undefined,
         pdfSent: pdfSentFilter || undefined,
+        sortBy: sortBy || 'dueDate',
+        sortOrder: (sortOrder || 'asc') as SortOrder,
       })
   );
-
-
 
   const handleDownload = async (invoice: Invoice) => {
     setIsDownloading(true);
@@ -118,7 +134,7 @@ export function InvoicesPage() {
   const handleSendEmail = async (invoice: Invoice) => {
     const email = recipientEmailFor(invoice);
     const alreadySent = pdfAlreadySentFor(invoice);
-    
+
     if (!email || alreadySent) return;
 
     setIsSending(true);
@@ -140,6 +156,10 @@ export function InvoicesPage() {
     },
     {
       id: 'recipient',
+      accessorFn: row =>
+        row.type === InvoiceType.PARENT_INVOICE
+          ? row.parent?.parentProfile?.name || row.parent?.email || ''
+          : row.coach?.coachProfile?.name || row.coach?.email || '',
       header: 'Name & email',
       cell: ({ row }) => {
         const inv = row.original;
@@ -203,6 +223,7 @@ export function InvoicesPage() {
     {
       id: 'actions',
       header: 'Actions',
+      enableSorting: false,
       cell: ({ row }) => {
         const invoice = row.original;
         return (
@@ -210,7 +231,12 @@ export function InvoicesPage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={!recipientEmailFor(invoice) || isSending || isDownloading || pdfAlreadySentFor(invoice)}
+              disabled={
+                !recipientEmailFor(invoice) ||
+                isSending ||
+                isDownloading ||
+                pdfAlreadySentFor(invoice)
+              }
               onClick={() => handleSendEmail(invoice)}
             >
               <Mail className="h-4 w-4" />
@@ -260,7 +286,6 @@ export function InvoicesPage() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-end gap-2">
-       
           <Button onClick={() => openModal(null, 'create')}>
             <Plus className="h-4 w-4 mr-2" />
             Create Invoice
@@ -272,9 +297,7 @@ export function InvoicesPage() {
             <label className="text-sm text-muted-foreground">Type:</label>
             <Select
               value={typeFilter || 'all'}
-              onValueChange={value =>
-                setTypeFilter(value === 'all' ? '' : (value as InvoiceType))
-              }
+              onValueChange={value => setTypeFilter(value === 'all' ? '' : (value as InvoiceType))}
             >
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="All types" />
@@ -312,9 +335,7 @@ export function InvoicesPage() {
             <Select
               value={pdfSentFilter || 'all'}
               onValueChange={value =>
-                setPdfSentFilter(
-                  value === 'all' ? '' : (value as InvoicePdfSentFilter)
-                )
+                setPdfSentFilter(value === 'all' ? '' : (value as InvoicePdfSentFilter))
               }
             >
               <SelectTrigger className="w-[150px]">
@@ -340,7 +361,9 @@ export function InvoicesPage() {
               data={data?.data || []}
               isLoading={isLoading}
               emptyMessage="No invoices found"
-              initialSorting={[{ id: 'dueDate', desc: false }]}
+              manualSorting
+              sorting={sorting}
+              onSortingChange={setSorting}
             />
             {data && (
               <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />

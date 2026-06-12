@@ -21,6 +21,16 @@ import { NotificationService } from '../notifications/notifications.service';
 import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { GoogleCalendarSyncService } from '../google-calendar/google-calendar-sync.service';
+import type { SessionSortField } from './dto/get-sessions-query.dto';
+
+function buildSessionSort(
+  sortBy?: SessionSortField,
+  sortOrder?: 'asc' | 'desc'
+): Record<string, 1 | -1> {
+  const field = sortBy ?? 'dateTime';
+  const direction = sortOrder === 'desc' ? -1 : 1;
+  return { [field]: direction, _id: 1 };
+}
 
 @Injectable()
 export class SessionsService {
@@ -182,7 +192,7 @@ export class SessionsService {
       startDate?: Date;
       endDate?: Date;
       isFreeSession?: boolean;
-      sortBy?: 'dateTime' | 'createdAt';
+      sortBy?: SessionSortField;
       sortOrder?: 'asc' | 'desc';
     }
   ) {
@@ -219,8 +229,7 @@ export class SessionsService {
       query.dateTime = dateTimeFilter;
     }
 
-    const sortField = filters?.sortBy ?? 'dateTime';
-    const sortDirection = filters?.sortOrder === 'desc' ? -1 : 1;
+    const sort = buildSessionSort(filters?.sortBy, filters?.sortOrder);
     const skip = (pagination.page - 1) * pagination.limit;
     const [data, total] = await Promise.all([
       this.sessionModel
@@ -228,7 +237,7 @@ export class SessionsService {
         .populate('coachId', 'email coachProfile')
         .populate('locationId')
         .populate('kids')
-        .sort({ [sortField]: sortDirection })
+        .sort(sort)
         .skip(skip)
         .limit(pagination.limit)
         .lean()

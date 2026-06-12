@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
-import { requestsService } from '@/services/requests.service';
+import { RequestSortField, SortOrder, requestsService } from '@/services/requests.service';
 import { usersService } from '@/services/users.service';
 import { ExtraSessionRequest, type User } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
@@ -29,7 +29,12 @@ import { formatDate, formatDateTime, formatSessionType } from '@/lib/formatters'
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState } from '@/components/common/ErrorState';
 
-type MongoCoachRef = { _id?: unknown; id?: unknown; coachProfile?: { name?: string }; email?: string };
+type MongoCoachRef = {
+  _id?: unknown;
+  id?: unknown;
+  coachProfile?: { name?: string };
+  email?: string;
+};
 
 function getCoachIdFromRow(coachField: unknown): string {
   if (!coachField) return '';
@@ -59,10 +64,32 @@ export function ExtraSessionRequestsTable() {
 
   const [approveTarget, setApproveTarget] = useState<ExtraSessionRequest | null>(null);
   const [approveCoachId, setApproveCoachId] = useState('');
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const sortBy = sorting[0]?.id as RequestSortField | undefined;
+  const sortOrder = sorting[0]?.desc ? 'desc' : sorting[0] ? 'asc' : undefined;
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [sorting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, isLoading, error } = useApiQuery(
-    ['requests', 'extra-sessions', page.toString(), pageSize.toString()],
-    () => requestsService.getExtraSessionRequests(page, pageSize)
+    [
+      'requests',
+      'extra-sessions',
+      page.toString(),
+      pageSize.toString(),
+      sortBy || '',
+      sortOrder || '',
+    ],
+    () =>
+      requestsService.getExtraSessionRequests(
+        page,
+        pageSize,
+        sortBy,
+        sortOrder as SortOrder | undefined
+      )
   );
 
   const { data: coachesRes } = useApiQuery(['users', 'coaches', 'assign-extra-session'], () =>
@@ -143,12 +170,14 @@ export function ExtraSessionRequestsTable() {
   const columns: ColumnDef<ExtraSessionRequest>[] = useMemo(
     () => [
       {
-        accessorKey: 'parentId',
+        id: 'parent',
+        accessorFn: row => getParentName(row.parentId),
         header: 'Parent Name',
         cell: ({ row }) => getParentName(row.original.parentId),
       },
       {
-        accessorKey: 'kidId',
+        id: 'kid',
+        accessorFn: row => getKidName(row.kidId),
         header: 'Kid Name',
         cell: ({ row }) => getKidName(row.original.kidId),
       },
@@ -162,9 +191,7 @@ export function ExtraSessionRequestsTable() {
             return (
               <Select
                 value={coachId || undefined}
-                onValueChange={val =>
-                  assignCoachMutation.mutate({ id: request.id, coachId: val })
-                }
+                onValueChange={val => assignCoachMutation.mutate({ id: request.id, coachId: val })}
                 disabled={assignCoachMutation.isPending || coaches.length === 0}
               >
                 <SelectTrigger className="h-9 w-[220px]">
@@ -208,6 +235,7 @@ export function ExtraSessionRequestsTable() {
       {
         id: 'actions',
         header: 'Actions',
+        enableSorting: false,
         cell: ({ row }) => {
           const request = row.original;
           return (
@@ -329,7 +357,10 @@ export function ExtraSessionRequestsTable() {
       </Dialog>
 
       {error ? (
-        <ErrorState title="Failed to load extra session requests" onRetry={() => window.location.reload()} />
+        <ErrorState
+          title="Failed to load extra session requests"
+          onRetry={() => window.location.reload()}
+        />
       ) : (
         <>
           <DataTable
@@ -337,6 +368,9 @@ export function ExtraSessionRequestsTable() {
             data={data?.data || []}
             isLoading={isLoading}
             emptyMessage="No extra session requests found"
+            manualSorting
+            sorting={sorting}
+            onSortingChange={setSorting}
           />
           {data && <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />}
         </>

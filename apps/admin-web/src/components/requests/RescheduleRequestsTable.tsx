@@ -1,6 +1,7 @@
-import { ColumnDef } from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
+import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
-import { requestsService } from '@/services/requests.service';
+import { RequestSortField, SortOrder, requestsService } from '@/services/requests.service';
 import { RescheduleRequest } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
@@ -15,10 +16,25 @@ import { ErrorState } from '@/components/common/ErrorState';
 export function RescheduleRequestsTable() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const { toast } = useToast();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const sortBy = sorting[0]?.id as RequestSortField | undefined;
+  const sortOrder = sorting[0]?.desc ? 'desc' : sorting[0] ? 'asc' : undefined;
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [sorting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, isLoading, error } = useApiQuery(
-    ['requests', 'reschedule', page.toString(), pageSize.toString()],
-    () => requestsService.getRescheduleRequests(page, pageSize)
+    ['requests', 'reschedule', page.toString(), pageSize.toString(), sortBy || '', sortOrder || ''],
+    () =>
+      requestsService.getRescheduleRequests(
+        page,
+        pageSize,
+        sortBy,
+        sortOrder as SortOrder | undefined
+      )
   );
 
   const approveMutation = useApiMutation(
@@ -80,6 +96,7 @@ export function RescheduleRequestsTable() {
     {
       id: 'actions',
       header: 'Actions',
+      enableSorting: false,
       cell: ({ row }) => {
         const request = row.original;
         return (
@@ -115,7 +132,10 @@ export function RescheduleRequestsTable() {
   return (
     <div className="space-y-4">
       {error ? (
-        <ErrorState title="Failed to load reschedule requests" onRetry={() => window.location.reload()} />
+        <ErrorState
+          title="Failed to load reschedule requests"
+          onRetry={() => window.location.reload()}
+        />
       ) : (
         <>
           <DataTable
@@ -123,6 +143,9 @@ export function RescheduleRequestsTable() {
             data={data?.data || []}
             isLoading={isLoading}
             emptyMessage="No reschedule requests found"
+            manualSorting
+            sorting={sorting}
+            onSortingChange={setSorting}
           />
           {data && <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />}
         </>

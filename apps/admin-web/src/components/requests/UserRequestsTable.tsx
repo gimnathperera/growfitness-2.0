@@ -1,22 +1,32 @@
-import { useState } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
+import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
-import { requestsService } from '@/services/requests.service';
+import { RequestSortField, SortOrder, requestsService } from '@/services/requests.service';
 import { usersService } from '@/services/users.service';
 import { UserRegistrationRequest, User, Kid, RequestStatus } from '@grow-fitness/shared-types';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Button } from '@/components/ui/button';
-import { Check, X, Eye, Mail, Phone, MapPin, Calendar, Baby, Target, Activity, AlertCircle, Award } from 'lucide-react';
+import {
+  Check,
+  X,
+  Eye,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Baby,
+  Target,
+  Activity,
+  AlertCircle,
+  Award,
+} from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDate, formatSessionType } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState } from '@/components/common/ErrorState';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -28,20 +38,38 @@ export function UserRequestsTable() {
   const { toast } = useToast();
   const [selectedRequest, setSelectedRequest] = useState<UserRegistrationRequest | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const sortBy = sorting[0]?.id as RequestSortField | undefined;
+  const sortOrder = sorting[0]?.desc ? 'desc' : sorting[0] ? 'asc' : undefined;
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [sorting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, isLoading, error } = useApiQuery(
-    ['requests', 'user-registrations', page.toString(), pageSize.toString()],
-    () => requestsService.getUserRegistrationRequests(page, pageSize)
+    [
+      'requests',
+      'user-registrations',
+      page.toString(),
+      pageSize.toString(),
+      sortBy || '',
+      sortOrder || '',
+    ],
+    () =>
+      requestsService.getUserRegistrationRequests(
+        page,
+        pageSize,
+        sortBy,
+        sortOrder as SortOrder | undefined
+      )
   );
 
   const approveMutation = useApiMutation(
     (id: string) => requestsService.approveUserRegistrationRequest(id),
     {
-      invalidateQueries: [
-        ['requests', 'user-registrations'],
-        ['users', 'parents'],
-        ['kids'],
-      ],
+      invalidateQueries: [['requests', 'user-registrations'], ['users', 'parents'], ['kids']],
       onSuccess: () => {
         toast.success('Registration approved successfully');
         setDetailsOpen(false);
@@ -126,8 +154,12 @@ export function UserRequestsTable() {
   };
 
   // Get parent from request or fetched data
-  const parent = parentData || (selectedRequest?.parentId && typeof selectedRequest.parentId === 'object' ? selectedRequest.parentId as User : null);
-  const kids: Kid[] = (parent && 'kids' in parent && Array.isArray(parent.kids)) ? parent.kids : [];
+  const parent =
+    parentData ||
+    (selectedRequest?.parentId && typeof selectedRequest.parentId === 'object'
+      ? (selectedRequest.parentId as User)
+      : null);
+  const kids: Kid[] = parent && 'kids' in parent && Array.isArray(parent.kids) ? parent.kids : [];
 
   const handleViewDetails = (request: UserRegistrationRequest) => {
     setSelectedRequest(request);
@@ -144,17 +176,20 @@ export function UserRequestsTable() {
 
   const columns: ColumnDef<UserRegistrationRequest>[] = [
     {
-      accessorKey: 'parentId',
+      id: 'parent',
+      accessorFn: row => getParentName(row.parentId),
       header: 'Parent Name',
       cell: ({ row }) => getParentName(row.original.parentId),
     },
     {
-      accessorKey: 'email',
+      id: 'email',
+      accessorFn: row => getParentEmail(row.parentId),
       header: 'Email',
       cell: ({ row }) => getParentEmail(row.original.parentId),
     },
     {
-      accessorKey: 'phone',
+      id: 'phone',
+      accessorFn: row => getParentPhone(row.parentId),
       header: 'Phone',
       cell: ({ row }) => getParentPhone(row.original.parentId),
     },
@@ -171,15 +206,12 @@ export function UserRequestsTable() {
     {
       id: 'actions',
       header: 'Actions',
+      enableSorting: false,
       cell: ({ row }) => {
         const request = row.original;
         return (
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleViewDetails(request)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(request)}>
               <Eye className="h-4 w-4 mr-1" />
               View
             </Button>
@@ -226,8 +258,13 @@ export function UserRequestsTable() {
               data={data?.data || []}
               isLoading={isLoading}
               emptyMessage="No user registration requests found"
+              manualSorting
+              sorting={sorting}
+              onSortingChange={setSorting}
             />
-            {data && <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />}
+            {data && (
+              <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            )}
           </>
         )}
       </div>
@@ -241,7 +278,9 @@ export function UserRequestsTable() {
               <div className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-semibold">{parent.parentProfile?.name || 'N/A'}</h2>
+                    <h2 className="text-2xl font-semibold">
+                      {parent.parentProfile?.name || 'N/A'}
+                    </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-sm text-muted-foreground">{parent.email}</p>
                       <StatusBadge status={selectedRequest?.status || RequestStatus.PENDING} />
@@ -316,7 +355,9 @@ export function UserRequestsTable() {
                       {parent.parentProfile?.location && (
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">{parent.parentProfile.location}</span>
+                          <span className="text-muted-foreground">
+                            {parent.parentProfile.location}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -374,11 +415,15 @@ export function UserRequestsTable() {
                             <p className="text-sm">{parent.parentProfile?.name || 'N/A'}</p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">Email</h4>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                              Email
+                            </h4>
                             <p className="text-sm">{parent.email}</p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">Phone</h4>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                              Phone
+                            </h4>
                             <p className="text-sm">{parent.phone}</p>
                           </div>
                           {parent.parentProfile?.location && (
@@ -390,7 +435,9 @@ export function UserRequestsTable() {
                             </div>
                           )}
                           <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                              Status
+                            </h4>
                             <StatusBadge status={parent.status} />
                           </div>
                           <div>
@@ -407,7 +454,9 @@ export function UserRequestsTable() {
                       {kids.length === 0 ? (
                         <div className="text-center py-12">
                           <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-sm text-muted-foreground">No children registered yet</p>
+                          <p className="text-sm text-muted-foreground">
+                            No children registered yet
+                          </p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -430,7 +479,9 @@ export function UserRequestsTable() {
                                   </div>
                                   <div>
                                     <p className="text-muted-foreground text-xs">Session Type</p>
-                                    <p className="font-medium">{formatSessionType(kid.sessionType)}</p>
+                                    <p className="font-medium">
+                                      {formatSessionType(kid.sessionType)}
+                                    </p>
                                   </div>
                                 </div>
 
@@ -481,8 +532,12 @@ export function UserRequestsTable() {
                                   <div className="flex items-start gap-2 pt-2 border-t">
                                     <Award className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                                     <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Achievements</p>
-                                      <p className="text-xs">{kid.achievements.length} achievement(s)</p>
+                                      <p className="text-xs text-muted-foreground mb-1">
+                                        Achievements
+                                      </p>
+                                      <p className="text-xs">
+                                        {kid.achievements.length} achievement(s)
+                                      </p>
                                     </div>
                                   </div>
                                 )}

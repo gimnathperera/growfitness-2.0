@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Invoice, InvoiceDocument } from '../../infra/database/schemas/invoice.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
 import { InvoiceType, InvoiceStatus, UserRole } from '@grow-fitness/shared-types';
@@ -12,6 +12,29 @@ import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import type { JwtPayload } from '../auth/auth.service';
 import { InvoicePdfSentFilter } from './dto/get-invoices-query.dto';
+import type { InvoiceSortField } from './dto/get-invoices-query.dto';
+
+function buildInvoiceSort(
+  sortBy?: InvoiceSortField,
+  sortOrder?: 'asc' | 'desc'
+): Record<string, 1 | -1> {
+  const direction = sortOrder === 'desc' ? -1 : 1;
+  const sortFields: Record<InvoiceSortField, string> = {
+    type: 'type',
+    recipient: 'recipientSort',
+    totalAmount: 'totalAmount',
+    status: 'status',
+    pdfEmailedAt: 'pdfEmailedAt',
+    dueDate: 'dueDate',
+    createdAt: 'createdAt',
+  };
+
+  if (!sortBy) {
+    return { dueDate: 1, _id: 1 };
+  }
+
+  return { [sortFields[sortBy]]: direction, _id: 1 };
+}
 
 @Injectable()
 export class InvoicesService {
@@ -50,6 +73,8 @@ export class InvoicesService {
           coachId?: string;
           status?: InvoiceStatus;
           pdfSent?: InvoicePdfSentFilter;
+          sortBy?: InvoiceSortField;
+          sortOrder?: 'asc' | 'desc';
         }
       | undefined,
     actor: JwtPayload
@@ -76,6 +101,8 @@ export class InvoicesService {
       coachId?: string;
       status?: InvoiceStatus;
       pdfSent?: InvoicePdfSentFilter;
+      sortBy?: InvoiceSortField;
+      sortOrder?: 'asc' | 'desc';
       /** Only invoices whose PDF was sent at least once (admin Send). */
       recipientVisibleOnly?: boolean;
     }
@@ -87,11 +114,15 @@ export class InvoicesService {
     }
 
     if (filters?.parentId) {
-      query.parentId = filters.parentId;
+      query.parentId = Types.ObjectId.isValid(filters.parentId)
+        ? { $in: [filters.parentId, new Types.ObjectId(filters.parentId)] }
+        : filters.parentId;
     }
 
     if (filters?.coachId) {
-      query.coachId = filters.coachId;
+      query.coachId = Types.ObjectId.isValid(filters.coachId)
+        ? { $in: [filters.coachId, new Types.ObjectId(filters.coachId)] }
+        : filters.coachId;
     }
 
     if (filters?.status) {
@@ -101,18 +132,101 @@ export class InvoicesService {
     this.applyPdfSentFilter(query, filters?.pdfSent, filters?.recipientVisibleOnly);
 
     const skip = (pagination.page - 1) * pagination.limit;
-    const [data, total] = await Promise.all([
-      this.invoiceModel
-        .find(query)
-        .populate('parentId', 'email parentProfile')
-        .populate('coachId', 'email coachProfile')
-        .sort({ dueDate: 1 })
-        .skip(skip)
-        .limit(pagination.limit)
-        .lean()
-        .exec(),
-      this.invoiceModel.countDocuments(query).exec(),
-    ]);
+    const sort = buildInvoiceSort(filters?.sortBy, filters?.sortOrder);
+
+    const pipeline: any[] = [
+      { $match: query },
+      {
+        $addFields: {
+          originalParentId: '$parentId',
+          originalCoachId: '$coachId',
+          parentLookupId: {
+            $convert: {
+              input: '$parentId',
+              to: 'objectId',
+              onError: null,
+              onNull: null,
+            },
+          },
+          coachLookupId: {
+            $convert: {
+              input: '$coachId',
+              to: 'objectId',
+              onError: null,
+              onNull: null,
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'parentLookupId',
+          foreignField: '_id',
+          as: 'parent',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'coachLookupId',
+          foreignField: '_id',
+          as: 'coach',
+        },
+      },
+      { $unwind: { path: '$parent', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$coach', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          recipientSort: {
+            $ifNull: [
+              '$parent.parentProfile.name',
+              {
+                $ifNull: [
+                  '$coach.coachProfile.name',
+                  { $ifNull: ['$parent.email', '$coach.email'] },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $facet: {
+          data: [
+            { $sort: sort },
+            { $skip: skip },
+            { $limit: pagination.limit },
+            {
+              $addFields: {
+                parentId: { $ifNull: ['$parent', '$originalParentId'] },
+                coachId: { $ifNull: ['$coach', '$originalCoachId'] },
+              },
+            },
+            {
+              $project: {
+                recipientSort: 0,
+                parentLookupId: 0,
+                coachLookupId: 0,
+                originalParentId: 0,
+                originalCoachId: 0,
+                'parent.passwordHash': 0,
+                'parent.googleCalendarRefreshToken': 0,
+                'parent.__v': 0,
+                'coach.passwordHash': 0,
+                'coach.googleCalendarRefreshToken': 0,
+                'coach.__v': 0,
+              },
+            },
+          ],
+          total: [{ $count: 'count' }],
+        },
+      },
+    ];
+
+    const [result] = await this.invoiceModel.aggregate(pipeline).exec();
+    const data = result.data;
+    const total = result.total[0]?.count || 0;
 
     const transformedData = (data as any[]).map(inv => this.toInvoiceResponse(inv));
     return new PaginatedResponseDto(transformedData, total, pagination.page, pagination.limit);
@@ -360,11 +474,7 @@ export class InvoicesService {
       });
     }
 
-    if (
-      invoiceWasSentToRecipient &&
-      invoice.type === InvoiceType.COACH_PAYOUT &&
-      invoice.coachId
-    ) {
+    if (invoiceWasSentToRecipient && invoice.type === InvoiceType.COACH_PAYOUT && invoice.coachId) {
       const coachIdStr = invoice.coachId.toString();
       await this.notificationService.createNotification({
         userId: coachIdStr,

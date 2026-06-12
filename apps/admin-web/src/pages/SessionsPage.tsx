@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useApiQuery, useApiMutation } from '@/hooks';
-import { sessionsService } from '@/services/sessions.service';
+import { SessionSortField, SortOrder, sessionsService } from '@/services/sessions.service';
 import { usersService } from '@/services/users.service';
 import { locationsService } from '@/services/locations.service';
 import { Session, SessionStatus } from '@grow-fitness/shared-types';
@@ -53,6 +53,9 @@ export function SessionsPage() {
   const [coachFilter, setCoachFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<SessionStatus | ''>('');
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const sortBy = sorting[0]?.id as SessionSortField | undefined;
+  const sortOrder = sorting[0]?.desc ? 'desc' : sorting[0] ? 'asc' : undefined;
 
   const hasActiveFilters = Boolean(coachFilter || locationFilter || statusFilter);
 
@@ -71,6 +74,12 @@ export function SessionsPage() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarBusy, setCalendarBusy] = useState(false);
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1);
+    }
+  }, [coachFilter, locationFilter, statusFilter, sorting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = (value: string) => {
     setSearchParams({ view: value });
@@ -162,14 +171,23 @@ export function SessionsPage() {
   );
 
   const { data, isLoading, error } = useApiQuery(
-    ['sessions', page.toString(), pageSize.toString(), coachFilter, locationFilter, statusFilter],
+    [
+      'sessions',
+      page.toString(),
+      pageSize.toString(),
+      coachFilter,
+      locationFilter,
+      statusFilter,
+      sortBy || '',
+      sortOrder || '',
+    ],
     () =>
       sessionsService.getSessions(page, pageSize, {
         coachId: coachFilter || undefined,
         locationId: locationFilter || undefined,
         status: statusFilter || undefined,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: (sortOrder || 'desc') as SortOrder,
       }),
     {
       enabled: currentTab === 'list',
@@ -212,99 +230,104 @@ export function SessionsPage() {
     return 'N/A';
   };
 
-  const columns = useMemo<ColumnDef<Session>[]>(() => [
-    {
-      accessorKey: 'title',
-      header: 'Title',
-      cell: ({ row }) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <span>{row.original.title || 'N/A'}</span>
-          <SessionSpecialBadges session={row.original} />
-          {row.original.recurringGroupId ? (
-            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-              <Repeat className="h-3 w-3" />
-              Recurring
-            </span>
-          ) : null}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'dateTime',
-      header: 'Date & Time',
-      cell: ({ row }) => formatDateTime(row.original.dateTime),
-    },
-    {
-      accessorKey: 'coachId',
-      header: 'Coach',
-      cell: ({ row }) => getCoachName(row.original.coachId),
-    },
-    {
-      accessorKey: 'type',
-      header: 'Type',
-      cell: ({ row }) => formatSessionType(row.original.type),
-    },
-    {
-      accessorKey: 'duration',
-      header: 'Duration',
-      cell: ({ row }) => `${row.original.duration} min`,
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => {
-        const session = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setSelectedSession(session);
-                openModal(session.id, 'details');
-              }}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={!canAdminRescheduleSession(session)}
-              title={
-                canAdminRescheduleSession(session)
-                  ? 'Reschedule session'
-                  : 'Cannot reschedule cancelled or completed sessions'
-              }
-              onClick={() => {
-                setSelectedSession(session);
-                openModal(session.id, 'reschedule');
-              }}
-            >
-              <CalendarClock className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setSelectedSession(session);
-                openModal(session.id, 'edit');
-              }}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleDelete(session)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+  const columns = useMemo<ColumnDef<Session>[]>(
+    () => [
+      {
+        accessorKey: 'title',
+        header: 'Title',
+        cell: ({ row }) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <span>{row.original.title || 'N/A'}</span>
+            <SessionSpecialBadges session={row.original} />
+            {row.original.recurringGroupId ? (
+              <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                <Repeat className="h-3 w-3" />
+                Recurring
+              </span>
+            ) : null}
           </div>
-        );
+        ),
       },
-    },
-  ], [coachesData]);
+      {
+        accessorKey: 'dateTime',
+        header: 'Date & Time',
+        cell: ({ row }) => formatDateTime(row.original.dateTime),
+      },
+      {
+        accessorKey: 'coachId',
+        header: 'Coach',
+        enableSorting: false,
+        cell: ({ row }) => getCoachName(row.original.coachId),
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: ({ row }) => formatSessionType(row.original.type),
+      },
+      {
+        accessorKey: 'duration',
+        header: 'Duration',
+        cell: ({ row }) => `${row.original.duration} min`,
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const session = row.original;
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSelectedSession(session);
+                  openModal(session.id, 'details');
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={!canAdminRescheduleSession(session)}
+                title={
+                  canAdminRescheduleSession(session)
+                    ? 'Reschedule session'
+                    : 'Cannot reschedule cancelled or completed sessions'
+                }
+                onClick={() => {
+                  setSelectedSession(session);
+                  openModal(session.id, 'reschedule');
+                }}
+              >
+                <CalendarClock className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSelectedSession(session);
+                  openModal(session.id, 'edit');
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => handleDelete(session)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [coachesData]
+  );
 
   const filters = (
     <FilterBar>
@@ -352,9 +375,7 @@ export function SessionsPage() {
         <label className="text-sm text-muted-foreground">Status:</label>
         <Select
           value={statusFilter || 'all'}
-          onValueChange={value =>
-            setStatusFilter(value === 'all' ? '' : (value as SessionStatus))
-          }
+          onValueChange={value => setStatusFilter(value === 'all' ? '' : (value as SessionStatus))}
         >
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="All statuses" />
@@ -412,6 +433,9 @@ export function SessionsPage() {
                 data={data?.data || []}
                 isLoading={isLoading}
                 emptyMessage="No sessions found"
+                manualSorting
+                sorting={sorting}
+                onSortingChange={setSorting}
               />
               {data && (
                 <Pagination data={data} onPageChange={setPage} onPageSizeChange={setPageSize} />
@@ -424,7 +448,9 @@ export function SessionsPage() {
           <div className="flex items-center justify-end gap-2">
             <Button
               variant={calendarConnected ? 'outline' : 'default'}
-              onClick={calendarConnected ? handleDisconnectGoogleCalendar : handleSyncWithGoogleCalendar}
+              onClick={
+                calendarConnected ? handleDisconnectGoogleCalendar : handleSyncWithGoogleCalendar
+              }
               disabled={calendarLoading || calendarBusy}
               className="flex items-center gap-2"
             >
@@ -436,7 +462,7 @@ export function SessionsPage() {
             coachId={coachFilter}
             locationId={locationFilter}
             status={statusFilter}
-            onSessionClick={(session) => {
+            onSessionClick={session => {
               setSelectedSession(session);
               openModal(session.id, 'edit');
             }}

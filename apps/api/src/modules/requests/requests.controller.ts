@@ -23,7 +23,6 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { PaginationDto } from '../../common/dto/pagination.dto';
 import { ObjectIdValidationPipe } from '../../common/pipes/objectid-validation.pipe';
 import { RequestStatus, UserRole } from '@grow-fitness/shared-types';
 import {
@@ -34,6 +33,7 @@ import {
   CreateExtraSessionRequestSchema,
 } from '@grow-fitness/shared-schemas';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { ListRequestsQueryDto } from './dto/list-requests-query.dto';
 
 @ApiTags('requests')
 @ApiBearerAuth('JWT-auth')
@@ -87,8 +87,8 @@ export class RequestsController {
     description: 'Items per page (default: 10, max: 100)',
   })
   @ApiResponse({ status: 200, description: 'List of free session requests' })
-  findFreeSessionRequests(@Query() pagination: PaginationDto) {
-    return this.requestsService.findFreeSessionRequests(pagination);
+  findFreeSessionRequests(@Query() query: ListRequestsQueryDto) {
+    return this.requestsService.findFreeSessionRequests(query, query.sortBy, query.sortOrder);
   }
 
   @Post('free-sessions/:id/select')
@@ -249,8 +249,8 @@ export class RequestsController {
     description: 'Items per page (default: 10, max: 100)',
   })
   @ApiResponse({ status: 200, description: 'List of reschedule requests' })
-  findRescheduleRequests(@Query() pagination: PaginationDto) {
-    return this.requestsService.findRescheduleRequests(pagination);
+  findRescheduleRequests(@Query() query: ListRequestsQueryDto) {
+    return this.requestsService.findRescheduleRequests(query, query.sortBy, query.sortOrder);
   }
 
   @Post('reschedules/:id/approve')
@@ -333,8 +333,8 @@ export class RequestsController {
     description: 'Items per page (default: 10, max: 100)',
   })
   @ApiResponse({ status: 200, description: 'List of extra session requests' })
-  findExtraSessionRequests(@Query() pagination: PaginationDto) {
-    return this.requestsService.findExtraSessionRequests(pagination);
+  findExtraSessionRequests(@Query() query: ListRequestsQueryDto) {
+    return this.requestsService.findExtraSessionRequests(query, query.sortBy, query.sortOrder);
   }
 
   @Post('extra-sessions/:id/approve')
@@ -444,8 +444,8 @@ export class RequestsController {
     description: 'Items per page (default: 10, max: 100)',
   })
   @ApiResponse({ status: 200, description: 'List of user registration requests' })
-  findUserRegistrationRequests(@Query() pagination: PaginationDto) {
-    return this.requestsService.findUserRegistrationRequests(pagination);
+  findUserRegistrationRequests(@Query() query: ListRequestsQueryDto) {
+    return this.requestsService.findUserRegistrationRequests(query, query.sortBy, query.sortOrder);
   }
 
   @Post('user-registrations/:id/approve')

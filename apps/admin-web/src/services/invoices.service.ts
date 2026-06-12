@@ -3,6 +3,15 @@ import { Invoice, PaginatedResponse, InvoiceType, InvoiceStatus } from '@grow-fi
 import { CreateInvoiceDto, UpdateInvoicePaymentStatusDto } from '@grow-fitness/shared-schemas';
 
 export type InvoicePdfSentFilter = 'sent' | 'not_sent';
+export type InvoiceSortField =
+  | 'type'
+  | 'recipient'
+  | 'totalAmount'
+  | 'status'
+  | 'pdfEmailedAt'
+  | 'dueDate'
+  | 'createdAt';
+export type SortOrder = 'asc' | 'desc';
 
 export const invoicesService = {
   getInvoices: (
@@ -14,6 +23,8 @@ export const invoicesService = {
       coachId?: string;
       status?: InvoiceStatus;
       pdfSent?: InvoicePdfSentFilter;
+      sortBy?: InvoiceSortField;
+      sortOrder?: SortOrder;
     }
   ) => {
     const params = new URLSearchParams({
@@ -25,6 +36,8 @@ export const invoicesService = {
     if (filters?.coachId) params.append('coachId', filters.coachId);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.pdfSent) params.append('pdfSent', filters.pdfSent);
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
     return api.get<PaginatedResponse<Invoice>>(`/invoices?${params.toString()}`);
   },
   getInvoiceById: (id: string) => api.get<Invoice>(`/invoices/${id}`),
