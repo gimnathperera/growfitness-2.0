@@ -254,7 +254,7 @@ export function SessionKidCard({ kid, isLoading }: SessionKidCardProps) {
 
 
               {/* Notes */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">Notes</p>
 
                 <textarea
@@ -269,7 +269,7 @@ export function SessionKidCard({ kid, isLoading }: SessionKidCardProps) {
                     {noteSaved ? 'Saved ✓' : 'Save Note'}
                   </Button>
                 </div>
-              </div>
+              </div> */}
             </div>
           </>
         )}

@@ -2,39 +2,25 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  formatDate,
-  formatDateTime,
-  formatEmploymentType,
-  formatSessionType,
+  formatDate, formatDateTime, formatEmploymentType, formatSessionType,
 } from '@/lib/formatters';
-import { User, Kid, Session, SessionType } from '@grow-fitness/shared-types';
+import { User, Kid, Session } from '@grow-fitness/shared-types';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { usersService } from '@/services/users.service';
 import { sessionsService } from '@/services/sessions.service';
 import { useModalParams } from '@/hooks/useModalParams';
 import {
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Baby,
-  Target,
-  Activity,
-  Award,
-  AlertCircle,
-  FileText,
+  Mail, Phone, MapPin, Calendar, Baby, Target, Activity,
+  Award, AlertCircle, FileText, Briefcase, GraduationCap, Clock, User as UserIcon,
 } from 'lucide-react';
 
 interface UserDetailsDialogProps {
@@ -42,524 +28,293 @@ interface UserDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   user?: User;
 }
-
-interface ParentWithKids extends User {
-  kids?: Kid[];
-}
+interface ParentWithKids extends User { kids?: Kid[] }
 
 export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDetailsDialogProps) {
   const { entityId, closeModal } = useModalParams('userId');
 
-  // Fetch user from URL if prop not provided
-  const { data: userFromUrl } = useApiQuery<User>(
+  const { data: userFromUrl } = useApiQuery(
     ['users', entityId || 'no-id'],
     () => {
-      if (!entityId) {
-        throw new Error('User ID is required');
-      }
-      // Try to determine if it's a parent or coach by fetching both
+      if (!entityId) throw new Error('User ID is required');
       return usersService.getParentById(entityId).catch(() => usersService.getCoachById(entityId));
     },
-    {
-      enabled: open && !userProp && !!entityId,
-    }
+    { enabled: open && !userProp && !!entityId },
   );
 
   const user = userProp || userFromUrl;
   const isParent = !!user?.parentProfile;
   const isCoach = !!user?.coachProfile;
-
-  // Fetch parent with kids if it's a parent, or coach if it's a coach
-  // We always fetch to ensure we have the latest data with populated kids
   const userId = user?.id || entityId;
-  const shouldFetchParent = isParent && open && !!userId;
-  const shouldFetchCoach = isCoach && open && !!userId;
 
-  const { data: parentData, isLoading: isLoadingParent } = useApiQuery<ParentWithKids>(
+  const { data: parentData, isLoading: isLoadingParent } = useApiQuery(
     ['users', 'parents', userId || 'no-id'],
-    () => {
-      if (!userId) {
-        throw new Error('User ID is required');
-      }
-      return usersService.getParentById(userId);
-    },
-    {
-      enabled: shouldFetchParent,
-    }
+    () => { if (!userId) throw new Error('User ID is required'); return usersService.getParentById(userId); },
+    { enabled: isParent && open && !!userId },
   );
-
-  const { data: coachData, isLoading: isLoadingCoach } = useApiQuery<User>(
+  const { data: coachData, isLoading: isLoadingCoach } = useApiQuery(
     ['users', 'coaches', userId || 'no-id'],
-    () => {
-      if (!userId) {
-        throw new Error('User ID is required');
-      }
-      return usersService.getCoachById(userId);
-    },
-    {
-      enabled: shouldFetchCoach,
-    }
+    () => { if (!userId) throw new Error('User ID is required'); return usersService.getCoachById(userId); },
+    { enabled: isCoach && open && !!userId },
   );
-
   const { data: coachSessionsData, isLoading: isLoadingCoachSessions } = useApiQuery(
     ['sessions', 'coach', userId || 'no-id'],
     () => {
-      if (!userId) {
-        throw new Error('User ID is required');
-      }
-      return sessionsService.getSessions(1, 100, {
-        coachId: userId,
-        sortBy: 'dateTime',
-        sortOrder: 'desc',
-      });
+      if (!userId) throw new Error('User ID is required');
+      return sessionsService.getSessions(1, 100, { coachId: userId, sortBy: 'dateTime', sortOrder: 'desc' });
     },
-    {
-      enabled: shouldFetchCoach,
-    }
+    { enabled: isCoach && open && !!userId },
   );
 
-  // Handle close with URL params
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      closeModal();
-    }
+    if (!newOpen) closeModal();
     onOpenChange(newOpen);
   };
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const displayUser = parentData || coachData || user;
   const kids = (displayUser as ParentWithKids).kids || [];
-  const userName = isParent
-    ? displayUser.parentProfile?.name
-    : isCoach
-      ? displayUser.coachProfile?.name
-      : 'N/A';
+  const userName = isParent ? displayUser.parentProfile?.name
+    : isCoach ? displayUser.coachProfile?.name : 'N/A';
   const coachProfile = isCoach ? displayUser.coachProfile : undefined;
+  const parentProfile = isParent ? displayUser.parentProfile : undefined;
+  const photoUrl = isCoach ? coachProfile?.photoUrl : parentProfile?.photoUrl;
 
-  const initials = (userName || 'U')
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
+  const initials = (userName || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const isLoading = isLoadingParent || isLoadingCoach;
 
   const emptyLabel = '—';
-  const formatCoachValue = (value: string | null | undefined) =>
-    value != null && String(value).trim() !== '' ? String(value).trim() : emptyLabel;
-  const formatCoachDate = (value: Date | string | null | undefined) =>
-    value != null ? formatDate(typeof value === 'string' ? value : value) : emptyLabel;
+  const fmt = (v: string | null | undefined) =>
+    v != null && String(v).trim() !== '' ? String(v).trim() : emptyLabel;
+  const fmtDate = (v: Date | string | null | undefined) =>
+    v != null ? formatDate(typeof v === 'string' ? v : v) : emptyLabel;
 
-  // Calculate highlights for parents
   const totalKids = kids.length;
-  const kidsInSports = kids.filter(k => k.currentlyInSports).length;
-  const individualSessions = kids.filter(k => k.sessionType === SessionType.INDIVIDUAL).length;
-  const groupSessions = kids.filter(k => k.sessionType === SessionType.GROUP).length;
   const coachSessions = (coachSessionsData?.data || []) as Session[];
   const totalCoachSessions = coachSessionsData?.total || coachSessions.length;
 
+  const Field = ({ icon: Icon, label, children }: { icon?: any; label: string; children: React.ReactNode }) => (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {Icon && <Icon className="h-3.5 w-3.5" />}
+        {label}
+      </div>
+      <div className="text-sm text-foreground">{children}</div>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-6xl h-[78vh] max-h-[90vh] p-0 flex flex-col">
-        <div className="flex flex-col flex-1 min-h-0">
-          {/* Header */}
-          <div className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold">{userName}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm text-muted-foreground">{displayUser.email}</p>
-                  <StatusBadge status={displayUser.status} />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  Joined {formatDate(displayUser.createdAt)}
-                </p>
+      <DialogContent className="max-w-5xl p-0 overflow-hidden gap-0">
+        {/* Gradient header */}
+        <div className="relative bg-gradient-to-br from-primary/15 via-primary/5 to-background px-8 pt-8 pb-6 border-b">
+          <div className="flex items-start gap-5">
+            <Avatar className="h-20 w-20 ring-4 ring-background shadow-lg">
+              {photoUrl && <AvatarImage src={photoUrl} alt={userName || ''} />}
+              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-2xl font-semibold tracking-tight">{userName}</h2>
+                <StatusBadge status={displayUser.status} />
+              </div>
+              <div className="mt-1.5 flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                <span className="inline-flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5" />{displayUser.email}
+                </span>
+                {displayUser.phone && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5" />{displayUser.phone}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />Joined {formatDate(displayUser.createdAt)}
+                </span>
+              </div>
+              <div className="mt-3">
+                <Badge variant="secondary" className="font-normal">
+                  {isCoach ? 'Coach Account' : isParent ? 'Parent Account' : 'User'}
+                </Badge>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            {/* Left Sidebar */}
-            <div className="w-80 border-r bg-muted/20 p-6 overflow-y-auto min-h-0">
-              {/* Profile Section */}
-              <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm">Profile</h3>
-                </div>
-                <div className="flex items-center gap-3">
-                  {(isCoach && coachProfile?.photoUrl) ||
-                  (isParent && displayUser.parentProfile?.photoUrl) ? (
-                    <img
-                      src={
-                        (isCoach
-                          ? coachProfile?.photoUrl
-                          : displayUser.parentProfile?.photoUrl) as string
-                      }
-                      alt=""
-                      className="h-16 w-16 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <Avatar className="h-16 w-16 flex-shrink-0">
-                      <AvatarFallback className="text-base">{initials}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{userName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {isCoach ? 'Coach Account' : 'Parent Account'}
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <ScrollArea className="max-h-[70vh]">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-0">
+            {/* Sidebar */}
+            <aside className="border-r bg-muted/30 p-6 space-y-6">
+              <section>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Contact</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-start gap-2.5">
+                    <Mail className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <span className="break-all">{displayUser.email}</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Phone className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <span>{fmt(displayUser.phone)}</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <span>{fmt(isCoach ? coachProfile?.homeAddress : parentProfile?.location)}</span>
+                  </li>
+                </ul>
+              </section>
 
-              <Separator className="my-6" />
+              <Separator />
 
-              {/* Contact Section */}
-              <div className="space-y-4 mb-6">
-                <h3 className="font-semibold text-sm">Contact</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{displayUser.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{displayUser.phone}</span>
-                  </div>
-                  {isParent && displayUser.parentProfile?.location && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {displayUser.parentProfile.location}
-                      </span>
+              <section>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Highlights</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {isParent && (
+                    <div className="rounded-lg border bg-background p-3">
+                      <div className="text-xs text-muted-foreground">Kids</div>
+                      <div className="text-xl font-semibold mt-0.5">{totalKids}</div>
                     </div>
                   )}
                   {isCoach && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {formatCoachValue(coachProfile?.homeAddress)}
-                      </span>
-                    </div>
+                    <>
+                      <div className="rounded-lg border bg-background p-3">
+                        <div className="text-xs text-muted-foreground">Sessions</div>
+                        <div className="text-xl font-semibold mt-0.5">{totalCoachSessions}</div>
+                      </div>
+                      <div className="rounded-lg border bg-background p-3 col-span-2">
+                        <div className="text-xs text-muted-foreground">Employment</div>
+                        <div className="text-sm font-medium mt-0.5">{formatEmploymentType(coachProfile?.employmentType)}</div>
+                      </div>
+                    </>
                   )}
                 </div>
-              </div>
+              </section>
+            </aside>
 
-              <Separator className="my-6" />
-
-              {/* Highlights Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm">Highlights</h3>
-                <div className="space-y-3">
-                  {isParent ? (
-                    <>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Total Kids</span>
-                        <span className="text-muted-foreground">{totalKids}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">In Sports</span>
-                        <span className="text-muted-foreground">{kidsInSports}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Private Sessions</span>
-                        <span className="text-muted-foreground">{individualSessions}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Group Sessions</span>
-                        <span className="text-muted-foreground">{groupSessions}</span>
-                      </div>
-                    </>
-                  ) : isCoach ? (
-                    <>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Employment</span>
-                        <span className="text-muted-foreground">
-                          {formatEmploymentType(coachProfile?.employmentType)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">School</span>
-                        <span className="text-muted-foreground">
-                          {formatCoachValue(coachProfile?.school)}
-                        </span>
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Main Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Main */}
+            <main className="p-6">
               {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                </div>
+                <div className="flex items-center justify-center py-20 text-muted-foreground">Loading…</div>
               ) : (
                 <Tabs defaultValue="overview" className="w-full">
                   <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    {!isCoach && (
-                      <TabsTrigger value="kids">
-                        Kids {totalKids > 0 && `(${totalKids})`}
-                      </TabsTrigger>
-                    )}
-                    {isCoach && (
-                      <TabsTrigger value="sessions">
-                        Sessions {totalCoachSessions > 0 && `(${totalCoachSessions})`}
-                      </TabsTrigger>
-                    )}
+                    {!isCoach && <TabsTrigger value="kids">Kids {totalKids > 0 && `(${totalKids})`}</TabsTrigger>}
+                    {isCoach && <TabsTrigger value="sessions">Sessions {totalCoachSessions > 0 && `(${totalCoachSessions})`}</TabsTrigger>}
                   </TabsList>
 
-                  <TabsContent value="overview" className="mt-6 space-y-6">
-                    {/* About Section */}
-                    <div>
-                      <h3 className="font-semibold mb-3">About</h3>
-                      {isCoach ? (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Name
-                              </h4>
-                              <p className="text-sm">{formatCoachValue(userName)}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Email
-                              </h4>
-                              <p className="text-sm">{displayUser.email}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Phone
-                              </h4>
-                              <p className="text-sm">{displayUser.phone}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Date of birth
-                              </h4>
-                              <p className="text-sm">
-                                {formatCoachDate(
-                                  coachProfile?.dateOfBirth != null
-                                    ? typeof coachProfile.dateOfBirth === 'string'
-                                      ? coachProfile.dateOfBirth
-                                      : (coachProfile.dateOfBirth as Date)
-                                    : null
-                                )}
-                              </p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Home address
-                              </h4>
-                              <p className="text-sm">
-                                {formatCoachValue(coachProfile?.homeAddress)}
-                              </p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                School
-                              </h4>
-                              <p className="text-sm">{formatCoachValue(coachProfile?.school)}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Employment type
-                              </h4>
-                              <p className="text-sm">
-                                {formatEmploymentType(coachProfile?.employmentType)}
-                              </p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Status
-                              </h4>
-                              <StatusBadge status={displayUser.status} />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Member Since
-                              </h4>
-                              <p className="text-sm">{formatDate(displayUser.createdAt)}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Available times
-                            </h4>
-                            {coachProfile?.availableTimes &&
-                            coachProfile.availableTimes.length > 0 ? (
-                              <ul className="text-sm list-disc list-inside space-y-1">
-                                {coachProfile.availableTimes.map((slot, i) => (
-                                  <li key={i}>
-                                    {slot.dayOfWeek} {slot.startTime}–{slot.endTime}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">{emptyLabel}</p>
-                            )}
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">CV</h4>
-                            {coachProfile?.cvUrl ? (
-                              <a
-                                href={coachProfile.cvUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-primary hover:underline flex items-center gap-1"
-                              >
-                                <FileText className="h-4 w-4" />
-                                View CV
-                              </a>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">{emptyLabel}</p>
-                            )}
-                          </div>
+                  <TabsContent value="overview" className="mt-4 space-y-4">
+                    <Card>
+                      <CardHeader className="pb-3"><CardTitle className="text-base">About</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                          <Field icon={UserIcon} label="Name">{fmt(userName)}</Field>
+                          <Field icon={Mail} label="Email">{displayUser.email}</Field>
+                          <Field icon={Phone} label="Phone">{fmt(displayUser.phone)}</Field>
+                          {isCoach && <Field icon={Calendar} label="Date of birth">{fmtDate(coachProfile?.dateOfBirth as any)}</Field>}
+                          <Field icon={MapPin} label={isCoach ? 'Home address' : 'Address'}>
+                            {fmt(isCoach ? coachProfile?.homeAddress : parentProfile?.location)}
+                          </Field>
+                          {isCoach && <Field icon={GraduationCap} label="School">{fmt(coachProfile?.school)}</Field>}
+                          {isCoach && <Field icon={Briefcase} label="Employment">{formatEmploymentType(coachProfile?.employmentType)}</Field>}
+                          <Field label="Status"><StatusBadge status={displayUser.status} /></Field>
+                          <Field icon={Calendar} label="Member since">{formatDate(displayUser.createdAt)}</Field>
                         </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">Name</h4>
-                            <p className="text-sm">{userName}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Email
-                            </h4>
-                            <p className="text-sm">{displayUser.email}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Phone
-                            </h4>
-                            <p className="text-sm">{displayUser.phone}</p>
-                          </div>
-                          {isParent && displayUser.parentProfile?.location && (
-                            <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Address
+
+                        {isCoach && (
+                          <>
+                            <Separator className="my-6" />
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />Available times
                               </h4>
-                              <p className="text-sm">{displayUser.parentProfile.location}</p>
+                              {coachProfile?.availableTimes?.length ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {coachProfile.availableTimes.map((slot, i) => (
+                                    <Badge key={i} variant="secondary" className="font-normal">
+                                      {slot.dayOfWeek} · {slot.startTime}–{slot.endTime}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
                             </div>
-                          )}
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Status
-                            </h4>
-                            <StatusBadge status={displayUser.status} />
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Member Since
-                            </h4>
-                            <p className="text-sm">{formatDate(displayUser.createdAt)}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
+                            <Separator className="my-6" />
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />CV
+                              </h4>
+                              {coachProfile?.cvUrl ? (
+                                <Button asChild variant="outline" size="sm">
+                                  <a href={coachProfile.cvUrl} target="_blank" rel="noreferrer">
+                                    <FileText className="h-4 w-4 mr-2" />View CV
+                                  </a>
+                                </Button>
+                              ) : <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
+                            </div>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
                   </TabsContent>
 
                   {!isCoach && (
-                    <TabsContent value="kids" className="mt-6">
+                    <TabsContent value="kids" className="mt-4">
                       {totalKids === 0 ? (
-                        <div className="text-center py-12">
-                          <Baby className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-sm text-muted-foreground">
-                            No children registered yet
-                          </p>
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <Baby className="h-10 w-10 text-muted-foreground mb-3" />
+                          <p className="text-sm text-muted-foreground">No children registered yet</p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
                           {kids.map(kid => (
-                            <Card key={kid.id} className="overflow-hidden">
+                            <Card key={kid.id}>
                               <CardHeader className="pb-3">
                                 <div className="flex items-center justify-between">
-                                  <CardTitle className="text-lg flex items-center gap-2">
-                                    <Baby className="h-4 w-4" />
-                                    {kid.name}
+                                  <CardTitle className="text-base flex items-center gap-2">
+                                    <Baby className="h-4 w-4 text-primary" />{kid.name}
                                   </CardTitle>
-                                  <Badge variant="outline">{kid.gender}</Badge>
+                                  <Badge variant="outline" className="font-normal">{kid.gender}</Badge>
                                 </div>
                               </CardHeader>
-                              <CardContent className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                  <div>
-                                    <p className="text-muted-foreground text-xs">Birth Date</p>
-                                    <p className="font-medium">{formatDate(kid.birthDate)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground text-xs">Session Type</p>
-                                    <p className="font-medium">
-                                      {formatSessionType(kid.sessionType)}
-                                    </p>
-                                  </div>
+                              <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <Field label="Birth date">{formatDate(kid.birthDate)}</Field>
+                                  <Field label="Session type">{formatSessionType(kid.sessionType)}</Field>
                                 </div>
-
                                 {kid.goal && (
-                                  <div className="flex items-start gap-2 pt-2 border-t">
-                                    <Target className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                  <div className="rounded-md bg-muted/50 p-3 flex gap-2">
+                                    <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                                     <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Goal</p>
-                                      <p className="text-sm">{kid.goal}</p>
+                                      <div className="text-xs font-medium text-muted-foreground">Goal</div>
+                                      <div className="text-sm">{kid.goal}</div>
                                     </div>
                                   </div>
                                 )}
-
-                                <div className="flex items-center gap-4 pt-2 border-t">
-                                  <div className="flex items-center gap-2">
-                                    <Activity
-                                      className={`h-4 w-4 ${
-                                        kid.currentlyInSports
-                                          ? 'text-green-600'
-                                          : 'text-muted-foreground'
-                                      }`}
-                                    />
-                                    <span className="text-xs text-muted-foreground">
-                                      {kid.currentlyInSports ? 'In Sports' : 'Not in Sports'}
-                                    </span>
-                                  </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Activity className="h-4 w-4 text-muted-foreground" />
+                                  <span>{kid.currentlyInSports ? 'In sports' : 'Not in sports'}</span>
                                 </div>
-
-                                {kid.medicalConditions && kid.medicalConditions.length > 0 && (
-                                  <div className="flex items-start gap-2 pt-2 border-t">
-                                    <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">
-                                        Medical Conditions
-                                      </p>
-                                      <div className="flex flex-wrap gap-1">
-                                        {kid.medicalConditions.map((condition, idx) => (
-                                          <Badge key={idx} variant="secondary" className="text-xs">
-                                            {condition}
-                                          </Badge>
+                                {kid.medicalConditions?.length ? (
+                                  <div className="flex items-start gap-2">
+                                    <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
+                                    <div className="space-y-1.5">
+                                      <div className="text-xs font-medium text-muted-foreground">Medical conditions</div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {kid.medicalConditions.map((c, i) => (
+                                          <Badge key={i} variant="destructive" className="font-normal">{c}</Badge>
                                         ))}
                                       </div>
                                     </div>
                                   </div>
-                                )}
-
-                                {kid.achievements && kid.achievements.length > 0 && (
-                                  <div className="flex items-start gap-2 pt-2 border-t">
-                                    <Award className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">
-                                        Achievements
-                                      </p>
-                                      <p className="text-xs">
-                                        {kid.achievements.length} achievement(s)
-                                      </p>
-                                    </div>
+                                ) : null}
+                                {kid.achievements?.length ? (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Award className="h-4 w-4 text-primary" />
+                                    <span>{kid.achievements.length} achievement(s)</span>
                                   </div>
-                                )}
+                                ) : null}
                               </CardContent>
                             </Card>
                           ))}
@@ -569,18 +324,16 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                   )}
 
                   {isCoach && (
-                    <TabsContent value="sessions" className="mt-6">
+                    <TabsContent value="sessions" className="mt-4">
                       {isLoadingCoachSessions ? (
-                        <div className="flex items-center justify-center h-40">
-                          <p className="text-sm text-muted-foreground">Loading sessions...</p>
-                        </div>
+                        <div className="flex items-center justify-center py-16 text-muted-foreground">Loading sessions…</div>
                       ) : coachSessions.length === 0 ? (
-                        <div className="text-center py-12">
-                          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <Calendar className="h-10 w-10 text-muted-foreground mb-3" />
                           <p className="text-sm text-muted-foreground">No sessions assigned yet</p>
                         </div>
                       ) : (
-                        <div className="rounded-md border overflow-hidden">
+                        <Card>
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -589,8 +342,8 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                                 <TableHead>Type</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Location</TableHead>
-                                <TableHead>Kids</TableHead>
-                                <TableHead>Duration</TableHead>
+                                <TableHead className="text-right">Kids</TableHead>
+                                <TableHead className="text-right">Duration</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -601,27 +354,23 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                                   </TableCell>
                                   <TableCell>{formatDateTime(session.dateTime)}</TableCell>
                                   <TableCell>{formatSessionType(session.type)}</TableCell>
-                                  <TableCell>
-                                    <StatusBadge status={session.status} />
-                                  </TableCell>
+                                  <TableCell><StatusBadge status={session.status} /></TableCell>
                                   <TableCell>{session.location?.name || emptyLabel}</TableCell>
-                                  <TableCell>
-                                    {session.kids?.length ?? (session.kidId ? 1 : 0)}
-                                  </TableCell>
-                                  <TableCell>{session.duration} min</TableCell>
+                                  <TableCell className="text-right">{session.kids?.length ?? (session.kidId ? 1 : 0)}</TableCell>
+                                  <TableCell className="text-right">{session.duration} min</TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
                           </Table>
-                        </div>
+                        </Card>
                       )}
                     </TabsContent>
                   )}
                 </Tabs>
               )}
-            </div>
+            </main>
           </div>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

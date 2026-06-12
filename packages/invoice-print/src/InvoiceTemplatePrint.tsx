@@ -143,9 +143,9 @@ export function InvoiceTemplatePrint({
               <h3 className="inv-accent-title">Bank reference</h3>
               <p className="inv-ref-hint-line">kid&apos;s name-Month-Fee</p>
               <p className="inv-ref-hint-line">Ex: John October Fee</p>
-              {data.bankReference.trim() ? (
+              {/* {data.bankReference.trim() ? (
                 <p className="inv-ref-actual">{data.bankReference}</p>
-              ) : null}
+              ) : null} */}
             </div>
             <div className="inv-bank-details-block">
               <h3 className="inv-accent-title">Bank details</h3>
