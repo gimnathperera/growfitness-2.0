@@ -13,6 +13,82 @@ import { formatDate, formatDateTime } from '@/lib/formatters';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ErrorState } from '@/components/common/ErrorState';
 
+type ProfileRef = {
+  email?: string;
+  parentProfile?: { name?: string };
+  coachProfile?: { name?: string };
+};
+
+type RescheduleKidRef = {
+  name?: string;
+  parentId?: string | ProfileRef;
+};
+
+type RescheduleSessionRef = {
+  id?: string;
+  _id?: string;
+  dateTime?: Date | string;
+  coachId?: string | ProfileRef;
+  locationId?: string | { name?: string; address?: string };
+  kids?: (string | RescheduleKidRef)[];
+};
+
+type RescheduleRequestRow = Omit<RescheduleRequest, 'sessionId' | 'requestedBy'> & {
+  sessionId?: string | RescheduleSessionRef;
+  requestedBy?: string | ProfileRef;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getProfileName = (
+  value: unknown,
+  profileKey: 'parentProfile' | 'coachProfile'
+): string | undefined => {
+  if (!isRecord(value)) return undefined;
+  const profile = value[profileKey];
+  if (isRecord(profile) && typeof profile.name === 'string' && profile.name.trim()) {
+    return profile.name;
+  }
+  return typeof value.email === 'string' && value.email.trim() ? value.email : undefined;
+};
+
+const getSession = (request: RescheduleRequestRow): RescheduleSessionRef | undefined =>
+  isRecord(request.sessionId) ? (request.sessionId as RescheduleSessionRef) : undefined;
+
+const getParentName = (request: RescheduleRequestRow): string => {
+  const session = getSession(request);
+  const kids = Array.isArray(session?.kids) ? session.kids : [];
+  const parentName = kids
+    .map(kid => (isRecord(kid) ? getProfileName(kid.parentId, 'parentProfile') : undefined))
+    .find(Boolean);
+
+  return parentName || getProfileName(request.requestedBy, 'parentProfile') || 'N/A';
+};
+
+const getKidsName = (request: RescheduleRequestRow): string => {
+  const session = getSession(request);
+  const names = (Array.isArray(session?.kids) ? session.kids : [])
+    .map(kid => (isRecord(kid) && typeof kid.name === 'string' ? kid.name : undefined))
+    .filter((name): name is string => Boolean(name?.trim()));
+
+  return names.length > 0 ? names.join(', ') : 'N/A';
+};
+
+const getCoachName = (request: RescheduleRequestRow): string =>
+  getProfileName(getSession(request)?.coachId, 'coachProfile') || 'N/A';
+
+const getLocationName = (request: RescheduleRequestRow): string => {
+  const location = getSession(request)?.locationId;
+  if (isRecord(location) && typeof location.name === 'string' && location.name.trim()) {
+    return location.name;
+  }
+  return 'N/A';
+};
+
+const getCurrentDateTime = (request: RescheduleRequestRow): string =>
+  formatDateTime(getSession(request)?.dateTime);
+
 export function RescheduleRequestsTable() {
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const { toast } = useToast();
@@ -60,19 +136,36 @@ export function RescheduleRequestsTable() {
     },
   });
 
-  // Helper to get session ID from populated object or return ID
-  const getSessionId = (sessionId: any): string => {
-    if (!sessionId) return 'N/A';
-    if (typeof sessionId === 'string') return sessionId;
-    if (typeof sessionId === 'object' && sessionId.id) return sessionId.id;
-    return 'N/A';
-  };
-
-  const columns: ColumnDef<RescheduleRequest>[] = [
+  const columns: ColumnDef<RescheduleRequestRow>[] = [
     {
-      accessorKey: 'sessionId',
-      header: 'Session ID',
-      cell: ({ row }) => getSessionId(row.original.sessionId),
+      id: 'parent',
+      header: 'Parent Name',
+      enableSorting: false,
+      cell: ({ row }) => getParentName(row.original),
+    },
+    {
+      id: 'kid',
+      header: 'Kid Name(s)',
+      enableSorting: false,
+      cell: ({ row }) => getKidsName(row.original),
+    },
+    {
+      id: 'coach',
+      header: 'Coach',
+      enableSorting: false,
+      cell: ({ row }) => getCoachName(row.original),
+    },
+    {
+      id: 'location',
+      header: 'Location',
+      enableSorting: false,
+      cell: ({ row }) => getLocationName(row.original),
+    },
+    {
+      id: 'sessionId',
+      header: 'Current Date & Time',
+      enableSorting: false,
+      cell: ({ row }) => getCurrentDateTime(row.original),
     },
     {
       accessorKey: 'newDateTime',
@@ -140,7 +233,7 @@ export function RescheduleRequestsTable() {
         <>
           <DataTable
             columns={columns}
-            data={data?.data || []}
+            data={(data?.data || []) as RescheduleRequestRow[]}
             isLoading={isLoading}
             emptyMessage="No reschedule requests found"
             manualSorting
