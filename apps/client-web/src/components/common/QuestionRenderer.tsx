@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { QuestionConfig, QuestionOption } from '@/types/question-config';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface QuestionRendererProps<TFormValues extends FieldValues = FieldValues> {
   question: QuestionConfig<FieldPath<TFormValues>>;
@@ -40,6 +41,7 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
   const [options, setOptions] = useState<QuestionOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Load options for select/multiselect types
   useEffect(() => {
@@ -155,50 +157,17 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
             control={control}
             render={({ field: { value, onChange, ...field } }) => {
               const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
-              return (
-                <motion.input
-                  {...field}
-                  value={val as string}
-                  type="password"
-                  onChange={e => onChange(e.target.value)}
-                  placeholder={question.placeholder}
-                  className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
-                    error
-                      ? 'border-red-400 focus:border-red-500'
-                      : 'border-amber-200 focus:border-emerald-400'
-                  }`}
-                  variants={inputVariants}
-                  initial="hidden"
-                  animate="visible"
-                  autoFocus={shouldAutoFocus}
-                />
-              );
-            }}
-          />
-        );
-      }
-
-      case 'confirmPassword': {
-        return (
-          <Controller
-            name={question.id as Path<TFormValues>}
-            control={control}
-            render={({ field: { value, onChange, ...field } }) => {
-              const val = (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
-
-              // Real-time password validation
-              const isPasswordMismatch = val && passwordValue && val !== passwordValue;
 
               return (
-                <div className="space-y-2">
+                <div className="relative">
                   <motion.input
                     {...field}
                     value={val as string}
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     onChange={e => onChange(e.target.value)}
-                    placeholder={question.placeholder || 'Confirm password'}
-                    className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
-                      error || isPasswordMismatch
+                    placeholder={question.placeholder}
+                    className={`w-full px-4 sm:px-6 py-4 sm:py-5 pr-12 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
+                      error
                         ? 'border-red-400 focus:border-red-500'
                         : 'border-amber-200 focus:border-emerald-400'
                     }`}
@@ -207,20 +176,76 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                     animate="visible"
                     autoFocus={shouldAutoFocus}
                   />
-                  {isPasswordMismatch && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm font-medium px-2"
-                    >
-                      Passwords do not match
-                    </motion.p>
-                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none shadow-none p-0 hover:bg-transparent focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               );
             }}
           />
         );
+      }
+
+      case 'confirmPassword': {
+        return (
+  <Controller
+    name={question.id as Path<TFormValues>}
+    control={control}
+    render={({ field: { value, onChange, ...field } }) => {
+      const val =
+        (value as PathValue<TFormValues, Path<TFormValues>>) ?? '';
+
+      const isPasswordMismatch =
+        val && passwordValue && val !== passwordValue;
+
+      return (
+        <div className="space-y-2">
+          <div className="relative">
+            <motion.input
+              {...field}
+              value={val as string}
+              type={showPassword ? 'text' : 'password'}
+              onChange={e => onChange(e.target.value)}
+              placeholder={question.placeholder || 'Confirm password'}
+              className={`w-full px-4 sm:px-6 py-4 sm:py-5 pr-12 text-lg sm:text-xl bg-amber-50 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 text-gray-900 ${
+                error || isPasswordMismatch
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-amber-200 focus:border-emerald-400'
+              }`}
+              variants={inputVariants}
+              initial="hidden"
+              animate="visible"
+              autoFocus={shouldAutoFocus}
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => !prev)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-0 shadow-none p-0 hover:bg-transparent focus:outline-none"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+
+          {isPasswordMismatch && (
+            <motion.p
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-500 text-sm font-medium px-2"
+            >
+              Passwords do not match
+            </motion.p>
+          )}
+        </div>
+      );
+    }}
+  />
+);
       }
 
       case 'phone': {

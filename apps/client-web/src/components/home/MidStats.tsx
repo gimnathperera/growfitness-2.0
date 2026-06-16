@@ -4,7 +4,7 @@ import { Container } from '../layout/Container';
 export const MidStats = () => {
   const stats = [
     { icon: Heart, number: '5+', label: 'Pre-Schoolers & branches' },
-    { icon: Heart, number: '75+', label: 'Kids at group sessions' },
+    { icon: Heart, number: '100+', label: 'Kids at group sessions' },
     { icon: Heart, number: '20+', label: 'Kids at personal training' },
   ];
 
