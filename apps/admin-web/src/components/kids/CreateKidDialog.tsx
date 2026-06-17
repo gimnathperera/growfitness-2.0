@@ -33,7 +33,7 @@ import { FileDropzone } from '@/components/common/FileDropzone';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 const IMAGE_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -148,254 +148,250 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
           {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
             <form onSubmit={form.handleSubmit(onSubmit)} id="create-kid-form" className="space-y-4">
-         
 
-          <CustomFormField
-            label="Parent"
-            required
-            error={form.formState.errors.parentId?.message}
-          >
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className="w-full justify-between"
-                >
-                  {form.watch('parentId')
-                    ? (parentsData?.data || []).find(
-                        parent => parent.id === form.watch('parentId')
-                      )?.parentProfile?.name ||
-                      (parentsData?.data || []).find(
-                        parent => parent.id === form.watch('parentId')
-                      )?.email
-                    : 'Select parent'}
 
-                  <ChevronsUpDown className="ml-2 h-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-
-              <PopoverContent
-                className="w-[--radix-popover-trigger-width] p-0"
-                align="start"
+              <CustomFormField
+                label="Parent"
+                required
+                error={form.formState.errors.parentId?.message}
               >
-                <Command
-                  filter={(value: string, search: string) => {
-                    const parent = (parentsData?.data || []).find(
-                      p => p.id === value
-                    );
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Select value={form.watch('parentId')} onValueChange={(value) => form.setValue('parentId', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select parent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(parentsData?.data || []).map(parent => (
+                          <SelectItem key={parent.id} value={parent.id}>
+                            {parent.parentProfile?.name || parent.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </PopoverTrigger>
 
-                    if (!parent) return 0;
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
+                    <Command
+                      filter={(value: string, search: string) => {
+                        const parent = (parentsData?.data || []).find(
+                          p => p.id === value
+                        );
 
-                    const label = [parent.parentProfile?.name, parent.email]
-                      .filter(Boolean)
-                      .join(' ')
-                      .toLowerCase();
+                        if (!parent) return 0;
 
-                    return label.includes(search.toLowerCase()) ? 1 : 0;
-                  }}
-                  className="w-full"
-                >
-                  <CommandInput placeholder="Search parent..." />
+                        const label = [parent.parentProfile?.name, parent.email]
+                          .filter(Boolean)
+                          .join(' ')
+                          .toLowerCase();
 
-                  <CommandEmpty>No parent found.</CommandEmpty>
-
-                  <CommandGroup className="max-h-64 overflow-y-auto">
-                    {(parentsData?.data || []).map(parent => {
-                      const label =
-                        parent.parentProfile?.name || parent.email;
-
-                      return (
-                        <CommandItem
-                          key={parent.id}
-                          value={parent.id}
-                          onSelect={() => {
-                            form.setValue('parentId', parent.id);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              form.watch('parentId') === parent.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-
-                          {label}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </CustomFormField>
-
-          <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
-            <Input {...form.register('name')} />
-          </CustomFormField>
-
-          <div className="space-y-2">
-            <CustomFormField
-              label="Profile photo"
-              error={form.formState.errors.profilePhotoUrl?.message}
-            >
-              <FileDropzone
-                value={profilePhotoFile}
-                onChange={setProfilePhotoFile}
-                accept={IMAGE_UPLOAD_TYPES}
-                maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
-                preview="image"
-                label="Drop photo here or browse"
-                description="JPEG, PNG, or WebP up to 5MB"
-                disabled={createMutation.isPending}
-              />
-            </CustomFormField>
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto p-0 text-xs text-muted-foreground"
-              onClick={() => setShowProfilePhotoUrl(v => !v)}
-            >
-              {showProfilePhotoUrl ? 'Hide photo URL field' : 'Paste photo URL instead'}
-            </Button>
-            {showProfilePhotoUrl && (
-              <Input type="url" placeholder="https://..." {...form.register('profilePhotoUrl')} />
-            )}
-          </div>
-
-          <CustomFormField label="Gender" required error={form.formState.errors.gender?.message}>
-            <Select
-              value={form.watch('gender')}
-              onValueChange={value => form.setValue('gender', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </CustomFormField>
-
-          <CustomFormField
-            label="Birth Date"
-            required
-            error={form.formState.errors.birthDate?.message}
-          >
-            <DatePicker
-              date={form.watch('birthDate') ? new Date(form.watch('birthDate')) : undefined}
-              onSelect={date => form.setValue('birthDate', date ? format(date, 'yyyy-MM-dd') : '')}
-              enableYearMonthDropdown
-            />
-          </CustomFormField>
-
-          <CustomFormField
-                      label="Goal"
-                      error={form.formState.errors.goal?.message}
+                        return label.includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                      className="w-full"
                     >
-                       <Select
-                        value={form.watch(`goal`)}
-                        onValueChange={value => form.setValue(`goal`, value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a goal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Build strength">Build strength</SelectItem>
-                          <SelectItem value="Improve coordination">Improve coordination</SelectItem>
-                          <SelectItem value="Make friends">Make friends</SelectItem>
-                          <SelectItem value="I don't know/ Basic fitness">I don't know/ Basic fitness</SelectItem>
-                        </SelectContent>
-                      </Select>
-          </CustomFormField>
+                      <CommandInput placeholder="Search parent..." />
 
-          <CustomFormField
-            label="Session Type"
-            required
-            error={form.formState.errors.sessionType?.message}
-          >
-            <Select
-              value={form.watch('sessionType')}
-              onValueChange={value => form.setValue('sessionType', value as SessionType)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
-                <SelectItem value={SessionType.GROUP}>Group</SelectItem>
-                <SelectItem value={SessionType.BOTH}>Both</SelectItem>
-              </SelectContent>
-            </Select>
-          </CustomFormField>
+                      <CommandEmpty>No parent found.</CommandEmpty>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="currentlyInSports"
-              checked={form.watch('currentlyInSports')}
-              onCheckedChange={checked => form.setValue('currentlyInSports', checked === true)}
-            />
-            <label htmlFor="currentlyInSports" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Currently in sports
-            </label>
-          </div>
-
-          <CustomFormField
-                      label="Medical Conditions (Optional)"
-                      error={form.formState.errors.medicalConditions?.message}
-                    >
-                      <div className="space-y-3">
-                        {[
-                          'Asthma',
-                          'Allergies',
-                          'Diabetes',
-                          'Heart conditions',
-                          'Joint issues',
-                          'Others',
-                        ].map(condition => {
-                          const selectedConditions =
-                            form.watch('medicalConditions') || [];
+                      <CommandGroup className="max-h-64 overflow-y-auto">
+                        {(parentsData?.data || []).map(parent => {
+                          const label =
+                            parent.parentProfile?.name || parent.email;
 
                           return (
-                            <div
-                              key={condition}
-                              className="flex items-center space-x-2"
+                            <CommandItem
+                              key={parent.id}
+                              value={parent.id}
+                              onSelect={() => {
+                                form.setValue('parentId', parent.id);
+                              }}
                             >
-                              <Checkbox
-                                id={`medical-condition-${condition}`}
-                                checked={selectedConditions.includes(condition)}
-                                onCheckedChange={checked => {
-                                  if (checked === true) {
-                                    form.setValue('medicalConditions', [
-                                      ...selectedConditions,
-                                      condition,
-                                    ]);
-                                  } else {
-                                    form.setValue(
-                                      'medicalConditions',
-                                      selectedConditions.filter(
-                                        item => item !== condition
-                                      )
-                                    );
-                                  }
-                                }}
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  form.watch('parentId') === parent.id
+                                    ? 'opacity-100'
+                                    : 'opacity-0'
+                                )}
                               />
 
-                              <label
-                                htmlFor={`medical-condition-${condition}`}
-                                className="text-sm font-normal leading-none"
-                              >
-                                {condition}
-                              </label>
-                            </div>
+                              {label}
+                            </CommandItem>
                           );
                         })}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </CustomFormField>
+
+              <CustomFormField label="Name" required error={form.formState.errors.name?.message}>
+                <Input {...form.register('name')} />
+              </CustomFormField>
+
+              <div className="space-y-2">
+                <CustomFormField
+                  label="Profile photo"
+                  error={form.formState.errors.profilePhotoUrl?.message}
+                >
+                  <FileDropzone
+                    value={profilePhotoFile}
+                    onChange={setProfilePhotoFile}
+                    accept={IMAGE_UPLOAD_TYPES}
+                    maxSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+                    preview="image"
+                    label="Drop photo here or browse"
+                    description="JPEG, PNG, or WebP up to 5MB"
+                    disabled={createMutation.isPending}
+                  />
+                </CustomFormField>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-xs text-muted-foreground"
+                  onClick={() => setShowProfilePhotoUrl(v => !v)}
+                >
+                  {showProfilePhotoUrl ? 'Hide photo URL field' : 'Paste photo URL instead'}
+                </Button>
+                {showProfilePhotoUrl && (
+                  <Input type="url" placeholder="https://..." {...form.register('profilePhotoUrl')} />
+                )}
+              </div>
+
+              <CustomFormField label="Gender" required error={form.formState.errors.gender?.message}>
+                <Select
+                  value={form.watch('gender')}
+                  onValueChange={value => form.setValue('gender', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CustomFormField>
+
+              <CustomFormField
+                label="Birth Date"
+                required
+                error={form.formState.errors.birthDate?.message}
+              >
+                <DatePicker
+                  date={form.watch('birthDate') ? new Date(form.watch('birthDate')) : undefined}
+                  onSelect={date => form.setValue('birthDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                  enableYearMonthDropdown
+                />
+              </CustomFormField>
+
+              <CustomFormField
+                label="Goal"
+                error={form.formState.errors.goal?.message}
+              >
+                <Select
+                  value={form.watch(`goal`)}
+                  onValueChange={value => form.setValue(`goal`, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a goal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Build strength">Build strength</SelectItem>
+                    <SelectItem value="Improve coordination">Improve coordination</SelectItem>
+                    <SelectItem value="Make friends">Make friends</SelectItem>
+                    <SelectItem value="I don't know/ Basic fitness">I don't know/ Basic fitness</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CustomFormField>
+
+              <CustomFormField
+                label="Session Type"
+                required
+                error={form.formState.errors.sessionType?.message}
+              >
+                <Select
+                  value={form.watch('sessionType')}
+                  onValueChange={value => form.setValue('sessionType', value as SessionType)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
+                    <SelectItem value={SessionType.GROUP}>Group</SelectItem>
+                    <SelectItem value={SessionType.BOTH}>Both</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CustomFormField>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="currentlyInSports"
+                  checked={form.watch('currentlyInSports')}
+                  onCheckedChange={checked => form.setValue('currentlyInSports', checked === true)}
+                />
+                <label htmlFor="currentlyInSports" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Currently in sports
+                </label>
+              </div>
+
+              <CustomFormField
+                label="Medical Conditions (Optional)"
+                error={form.formState.errors.medicalConditions?.message}
+              >
+                <div className="space-y-3">
+                  {[
+                    'Asthma',
+                    'Allergies',
+                    'Diabetes',
+                    'Heart conditions',
+                    'Joint issues',
+                    'Others',
+                  ].map(condition => {
+                    const selectedConditions =
+                      form.watch('medicalConditions') || [];
+
+                    return (
+                      <div
+                        key={condition}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={`medical-condition-${condition}`}
+                          checked={selectedConditions.includes(condition)}
+                          onCheckedChange={checked => {
+                            if (checked === true) {
+                              form.setValue('medicalConditions', [
+                                ...selectedConditions,
+                                condition,
+                              ]);
+                            } else {
+                              form.setValue(
+                                'medicalConditions',
+                                selectedConditions.filter(
+                                  item => item !== condition
+                                )
+                              );
+                            }
+                          }}
+                        />
+
+                        <label
+                          htmlFor={`medical-condition-${condition}`}
+                          className="text-sm font-normal leading-none"
+                        >
+                          {condition}
+                        </label>
                       </div>
-          </CustomFormField>
+                    );
+                  })}
+                </div>
+              </CustomFormField>
 
             </form>
           </div>
