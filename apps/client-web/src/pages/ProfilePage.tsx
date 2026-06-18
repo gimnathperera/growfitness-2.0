@@ -65,6 +65,7 @@ export default function ProfilePage() {
     address: '',
     parentPhotoUrl: '',
   });
+  const [initialForm, setInitialForm] = useState<FormState | null>(null);
   const [coachData, setCoachData] = useState<User | null>(null);
 
   const [savingParent, setSavingParent] = useState(false);
@@ -77,6 +78,7 @@ export default function ProfilePage() {
 
   const isGmail = isGmailAccount(user?.email);
   const calendarSync = useGoogleCalendarSync({ enabled: isGmail });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!user?.id || user.role !== 'PARENT') return;
@@ -90,15 +92,16 @@ export default function ProfilePage() {
     }
 
     const nameParts = data.parentProfile?.name?.split(' ') || [];
-
-    setForm(prev => ({
-      ...prev,
+    const loadedForm = {
       firstName: nameParts[0] || '',
       lastName: nameParts.slice(1).join(' ') || '',
       phone: data.phone || '',
       address: data.parentProfile?.location || '',
       parentPhotoUrl: data.parentProfile?.photoUrl || '',
-    }));
+    };
+
+    setForm(loadedForm);
+    setInitialForm(loadedForm);
     setParentPhotoFile(null);
     setParentPhotoRemoved(false);
     setParentFieldErrors({});
@@ -118,8 +121,7 @@ export default function ProfilePage() {
 
     setCoachData(data);
     const nameParts = data.coachProfile?.name?.split(' ') || [];
-
-    setForm({
+    const loadedForm = {
       firstName: nameParts[0] || '',
       lastName: nameParts.slice(1).join(' ') || '',
       phone: data.phone || '',
@@ -131,7 +133,10 @@ export default function ProfilePage() {
           startTime: t.startTime,
           endTime: t.endTime,
         })) ?? [],
-    });
+    };
+
+    setForm(loadedForm);
+    setInitialForm(loadedForm);
     setLoading(false);
   }, [user?.id, user?.role, coachCtx.isLoading, coachCtx.profile]);
 
@@ -154,6 +159,23 @@ export default function ProfilePage() {
     calendarSync.clearOAuthResult();
   }, [calendarSync.oauthResult, calendarSync.clearOAuthResult, toast]);
 
+  // Check if there are any changes
+  const hasChanges = (() => {
+    if (!initialForm) return false;
+    
+    // Compare text fields
+    const textFieldsChanged = 
+      form.firstName !== initialForm.firstName ||
+      form.lastName !== initialForm.lastName ||
+      form.phone !== initialForm.phone ||
+      form.address !== initialForm.address;
+
+    // Check photo changes
+    const photoChanged = !!parentPhotoFile || parentPhotoRemoved;
+    
+    return textFieldsChanged || photoChanged;
+  })();
+
   const DAYS_OF_WEEK = [
     'Monday',
     'Tuesday',
@@ -167,6 +189,15 @@ export default function ProfilePage() {
   const handleParentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id || user.role !== 'PARENT') return;
+
+    // Prevent saving if no changes were made
+    if (!hasChanges) {
+      toast({
+        title: 'No changes detected',
+        description: 'Update a field before saving.',
+      });
+      return;
+    }
 
     const parsed = parseParentProfileForm({
       firstName: form.firstName,
@@ -213,6 +244,18 @@ export default function ProfilePage() {
       setParentPhotoFile(null);
       setParentPhotoRemoved(false);
       await parentCtx.refresh();
+      
+      // Update initialForm with the saved values
+      const newForm = {
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+        phone: parsed.data.phone,
+        address: parsed.data.address || '',
+        parentPhotoUrl: parentPhotoFile ? undefined : form.parentPhotoUrl,
+      };
+      setInitialForm(newForm);
+      
+      setIsEditing(false);
 
       toast({
         variant: 'success',
@@ -232,6 +275,32 @@ export default function ProfilePage() {
     } finally {
       setSavingParent(false);
     }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    
+    // Restore initial values
+    if (initialForm) {
+      setForm(initialForm);
+    } else {
+      // Fallback to parent context data
+      const data = parentCtx.profile;
+      if (data) {
+        const nameParts = data.parentProfile?.name?.split(' ') || [];
+        setForm({
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          phone: data.phone || '',
+          address: data.parentProfile?.location || '',
+          parentPhotoUrl: data.parentProfile?.photoUrl || '',
+        });
+      }
+    }
+    
+    setParentPhotoFile(null);
+    setParentPhotoRemoved(false);
+    setParentFieldErrors({});
   };
 
   const parentStatus =
@@ -275,28 +344,6 @@ export default function ProfilePage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="h-4 w-4" /> Email
-                </Label>
-                <div className="relative">
-                  <Input disabled value={user.email} />
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground">
-                  <UserIcon className="h-4 w-4" /> Status
-                </Label>
-                <Input
-                  disabled
-                  value={user.role === 'PARENT' ? parentStatus : (user.status ?? 'ACTIVE')}
-                />
-              </div>
-            </div>
-
             {user.role === 'PARENT' ? (
               <form
                 noValidate
@@ -310,10 +357,32 @@ export default function ProfilePage() {
                   photoRemoved={parentPhotoRemoved}
                   onPhotoRemovedChange={setParentPhotoRemoved}
                   fallbackLabel={form.firstName || user.email || '?'}
-                  disabled={savingParent}
+                  disabled={!isEditing || savingParent}
                   uploading={uploadingParentPhoto}
                   helperText="The selected photo uploads when you save changes."
                 />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="h-4 w-4" /> Email
+                  </Label>
+                  <div className="relative">
+                    <Input disabled value={user.email} />
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-muted-foreground">
+                  <UserIcon className="h-4 w-4" /> Status
+                </Label>
+                <Input
+                  disabled
+                  value={user.role === 'PARENT' ? parentStatus : (user.status ?? 'ACTIVE')}
+                />
+              </div>
+            </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
@@ -325,7 +394,7 @@ export default function ProfilePage() {
                         setForm(prev => ({ ...prev, firstName: e.target.value }));
                         setParentFieldErrors(prev => ({ ...prev, firstName: undefined }));
                       }}
-                      disabled={savingParent}
+                      disabled={!isEditing || savingParent}
                       autoComplete="given-name"
                       aria-invalid={Boolean(parentFieldErrors.firstName)}
                       aria-describedby={
@@ -347,7 +416,7 @@ export default function ProfilePage() {
                       onChange={e => {
                         setForm(prev => ({ ...prev, lastName: e.target.value }));
                       }}
-                      disabled={savingParent}
+                      disabled={!isEditing || savingParent}
                       autoComplete="family-name"
                     />
                   </div>
@@ -363,7 +432,7 @@ export default function ProfilePage() {
                         setForm(prev => ({ ...prev, phone: e.target.value }));
                         setParentFieldErrors(prev => ({ ...prev, phone: undefined }));
                       }}
-                      disabled={savingParent}
+                      disabled={!isEditing || savingParent}
                       autoComplete="tel"
                       aria-invalid={Boolean(parentFieldErrors.phone)}
                       aria-describedby={
@@ -383,7 +452,7 @@ export default function ProfilePage() {
                         setForm(prev => ({ ...prev, address: e.target.value }));
                         setParentFieldErrors(prev => ({ ...prev, address: undefined }));
                       }}
-                      disabled={savingParent}
+                      disabled={!isEditing || savingParent}
                       autoComplete="street-address"
                       aria-invalid={Boolean(parentFieldErrors.address)}
                       aria-describedby={
@@ -395,20 +464,42 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={savingParent || uploadingParentPhoto}>
-                    {savingParent || uploadingParentPhoto ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving…
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save changes
-                      </>
-                    )}
-                  </Button>
+                <div className="flex gap-3">
+                  {!isEditing ? (
+                    <Button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Edit Profile
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="submit"
+                        disabled={savingParent || uploadingParentPhoto || !hasChanges}
+                      >
+                        {savingParent || uploadingParentPhoto ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Changes
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancel}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
                 </div>
               </form>
             ) : user.role === 'COACH' ? (
@@ -447,7 +538,7 @@ export default function ProfilePage() {
                       rows={2}
                       value={form.homeAddress ?? ''}
                       placeholder="Full address"
-                      disabled
+                      disabled  
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
