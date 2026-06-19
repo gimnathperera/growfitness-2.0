@@ -41,7 +41,6 @@ import { usersService } from '@/services/users.service';
 import { locationsService } from '@/services/locations.service';
 import { kidsService } from '@/services/kids.service';
 import { useToast } from '@/hooks/useToast';
-import { formatSessionType } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { useModalParams } from '@/hooks/useModalParams';
 import { Repeat } from 'lucide-react';
@@ -163,6 +162,7 @@ export function EditSessionDialog({
     resolver: zodResolver(UpdateSessionSchema),
     defaultValues: {
       title: session.title || '',
+      type: session.type,
       coachId: extractId(session.coachId),
       locationId: extractId(session.locationId),
       dateTime: getDateValue(session.dateTime),
@@ -184,6 +184,7 @@ export function EditSessionDialog({
     if (open) {
       form.reset({
         title: session.title || '',
+        type: session.type,
         coachId: extractId(session.coachId),
         locationId: extractId(session.locationId),
         dateTime: getDateValue(session.dateTime),
@@ -237,16 +238,22 @@ export function EditSessionDialog({
     // Get current form values to ensure we have the latest values
     // Use getValues() to get the actual current form state
     const formValues = form.getValues();
+    const currentSessionType = formValues.type || session.type;
 
     // Transform dateTime to string format if it's a Date object
     const normalizedKids =
-      session.type === SessionType.INDIVIDUAL
+      currentSessionType === SessionType.INDIVIDUAL
         ? data.kids && data.kids.length > 0
           ? data.kids
           : data.kidId
             ? [data.kidId]
             : []
         : data.kids || [];
+
+    if (currentSessionType === SessionType.INDIVIDUAL && normalizedKids.length === 0) {
+      toast.error('Please select at least one kid for individual sessions');
+      return;
+    }
 
     const rawDateTime = data.dateTime;
     const dateTimeIso =
@@ -259,10 +266,11 @@ export function EditSessionDialog({
     const submitData: UpdateSessionDto = {
       ...data,
       title: formValues.title || data.title, // Explicitly include title from form values
+      type: currentSessionType,
       dateTime: dateTimeIso,
       // For individual sessions, ensure kidId is set from kids array if needed
       kidId:
-        session.type === SessionType.INDIVIDUAL && normalizedKids.length > 0
+        currentSessionType === SessionType.INDIVIDUAL && normalizedKids.length > 0
           ? normalizedKids[0]
           : data.kidId,
       kids: normalizedKids,
@@ -309,7 +317,7 @@ export function EditSessionDialog({
 
     const recurringPayload: CreateRecurringSessionDto = {
       title: submitData.title || session.title,
-      type: session.type,
+      type: currentSessionType,
       coachId: submitData.coachId || extractId(session.coachId),
       locationId: submitData.locationId || extractId(session.locationId),
       startDate: format(startDate, 'yyyy-MM-dd'),
@@ -351,6 +359,7 @@ export function EditSessionDialog({
 
   const isSubmitting =
     updateMutation.isPending || createRecurringMutation.isPending || deleteMutation.isPending;
+  const sessionType = form.watch('type');
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -377,37 +386,64 @@ export function EditSessionDialog({
                 <Input {...form.register('title')} placeholder="Enter session title" />
               </CustomFormField>
 
-              {/* Session Type - Read-only display */}
-              <CustomFormField label="Session Type">
-                <Input value={formatSessionType(session.type)} disabled className="bg-muted" />
-              </CustomFormField>
-
-              <CustomFormField
-                label="Coach"
-                required
-                error={form.formState.errors.coachId?.message}
-              >
-                <Select
-                  value={form.watch('coachId') || ''}
-                  onValueChange={value => form.setValue('coachId', value)}
+              {/* Type + Coach */}
+              <div className="grid grid-cols-2 gap-3">
+                <CustomFormField
+                  label="Session Type"
+                  required
+                  error={form.formState.errors.type?.message}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select coach" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {coachesForSessionAssignment(coachesData?.data, extractId(session.coachId)).map(
-                      coach => {
-                        const coachId = coach.id;
-                        return (
-                          <SelectItem key={coachId} value={coachId}>
-                            {coach.coachProfile?.name || coach.email}
-                          </SelectItem>
-                        );
+                  <Select
+                    value={sessionType}
+                    onValueChange={value => {
+                      form.setValue('type', value as SessionType);
+                      if (value === SessionType.GROUP) {
+                        form.setValue('kidId', undefined);
+                        form.setValue('kids', []);
+                        form.clearErrors(['kidId', 'kids']);
+                      } else {
+                        form.setValue('kidId', undefined);
+                        form.setValue('kids', []);
                       }
-                    )}
-                  </SelectContent>
-                </Select>
-              </CustomFormField>
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SessionType.INDIVIDUAL}>Private</SelectItem>
+                      <SelectItem value={SessionType.GROUP}>Group</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CustomFormField>
+
+                <CustomFormField
+                  label="Coach"
+                  required
+                  error={form.formState.errors.coachId?.message}
+                >
+                  <Select
+                    value={form.watch('coachId') || ''}
+                    onValueChange={value => form.setValue('coachId', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select coach" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {coachesForSessionAssignment(coachesData?.data, extractId(session.coachId)).map(
+                        coach => {
+                          const coachId = coach.id;
+                          return (
+                            <SelectItem key={coachId} value={coachId}>
+                              {coach.coachProfile?.name || coach.email}
+                            </SelectItem>
+                          );
+                        }
+                      )}
+                    </SelectContent>
+                  </Select>
+                </CustomFormField>
+              </div>
 
               <CustomFormField
                 label="Location"
@@ -465,7 +501,7 @@ export function EditSessionDialog({
                 <Input type="number" {...form.register('duration', { valueAsNumber: true })} />
               </CustomFormField>
 
-              {session.type === SessionType.GROUP && (
+              {sessionType === SessionType.GROUP && (
                 <>
                   <CustomFormField label="Capacity" error={form.formState.errors.capacity?.message}>
                     <Input type="number" {...form.register('capacity', { valueAsNumber: true })} />
@@ -499,7 +535,7 @@ export function EditSessionDialog({
                 </>
               )}
 
-              {session.type === SessionType.INDIVIDUAL && (
+              {sessionType === SessionType.INDIVIDUAL && (
                 <CustomFormField label="Kids" required error={form.formState.errors.kids?.message}>
                   <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
                     {(kidsData?.data || []).map(kid => {

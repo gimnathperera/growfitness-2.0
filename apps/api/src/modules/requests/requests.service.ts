@@ -410,8 +410,19 @@ export class RequestsService {
     const [data, total] = await Promise.all([
       this.rescheduleRequestModel
         .find(filter)
-        .populate('sessionId')
-        .populate('requestedBy', 'email')
+        .populate({
+          path: 'sessionId',
+          populate: [
+            { path: 'coachId', select: 'email phone coachProfile' },
+            { path: 'locationId', select: 'name address' },
+            {
+              path: 'kids',
+              select: 'name parentId',
+              populate: { path: 'parentId', select: 'email phone parentProfile' },
+            },
+          ],
+        })
+        .populate('requestedBy', 'email phone parentProfile coachProfile')
         .sort(sort)
         .skip(skip)
         .limit(pagination.limit)

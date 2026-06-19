@@ -455,6 +455,7 @@ export type CreateRecurringSessionDto = z.infer<typeof CreateRecurringSessionSch
 
 export const UpdateSessionSchema = z.object({
   title: z.string().min(1).optional(),
+  type: z.nativeEnum(SessionType).optional(),
   coachId: z.string().min(1).optional(),
   locationId: z.string().min(1).optional(),
   dateTime: z.string().or(z.date()).optional(),

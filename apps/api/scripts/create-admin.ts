@@ -224,6 +224,7 @@ async function createAdmin() {
       phone: '+1234567890', // Default phone, can be updated later
       passwordHash,
       status: UserStatus.ACTIVE,
+      isApproved: true,
       coachProfile: {
         name: inputs.name,
       },

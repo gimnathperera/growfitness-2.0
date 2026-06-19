@@ -580,22 +580,27 @@ export class SessionsService {
       });
     }
 
-    if (
-      updateSessionDto.kids &&
-      session.type === SessionType.INDIVIDUAL &&
-      updateSessionDto.kids.length < 1
-    ) {
+    const targetType = updateSessionDto.type ?? session.type;
+    const targetKids = updateSessionDto.kids ? this.toObjectIdArray(updateSessionDto.kids, 'kids') : session.kids;
+    const targetKidsStr = targetKids?.map(k => k.toString()) ?? [];
+
+    if (targetType === SessionType.INDIVIDUAL && targetKidsStr.length < 1) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_INPUT,
         message: 'Individual sessions require at least one kid ID',
       });
     }
 
-    if (
-      updateSessionDto.kids &&
-      session.type === SessionType.GROUP &&
-      updateSessionDto.kids.length > (updateSessionDto.capacity ?? session.capacity)
-    ) {
+    let finalCapacity = updateSessionDto.capacity ?? session.capacity;
+    if (updateSessionDto.type) {
+      if (updateSessionDto.type === SessionType.INDIVIDUAL) {
+        finalCapacity = targetKidsStr.length;
+      } else if (updateSessionDto.type === SessionType.GROUP && !updateSessionDto.capacity && session.type === SessionType.INDIVIDUAL) {
+        finalCapacity = 10;
+      }
+    }
+
+    if (targetType === SessionType.GROUP && targetKidsStr.length > finalCapacity) {
       throw new BadRequestException({
         errorCode: ErrorCode.INVALID_SESSION_CAPACITY,
         message: 'Number of kids exceeds session capacity',
@@ -604,6 +609,7 @@ export class SessionsService {
 
     const updatedFields: Partial<Session> = {
       ...(updateSessionDto.title && { title: updateSessionDto.title }),
+      ...(updateSessionDto.type && { type: updateSessionDto.type }),
       ...(updateSessionDto.coachId && {
         coachId: this.toObjectId(updateSessionDto.coachId, 'coachId'),
       }),
@@ -612,7 +618,7 @@ export class SessionsService {
       }),
       ...(updateSessionDto.dateTime && { dateTime: new Date(updateSessionDto.dateTime) }),
       ...(updateSessionDto.duration && { duration: updateSessionDto.duration }),
-      ...(updateSessionDto.capacity && { capacity: updateSessionDto.capacity }),
+      capacity: finalCapacity,
       ...(updateSessionDto.kids && { kids: this.toObjectIdArray(updateSessionDto.kids, 'kids') }),
       ...(updateSessionDto.status && { status: updateSessionDto.status }),
       ...(updateSessionDto.isFreeSession !== undefined && {
