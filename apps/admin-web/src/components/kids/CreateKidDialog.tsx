@@ -43,6 +43,10 @@ interface CreateKidDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Reused everywhere we call setValue manually (Select / DatePicker / Checkbox handlers
+// don't fire native input events, so RHF won't re-run the resolver unless we tell it to).
+const VALIDATE_OPTS = { shouldValidate: true, shouldDirty: true } as const;
+
 export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
   const { closeModal } = useModalParams('kidId');
 
@@ -157,7 +161,10 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
               >
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Select value={form.watch('parentId')} onValueChange={(value) => form.setValue('parentId', value)}>
+                    <Select
+                      value={form.watch('parentId')}
+                      onValueChange={value => form.setValue('parentId', value, VALIDATE_OPTS)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select parent" />
                       </SelectTrigger>
@@ -206,7 +213,7 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
                               key={parent.id}
                               value={parent.id}
                               onSelect={() => {
-                                form.setValue('parentId', parent.id);
+                                form.setValue('parentId', parent.id, VALIDATE_OPTS);
                               }}
                             >
                               <Check
@@ -264,7 +271,7 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
               <CustomFormField label="Gender" required error={form.formState.errors.gender?.message}>
                 <Select
                   value={form.watch('gender')}
-                  onValueChange={value => form.setValue('gender', value)}
+                  onValueChange={value => form.setValue('gender', value, VALIDATE_OPTS)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
@@ -284,7 +291,9 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
               >
                 <DatePicker
                   date={form.watch('birthDate') ? new Date(form.watch('birthDate')) : undefined}
-                  onSelect={date => form.setValue('birthDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                  onSelect={date =>
+                    form.setValue('birthDate', date ? format(date, 'yyyy-MM-dd') : '', VALIDATE_OPTS)
+                  }
                   enableYearMonthDropdown
                 />
               </CustomFormField>
@@ -295,7 +304,7 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
               >
                 <Select
                   value={form.watch(`goal`)}
-                  onValueChange={value => form.setValue(`goal`, value)}
+                  onValueChange={value => form.setValue(`goal`, value, VALIDATE_OPTS)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a goal" />
@@ -316,7 +325,9 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
               >
                 <Select
                   value={form.watch('sessionType')}
-                  onValueChange={value => form.setValue('sessionType', value as SessionType)}
+                  onValueChange={value =>
+                    form.setValue('sessionType', value as SessionType, VALIDATE_OPTS)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -333,7 +344,9 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
                 <Checkbox
                   id="currentlyInSports"
                   checked={form.watch('currentlyInSports')}
-                  onCheckedChange={checked => form.setValue('currentlyInSports', checked === true)}
+                  onCheckedChange={checked =>
+                    form.setValue('currentlyInSports', checked === true, VALIDATE_OPTS)
+                  }
                 />
                 <label htmlFor="currentlyInSports" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Currently in sports
@@ -366,16 +379,16 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
                           checked={selectedConditions.includes(condition)}
                           onCheckedChange={checked => {
                             if (checked === true) {
-                              form.setValue('medicalConditions', [
-                                ...selectedConditions,
-                                condition,
-                              ]);
+                              form.setValue(
+                                'medicalConditions',
+                                [...selectedConditions, condition],
+                                VALIDATE_OPTS
+                              );
                             } else {
                               form.setValue(
                                 'medicalConditions',
-                                selectedConditions.filter(
-                                  item => item !== condition
-                                )
+                                selectedConditions.filter(item => item !== condition),
+                                VALIDATE_OPTS
                               );
                             }
                           }}
