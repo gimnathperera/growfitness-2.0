@@ -10,7 +10,29 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { notificationsService, type Notification } from '@/services/notifications.service';
 import { cn } from '@/lib/utils';
 
+import { NotificationType } from '@grow-fitness/shared-types';
+
 type Filter = 'all' | 'unread' | 'read';
+
+const INVOICE_NOTIFICATION_TYPES = new Set<NotificationType>([
+  NotificationType.INVOICE_STATUS_UPDATED,
+  NotificationType.INVOICE_CREATED,
+  NotificationType.INVOICE_CREATION_REMINDER,
+  NotificationType.INVOICE_PAYMENT_REMINDER,
+  NotificationType.MONTH_END_PAYMENT_REMINDER,
+]);
+
+function notificationMentionsInvoiceText(n: { title: string; body: string }): boolean {
+  return /\binvoice\b/i.test(`${n.title}\n${n.body}`);
+}
+
+function isInvoiceRelatedNotification(n: Notification): boolean {
+  return (
+    INVOICE_NOTIFICATION_TYPES.has(n.type as NotificationType) ||
+    n.entityType === 'Invoice' ||
+    notificationMentionsInvoiceText(n)
+  );
+}
 
 function groupLabel(date: Date) {
   if (isToday(date)) return 'Today';
@@ -83,6 +105,47 @@ export default function NotificationsPage() {
       variant: 'destructive',
     });
     if (ok) clearAllMutation.mutate(undefined!);
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    if (!n.read) {
+      markReadMutation.mutate(n.id);
+    }
+
+    // Invoice-related → payments page
+    if (isInvoiceRelatedNotification(n)) {
+      navigate('/payments');
+      return;
+    }
+
+    // Redirect to schedule tab if it's a session notification
+    const sessionNotificationTypes = [
+      'FREE_SESSION_REQUEST',
+      'RESCHEDULE_REQUEST',
+      'EXTRA_SESSION_REQUEST',
+      'FREE_SESSION_SELECTED',
+      'RESCHEDULE_APPROVED',
+      'RESCHEDULE_DENIED',
+      'EXTRA_SESSION_APPROVED',
+      'EXTRA_SESSION_DENIED',
+      'SESSION_CREATED',
+      'SESSION_UPDATED',
+      'SESSION_CANCELLED',
+      'SESSION_COMPLETED',
+      'SESSION_DELETED',
+      'UPCOMING_SESSION_REMINDER',
+    ];
+
+    const isSessionEntityType =
+      n.entityType === 'Session' || n.entityType === 'SessionRecurringGroup';
+    if (sessionNotificationTypes.includes(n.type) || isSessionEntityType) {
+      navigate('/dashboard?tab=schedule');
+      return;
+    }
+
+    if (n.type === NotificationType.PROFILE_UPDATED) {
+      navigate('/profile');
+    }
   };
 
   return (
@@ -196,8 +259,17 @@ export default function NotificationsPage() {
                   {items.map(n => (
                     <article
                       key={n.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNotificationClick(n)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleNotificationClick(n);
+                        }
+                      }}
                       className={cn(
-                        'group relative rounded-2xl border bg-white p-4 transition-all hover:shadow-md hover:shadow-emerald-900/5',
+                        'group relative rounded-2xl border bg-white p-4 transition-all hover:shadow-md hover:shadow-emerald-900/5 cursor-pointer',
                         !n.read
                           ? 'border-emerald-200 ring-1 ring-emerald-100'
                           : 'border-gray-100'
@@ -243,7 +315,10 @@ export default function NotificationsPage() {
 
                           {!n.read && (
                             <button
-                              onClick={() => markReadMutation.mutate(n.id)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                markReadMutation.mutate(n.id);
+                              }}
                               className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900"
                             >
                               <Check className="h-3.5 w-3.5" />
@@ -254,7 +329,10 @@ export default function NotificationsPage() {
                       </div>
 
                       <button
-                        onClick={() => deleteOneMutation.mutate(n.id)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          deleteOneMutation.mutate(n.id);
+                        }}
                         aria-label="Delete notification"
                         className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all"
                       >

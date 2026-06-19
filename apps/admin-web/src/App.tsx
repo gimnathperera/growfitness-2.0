@@ -18,6 +18,7 @@ import { TestimonialsPage } from './pages/TestimonialsPage';
 import { Layout } from './components/layout/Layout';
 import { PrintInvoicePage } from './pages/PrintInvoicePage';
 import { SupportChatPage } from './pages/SupportChatPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="testimonials" element={<TestimonialsPage />} />
           <Route path="chat" element={<SupportChatPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Routes>
     </AuthProvider>
