@@ -2,19 +2,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 import { useKid } from '@/contexts/kid/useKid';
 import { useAuth } from '@/contexts/useAuth';
+import { useParentProfile } from '@/contexts/parent-profile/ParentProfileProvider';
+import { useCoachProfile } from '@/contexts/coach-profile/CoachProfileProvider';
+import { getFirstName } from '@/utils/formatName';
 
 export function DashboardHeader() {
   const { user, role, isLoading } = useAuth();
   const { kids, selectedKid, setSelectedKid, isLoading: isKidLoading } = useKid();
+  const parentProfile = useParentProfile();
+  const coachProfile = useCoachProfile();
 
   /* ---------- ROLE CONFIG ---------- */
   const roleConfig = {
     PARENT: {
-      greeting: `Hi, Welcome Back! 👋`,
+      greeting: parentProfile.displayName
+        ? `Hi ${getFirstName(parentProfile.displayName)}, Welcome Back! 👋`
+        : 'Hi, Welcome Back! 👋',
       subtitle: "Track your kid's fitness journey",
     },
     COACH: {
-      greeting: `Hi Coach 👋`,
+      greeting: coachProfile.displayName
+        ? `Hi Coach ${getFirstName(coachProfile.displayName)} 👋`
+        : 'Hi Coach 👋',
       subtitle: 'Ready to inspire young athletes today?',
     },
   };
