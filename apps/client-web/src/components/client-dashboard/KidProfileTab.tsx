@@ -42,6 +42,61 @@ type KidFieldKey = "name" | "gender" | "birthDate" | "goal";
 
 const MEDICAL_CONDITIONS = ["Asthma", "Diabetes", "Heart condition", "Allergy"];
 
+// Canonical option lists used by the <Select> components below.
+// We normalize incoming API values against these so the Select can
+// find a matching SelectItem (Radix/shadcn Select matching is an exact,
+// case-sensitive string match).
+const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER"] as const;
+const SESSION_TYPE_OPTIONS = ["INDIVIDUAL", "GROUP", "FAMILY"] as const;
+const GOAL_OPTIONS = [
+  "Build strength",
+  "Improve coordination",
+  "Make friends",
+  "I don't know/ Basic fitness",
+] as const;
+
+// Some APIs store the display label ("Private", "Group", "Both") instead of
+// the enum value ("INDIVIDUAL", "GROUP", "FAMILY"). This map lets the
+// normalizer below recognize either form. Add more variants here if the
+// console log shows something else still slipping through.
+const SESSION_TYPE_ALIASES: Record<string, typeof SESSION_TYPE_OPTIONS[number]> = {
+  INDIVIDUAL: "INDIVIDUAL",
+  PRIVATE: "INDIVIDUAL",
+  GROUP: "GROUP",
+  FAMILY: "FAMILY",
+  BOTH: "FAMILY",
+};
+
+/** Case-insensitively matches `raw` against `options` and returns the
+ * canonical-cased option if found, otherwise returns the trimmed raw value
+ * (so an unexpected value at least renders in read-only mode instead of
+ * silently becoming "").
+ */
+function normalizeToOption<T extends string>(
+  raw: string | undefined | null,
+  options: readonly T[]
+): T | "" {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
+  const match = options.find((opt) => opt.toLowerCase() === value.toLowerCase());
+  // If nothing matches, fall back to the raw (trimmed) value rather than
+  // silently blanking it out — this way an unexpected value still shows up
+  // in the read-only view / console instead of vanishing, making the
+  // mismatch easy to spot.
+  return (match ?? value) as T;
+}
+
+/** Like normalizeToOption, but also checks SESSION_TYPE_ALIASES so label-style
+ * values from the API (e.g. "Private", "Both") resolve to the correct enum
+ * value the <Select> actually expects. */
+function normalizeSessionType(raw: string | undefined | null): SessionType {
+  const value = (raw ?? "").trim().toUpperCase();
+  if (value && SESSION_TYPE_ALIASES[value]) {
+    return SESSION_TYPE_ALIASES[value] as unknown as SessionType;
+  }
+  return SessionType.INDIVIDUAL;
+}
+
 export function KidProfileTab() {
   const { toast } = useToast();
   const { selectedKid, isLoading: isKidLoading, setSelectedKid } = useKid();
@@ -119,16 +174,33 @@ export function KidProfileTab() {
         const fullKidData = await kidsService.getKidById(kidId);
         if (!fullKidData) throw new Error("No kid data received from API");
 
-        const details = {
+        // Debug: compare these against GENDER_OPTIONS / SESSION_TYPE_OPTIONS /
+        // GOAL_OPTIONS / MEDICAL_CONDITIONS above if a Select still shows blank.
+        console.log("Raw kid data from API:", {
+          gender: fullKidData.gender,
+          sessionType: fullKidData.sessionType,
+          goal: fullKidData.goal,
+          medicalConditions: fullKidData.medicalConditions,
+        });
+
+        const details: Partial<UpdateKidDto> = {
           name: fullKidData.name || "",
-          gender: fullKidData.gender || "",
+          gender: normalizeToOption(fullKidData.gender, GENDER_OPTIONS),
           birthDate: formatDateForInput(fullKidData.birthDate),
-          goal: fullKidData.goal || "",
+          goal: normalizeToOption(fullKidData.goal, GOAL_OPTIONS),
           profilePhotoUrl: fullKidData.profilePhotoUrl || "",
           currentlyInSports: fullKidData.currentlyInSports || false,
-          medicalConditions: fullKidData.medicalConditions || [],
-          sessionType: fullKidData.sessionType || "INDIVIDUAL",
+          sessionType: normalizeSessionType(fullKidData.sessionType),
+          medicalConditions: (fullKidData.medicalConditions || [])
+            .map((c: string) => c.trim())
+            .map((c: string) => {
+              const match = MEDICAL_CONDITIONS.find(
+                (opt) => opt.toLowerCase() === c.toLowerCase()
+              );
+              return match ?? c;
+            }),
         };
+
         setFormData(details);
         setBackupFormData(details);
         setProfilePhotoFile(null);
@@ -234,7 +306,7 @@ export function KidProfileTab() {
       };
 
       const updatedKid = await kidsService.updateKid(kidId, payload);
-      const newForm = {
+      const newForm: Partial<UpdateKidDto> = {
         name: updatedKid.name || "",
         gender: updatedKid.gender || "",
         birthDate: formatDateForInput(updatedKid.birthDate),
@@ -242,7 +314,7 @@ export function KidProfileTab() {
         profilePhotoUrl: updatedKid.profilePhotoUrl || "",
         currentlyInSports: updatedKid.currentlyInSports || false,
         medicalConditions: updatedKid.medicalConditions ?? [],
-        sessionType: updatedKid.sessionType || SessionType.INDIVIDUAL,
+        sessionType: (updatedKid.sessionType as SessionType) || SessionType.INDIVIDUAL,
       };
       setFormData(newForm);
       setBackupFormData(newForm);
@@ -574,7 +646,7 @@ export function KidProfileTab() {
                 </div>
                 {formData.currentlyInSports && (
                   <Badge variant="secondary" className="font-normal">
-                    Active
+                    Currently Active
                   </Badge>
                 )}
               </div>
