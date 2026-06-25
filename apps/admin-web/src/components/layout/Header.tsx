@@ -1,11 +1,15 @@
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useConfirm } from '@/hooks/useConfirm';
 import { NotificationBell } from '../notifications/NotificationBell';
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { confirm, confirmState } = useConfirm();
@@ -27,8 +31,15 @@ export function Header() {
 
   return (
     <>
-      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card">
-        <div>
+      <header className="h-16 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onMenuClick}
+            className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground focus:outline-none"
+            aria-label="Open sidebar"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
           <h2 className="text-lg font-semibold">Admin Portal</h2>
         </div>
         <div className="flex items-center gap-4">

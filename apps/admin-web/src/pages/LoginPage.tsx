@@ -49,9 +49,9 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Login Form (45%) */}
-      <div className="w-[45%] bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left Side - Login Form (45% on desktop, full width on mobile) */}
+      <div className="w-full lg:w-[45%] bg-white flex flex-col min-h-screen lg:min-h-0">
         {/* Logo/Branding */}
         <div className="p-8">
           <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ export function LoginPage() {
         </div>
 
         {/* Form Container - Centered Vertically */}
-        <div className="flex-1 flex items-center justify-center px-12">
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-8 lg:py-0">
           <div className="w-full max-w-md">
             <h1 className="text-3xl font-bold mb-2 text-foreground">Sign in to your account</h1>
             <p className="text-muted-foreground mb-8">
@@ -128,8 +128,8 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Illustration (55%) */}
-      <div className="w-[55%] bg-black relative overflow-hidden">
+      {/* Right Side - Illustration (55% on desktop, hidden on mobile) */}
+      <div className="hidden lg:block lg:w-[55%] bg-black relative overflow-hidden">
         {/* Illustration Pattern */}
         <div className="absolute inset-0 opacity-20">
           <svg

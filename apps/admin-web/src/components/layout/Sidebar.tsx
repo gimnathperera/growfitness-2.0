@@ -34,10 +34,18 @@ const menuItems: MenuItem[] = [
   { path: '/testimonials', label: 'Testimonials', icon: MessageCircle },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  className?: string;
+  onClose?: () => void;
+}
+
+export function Sidebar({ className, onClose }: SidebarProps) {
   return (
     <aside
-      className="w-64 flex flex-col text-white border-r border-white/10"
+      className={cn(
+        'w-64 flex flex-col text-white border-r border-white/10 shrink-0',
+        className
+      )}
       style={{ backgroundColor: BRAND }}
     >
       {/* Header */}
@@ -55,6 +63,7 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => onClose?.()}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 px-3 py-3 rounded-md text-lg font-medium transition-all duration-200',
