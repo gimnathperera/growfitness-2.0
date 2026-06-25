@@ -16,25 +16,38 @@ interface PaginationProps<T> {
   onPageSizeChange: (pageSize: number) => void;
 }
 
-export function Pagination<T>({ data, onPageChange, onPageSizeChange }: PaginationProps<T>) {
+export function Pagination<T>({
+  data,
+  onPageChange,
+  onPageSizeChange,
+}: PaginationProps<T>) {
   const { page, limit, totalPages, total } = data;
 
   return (
-    <div className="flex items-center justify-between px-2 py-4">
-      <div className="flex items-center gap-2">
-        <p className="text-sm text-muted-foreground">
-          Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} results
-        </p>
-      </div>
-      <div className="flex items-center gap-6">
+    <div className="flex flex-col gap-4 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Showing results */}
+      <p className="text-center text-sm text-muted-foreground sm:text-left">
+        Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} results
+      </p>
+
+      {/* Controls */}
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
+        {/* Rows per page */}
         <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">Rows per page</p>
-          <Select value={limit.toString()} onValueChange={value => onPageSizeChange(Number(value))}>
-            <SelectTrigger className="h-8 w-[70px]">
+          <p className="text-sm text-muted-foreground whitespace-nowrap">
+            Rows per page
+          </p>
+
+          <Select
+            value={limit.toString()}
+            onValueChange={(value) => onPageSizeChange(Number(value))}
+          >
+            <SelectTrigger className="h-8 w-20">
               <SelectValue />
             </SelectTrigger>
+
             <SelectContent>
-              {PAGE_SIZES.map(size => (
+              {PAGE_SIZES.map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -42,21 +55,25 @@ export function Pagination<T>({ data, onPageChange, onPageSizeChange }: Paginati
             </SelectContent>
           </Select>
         </div>
+
+        {/* Pagination */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </p>
+
+          <span className="min-w-[90px] text-center text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
           >
