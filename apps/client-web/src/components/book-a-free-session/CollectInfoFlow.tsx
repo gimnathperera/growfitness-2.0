@@ -103,14 +103,14 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
   const renderForm = () => (
     <>
       <ProgressBar progress={progress} currentStep={currentStep + 1} totalSteps={collectInfoQuestions.length} />
-      <form 
+      <form
         onSubmit={(e) => {
           e.preventDefault();
           goToNext();
-        }} 
+        }}
         className="flex-1 flex flex-col px-4"
       >
-        <motion.div className="flex-1 flex flex-col w-full max-w-2xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <motion.div className="flex-1 flex flex-col w-full max-w-3xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="flex-1 flex flex-col justify-center py-6">
             <AnimatePresence mode="wait">
               <motion.div
@@ -203,12 +203,12 @@ const CollectInfoFlow: React.FC<CollectInfoFlowProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex flex-col relative">
-    {!isSubmitSuccess && !isSubmitting
+      {!isSubmitSuccess && !isSubmitting
         ? renderForm()
         : isSubmitting
-        ? renderSubmitting()
-        : null}
-     
+          ? renderSubmitting()
+          : null}
+
     </div>
   );
 };
