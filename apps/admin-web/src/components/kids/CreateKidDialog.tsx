@@ -47,8 +47,18 @@ interface CreateKidDialogProps {
 // don't fire native input events, so RHF won't re-run the resolver unless we tell it to).
 const VALIDATE_OPTS = { shouldValidate: true, shouldDirty: true } as const;
 
+const PREDEFINED_MEDICAL_CONDITIONS = [
+  'Asthma',
+  'Allergies',
+  'Diabetes',
+  'Heart conditions',
+  'Joint issues',
+];
+
 export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
   const { closeModal } = useModalParams('kidId');
+  const [showOtherInput, setShowOtherInput] = useState(false);
+  const [otherCondition, setOtherCondition] = useState('');
 
   // Handle close with URL params
   const handleOpenChange = (newOpen: boolean) => {
@@ -90,10 +100,14 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
       form.reset(defaultValues);
       setProfilePhotoFile(null);
       setShowProfilePhotoUrl(false);
+      setShowOtherInput(false);
+      setOtherCondition('');
     } else {
       form.reset(defaultValues);
       setProfilePhotoFile(null);
       setShowProfilePhotoUrl(false);
+      setShowOtherInput(false);
+      setOtherCondition('');
     }
   }, [open]);
 
@@ -358,48 +372,80 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
                 error={form.formState.errors.medicalConditions?.message}
               >
                 <div className="space-y-3">
-                  {[
-                    'Asthma',
-                    'Allergies',
-                    'Diabetes',
-                    'Heart conditions',
-                    'Joint issues',
-                    'Others',
-                  ].map(condition => {
+                  {[...PREDEFINED_MEDICAL_CONDITIONS, 'Others'].map(condition => {
                     const selectedConditions =
                       form.watch('medicalConditions') || [];
+                    const isChecked = condition === 'Others' ? showOtherInput : selectedConditions.includes(condition);
 
                     return (
-                      <div
-                        key={condition}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`medical-condition-${condition}`}
-                          checked={selectedConditions.includes(condition)}
-                          onCheckedChange={checked => {
-                            if (checked === true) {
-                              form.setValue(
-                                'medicalConditions',
-                                [...selectedConditions, condition],
-                                VALIDATE_OPTS
-                              );
-                            } else {
-                              form.setValue(
-                                'medicalConditions',
-                                selectedConditions.filter(item => item !== condition),
-                                VALIDATE_OPTS
-                              );
-                            }
-                          }}
-                        />
+                      <div key={condition} className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`medical-condition-${condition}`}
+                            checked={isChecked}
+                            onCheckedChange={checked => {
+                              if (condition === 'Others') {
+                                if (checked === true) {
+                                  setShowOtherInput(true);
+                                  if (otherCondition.trim()) {
+                                    form.setValue(
+                                      'medicalConditions',
+                                      [...selectedConditions.filter(c => PREDEFINED_MEDICAL_CONDITIONS.includes(c)), otherCondition.trim()],
+                                      VALIDATE_OPTS
+                                    );
+                                  }
+                                } else {
+                                  setShowOtherInput(false);
+                                  form.setValue(
+                                    'medicalConditions',
+                                    selectedConditions.filter(item => PREDEFINED_MEDICAL_CONDITIONS.includes(item)),
+                                    VALIDATE_OPTS
+                                  );
+                                }
+                              } else {
+                                if (checked === true) {
+                                  form.setValue(
+                                    'medicalConditions',
+                                    [...selectedConditions, condition],
+                                    VALIDATE_OPTS
+                                  );
+                                } else {
+                                  form.setValue(
+                                    'medicalConditions',
+                                    selectedConditions.filter(item => item !== condition),
+                                    VALIDATE_OPTS
+                                  );
+                                }
+                              }
+                            }}
+                          />
 
-                        <label
-                          htmlFor={`medical-condition-${condition}`}
-                          className="text-sm font-normal leading-none"
-                        >
-                          {condition}
-                        </label>
+                          <label
+                            htmlFor={`medical-condition-${condition}`}
+                            className="text-sm font-normal leading-none"
+                          >
+                            {condition}
+                          </label>
+                        </div>
+                        {condition === 'Others' && showOtherInput && (
+                          <div className="pl-6 pt-1">
+                            <Input
+                              placeholder="Specify medical condition"
+                              value={otherCondition}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setOtherCondition(val);
+                                const base = selectedConditions.filter(c => PREDEFINED_MEDICAL_CONDITIONS.includes(c));
+                                if (val.trim()) {
+                                  form.setValue('medicalConditions', [...base, val.trim()], VALIDATE_OPTS);
+                                } else {
+                                  form.setValue('medicalConditions', base, VALIDATE_OPTS);
+                                }
+                              }}
+                              className="max-w-md"
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}

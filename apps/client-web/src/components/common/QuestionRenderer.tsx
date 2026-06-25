@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/select';
 import type { QuestionConfig, QuestionOption } from '@/types/question-config';
 import { Eye, EyeOff } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface QuestionRendererProps<TFormValues extends FieldValues = FieldValues> {
   question: QuestionConfig<FieldPath<TFormValues>>;
@@ -30,6 +32,9 @@ const errorVariants = {
   hidden: { opacity: 0, height: 0 },
   visible: { opacity: 1, height: 'auto', transition: { duration: 0.3 } },
 } as const;
+
+const OTHER_VALUE = 'other';
+const OTHER_PREFIX = 'other:';
 
 const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
   question,
@@ -548,11 +553,49 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                 ? (field.value as (string | boolean)[])
                 : [];
 
-              const toggleOption = (optionValue: string | boolean) => {
-                const newValues = selectedValues.includes(optionValue)
-                  ? selectedValues.filter(v => v !== optionValue)
+              const otherEntry = selectedValues.find(
+                (v) => String(v) === OTHER_VALUE || String(v).startsWith(OTHER_PREFIX)
+              );
+              const isOtherSelected = !!otherEntry;
+              const otherText =
+                otherEntry && String(otherEntry).startsWith(OTHER_PREFIX)
+                  ? String(otherEntry).slice(OTHER_PREFIX.length)
+                  : '';
+              const hasOtherOption = options.some((o) => String(o.value) === OTHER_VALUE);
+
+              const handleToggle = (optionValue: string) => {
+                if (optionValue === OTHER_VALUE) {
+                  if (isOtherSelected) {
+                    field.onChange(
+                      selectedValues.filter(
+                        (v) => String(v) !== OTHER_VALUE && !String(v).startsWith(OTHER_PREFIX)
+                      ) as PathValue<TFormValues, Path<TFormValues>>
+                    );
+                  } else {
+                    field.onChange([
+                      ...selectedValues.filter(
+                        (v) => String(v) !== OTHER_VALUE && !String(v).startsWith(OTHER_PREFIX)
+                      ),
+                      OTHER_VALUE,
+                    ] as PathValue<TFormValues, Path<TFormValues>>);
+                  }
+                  return;
+                }
+
+                const newValue = selectedValues.includes(optionValue)
+                  ? selectedValues.filter((v) => v !== optionValue)
                   : [...selectedValues, optionValue];
-                field.onChange(newValues as PathValue<TFormValues, Path<TFormValues>>);
+                field.onChange(newValue as PathValue<TFormValues, Path<TFormValues>>);
+              };
+
+              const handleOtherTextChange = (text: string) => {
+                const withoutOther = selectedValues.filter(
+                  (v) => String(v) !== OTHER_VALUE && !String(v).startsWith(OTHER_PREFIX)
+                );
+                field.onChange([
+                  ...withoutOther,
+                  text.trim() ? `${OTHER_PREFIX}${text}` : OTHER_VALUE,
+                ] as PathValue<TFormValues, Path<TFormValues>>);
               };
 
               // Show loading state
@@ -618,12 +661,13 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                   animate="visible"
                 >
                   {options.map((option, index) => {
-                    const isSelected = selectedValues.includes(option.value);
+                    const isSelected =
+                      option.value === OTHER_VALUE ? isOtherSelected : selectedValues.includes(option.value);
                     return (
                       <motion.button
                         key={String(option.value)}
                         type="button"
-                        onClick={() => toggleOption(String(option.value))}
+                        onClick={() => handleToggle(String(option.value))}
                         style={{
                           backgroundColor: isSelected ? '#ecfdf5' : '#fffbeb',
                           borderColor: isSelected ? '#10b981' : '#f3e8d0',
@@ -670,6 +714,36 @@ const QuestionRenderer = <TFormValues extends FieldValues = FieldValues>({
                       </motion.button>
                     );
                   })}
+
+                  <AnimatePresence initial={false}>
+                    {hasOtherOption && isOtherSelected && (
+                      <motion.div
+                        key="other-text-field"
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                        className="pl-1 pt-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Label
+                          htmlFor={`${question.id}-other-text`}
+                          className="text-sm text-amber-700 mb-1.5 block font-medium"
+                        >
+                          Tell us more
+                        </Label>
+                        <Input
+                          id={`${question.id}-other-text`}
+                          type="text"
+                          value={otherText}
+                          onChange={(e) => handleOtherTextChange(e.target.value)}
+                          placeholder="Type the medical condition here"
+                          autoFocus
+                          className="w-full text-base sm:text-lg px-4 sm:px-6 py-4 sm:py-5 border-2 border-emerald-200 bg-amber-50 rounded-xl focus:border-emerald-400 focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 shadow-sm text-gray-900"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {selectedValues.length > 0 && (
                     <motion.div

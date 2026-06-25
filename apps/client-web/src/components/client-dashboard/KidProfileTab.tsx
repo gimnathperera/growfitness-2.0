@@ -109,6 +109,8 @@ export function KidProfileTab() {
   const [kidFieldErrors, setKidFieldErrors] = useState<Partial<Record<KidFieldKey, string>>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [backupFormData, setBackupFormData] = useState<Partial<UpdateKidDto> | null>(null);
+  const [showOtherInput, setShowOtherInput] = useState(false);
+  const [otherCondition, setOtherCondition] = useState("");
 
   const [formData, setFormData] = useState<Partial<UpdateKidDto>>({
     name: "",
@@ -206,6 +208,10 @@ export function KidProfileTab() {
         setProfilePhotoFile(null);
         setPhotoRemoved(false);
         setKidFieldErrors({});
+        const existingConditions = details.medicalConditions || [];
+        const other = existingConditions.find((c) => !MEDICAL_CONDITIONS.includes(c)) || "";
+        setOtherCondition(other);
+        setShowOtherInput(!!other);
       } catch (error: unknown) {
         setFormData((prev) => {
           const initialForm = {
@@ -250,6 +256,47 @@ export function KidProfileTab() {
           ? [...conditions, condition]
           : conditions.filter((c) => c !== condition),
       };
+    });
+  };
+
+  const handleOtherCheckboxChange = (checked: boolean) => {
+    setShowOtherInput(checked);
+    setFormData((prev) => {
+      const conditions = prev.medicalConditions || [];
+      const base = conditions.filter((c) => MEDICAL_CONDITIONS.includes(c));
+      if (checked) {
+        if (otherCondition.trim()) {
+          return {
+            ...prev,
+            medicalConditions: [...base, otherCondition.trim()],
+          };
+        }
+        return prev;
+      } else {
+        return {
+          ...prev,
+          medicalConditions: base,
+        };
+      }
+    });
+  };
+
+  const handleOtherConditionTextChange = (value: string) => {
+    setOtherCondition(value);
+    setFormData((prev) => {
+      const conditions = prev.medicalConditions || [];
+      const base = conditions.filter((c) => MEDICAL_CONDITIONS.includes(c));
+      if (value.trim()) {
+        return {
+          ...prev,
+          medicalConditions: [...base, value.trim()],
+        };
+      } else {
+        return {
+          ...prev,
+          medicalConditions: base,
+        };
+      }
     });
   };
 
@@ -423,7 +470,13 @@ export function KidProfileTab() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (backupFormData) setFormData(backupFormData);
+                      if (backupFormData) {
+                        setFormData(backupFormData);
+                        const existingConditions = backupFormData.medicalConditions || [];
+                        const other = existingConditions.find((c) => !MEDICAL_CONDITIONS.includes(c)) || "";
+                        setOtherCondition(other);
+                        setShowOtherInput(!!other);
+                      }
                       setProfilePhotoFile(null);
                       setPhotoRemoved(false);
                       setKidFieldErrors({});
@@ -686,31 +739,64 @@ export function KidProfileTab() {
             </div>
 
             {isEditing ? (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
-                {MEDICAL_CONDITIONS.map((condition) => {
-                  const checked = (formData.medicalConditions || []).includes(condition);
-                  return (
-                    <label
-                      key={condition}
-                      htmlFor={`medical-${condition}`}
-                      className={[
-                        "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
-                        checked
-                          ? "border-primary/40 bg-primary/5"
-                          : "border-border hover:bg-muted/50",
-                        saving ? "pointer-events-none opacity-60" : "",
-                      ].join(" ")}
-                    >
-                      <Checkbox
-                        id={`medical-${condition}`}
-                        checked={checked}
-                        onCheckedChange={(c) => handleMedicalConditionChange(condition, !!c)}
-                        disabled={saving}
-                      />
-                      <span className="font-normal leading-none">{condition}</span>
-                    </label>
-                  );
-                })}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
+                  {MEDICAL_CONDITIONS.map((condition) => {
+                    const checked = (formData.medicalConditions || []).includes(condition);
+                    return (
+                      <label
+                        key={condition}
+                        htmlFor={`medical-${condition}`}
+                        className={[
+                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                          checked
+                            ? "border-primary/40 bg-primary/5"
+                            : "border-border hover:bg-muted/50",
+                          saving ? "pointer-events-none opacity-60" : "",
+                        ].join(" ")}
+                      >
+                        <Checkbox
+                          id={`medical-${condition}`}
+                          checked={checked}
+                          onCheckedChange={(c) => handleMedicalConditionChange(condition, !!c)}
+                          disabled={saving}
+                        />
+                        <span className="font-normal leading-none">{condition}</span>
+                      </label>
+                    );
+                  })}
+                  <label
+                    htmlFor="medical-other"
+                    className={[
+                      "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                      showOtherInput
+                        ? "border-primary/40 bg-primary/5"
+                        : "border-border hover:bg-muted/50",
+                      saving ? "pointer-events-none opacity-60" : "",
+                    ].join(" ")}
+                  >
+                    <Checkbox
+                      id="medical-other"
+                      checked={showOtherInput}
+                      onCheckedChange={(c) => handleOtherCheckboxChange(!!c)}
+                      disabled={saving}
+                    />
+                    <span className="font-normal leading-none">Other</span>
+                  </label>
+                </div>
+
+                {showOtherInput && (
+                  <div className="pt-1 max-w-md">
+                    <Input
+                      id="medical-other-text"
+                      placeholder="Specify medical condition"
+                      value={otherCondition}
+                      onChange={(e) => handleOtherConditionTextChange(e.target.value)}
+                      disabled={saving}
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div>

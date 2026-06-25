@@ -248,83 +248,67 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
               </div>
 
               {attribute.id === 'medicalConditions' ? (
-                <div className="space-y-4">
-                  <div className="grid gap-3 sm:gap-4 w-full">
-                    <motion.button
-                      type="button"
-                      onClick={() => setKidHasMedicalConditions(prev => ({ ...prev, [index]: true }))}
-                      className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
-                        kidHasMedicalConditions[index] === true
-                          ? '!border-emerald-500 !bg-emerald-50 shadow-md'
-                          : '!border-amber-200 !bg-amber-50 hover:border-amber-300 hover:!bg-amber-100'
-                      }`}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <span className="text-base sm:text-lg font-medium text-gray-900">
-                            Yes
-                          </span>
-                        </div>
-                        {kidHasMedicalConditions[index] === true && (
-                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                          </div>
-                        )}
-                      </div>
-                    </motion.button>
-
-                    <motion.button
-                      type="button"
-                      onClick={() => {
-                        setKidHasMedicalConditions(prev => ({ ...prev, [index]: false }));
-                        // Clear medical conditions if "No" is selected
-                        const kidValues = getValues(`kids.${index}`);
-                        if (kidValues && control) {
-                          const field = (control as any)._fields?.[`kids.${index}.medicalConditions`];
-                          if (field && field._f && field._f.ref) {
-                            field._f.ref.focus();
+                <div className="space-y-3">
+                  {/* Yes / No toggle — segmented control style so it reads as one control, not two cards */}
+                  <div className="flex gap-2 p-1 bg-amber-50 rounded-xl border border-amber-100">
+                    {([true, false] as const).map((option) => {
+                      const isSelected = kidHasMedicalConditions[index] === option;
+                      return (
+                        <motion.button
+                          key={String(option)}
+                          type="button"
+                          onClick={() =>
+                            setKidHasMedicalConditions((prev) => ({ ...prev, [index]: option }))
                           }
-                        }
-                      }}
-                      className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md ${
-                        kidHasMedicalConditions[index] === false
-                          ? '!border-emerald-500 !bg-emerald-50 shadow-md'
-                          : '!border-amber-200 !bg-amber-50 hover:border-amber-300 hover:!bg-amber-100'
-                      }`}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <span className="text-base sm:text-lg font-medium text-gray-900">
-                            No
+                          whileTap={{ scale: 0.97 }}
+                          className={`relative flex-1 py-3 rounded-lg text-base font-medium transition-colors duration-200 ${
+                            isSelected
+                              ? 'text-white'
+                              : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          {isSelected && (
+                            <motion.span
+                              layoutId={`medical-toggle-bg-${index}`}
+                              className="absolute inset-0 bg-emerald-500 rounded-lg shadow-sm"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {option ? 'Yes' : 'No'}
                           </span>
-                        </div>
-                        {kidHasMedicalConditions[index] === false && (
-                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                          </div>
-                        )}
-                      </div>
-                    </motion.button>
+                        </motion.button>
+                      );
+                    })}
                   </div>
 
-                  {kidHasMedicalConditions[index] === true && (
-                    <QuestionRenderer
-                      question={{
-                        id: `kids.${index}.${attribute.id}` as const,
-                        type: attribute.type,
-                        placeholder: attribute.placeholder,
-                        options: attribute.options,
-                        required: attribute.required,
-                      }}
-                      control={control}
-                      error={errors.kids?.[index]?.[attribute.id] as FieldError | undefined}
-                      shouldAutoFocus={index === 0}
-                    />
-                  )}
+                  <AnimatePresence initial={false}>
+                    {kidHasMedicalConditions[index] === true && (
+                      <motion.div
+                        key="medical-conditions-detail"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-3">
+                          <QuestionRenderer
+                            question={{
+                              id: `kids.${index}.${attribute.id}` as const,
+                              type: attribute.type,
+                              placeholder: attribute.placeholder,
+                              options: attribute.options,
+                              required: attribute.required,
+                            }}
+                            control={control}
+                            error={errors.kids?.[index]?.[attribute.id] as FieldError | undefined}
+                            shouldAutoFocus={false}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <QuestionRenderer

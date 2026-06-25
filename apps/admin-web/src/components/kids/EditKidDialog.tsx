@@ -42,8 +42,18 @@ interface EditKidDialogProps {
   kid?: Kid;
 }
 
+const PREDEFINED_MEDICAL_CONDITIONS = [
+  'Asthma',
+  'Allergies',
+  'Diabetes',
+  'Heart conditions',
+  'Joint issues',
+];
+
 export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialogProps) {
   const { entityId, closeModal } = useModalParams('kidId');
+  const [showOtherInput, setShowOtherInput] = useState(false);
+  const [otherCondition, setOtherCondition] = useState('');
 
   // Fetch kid from URL if prop not provided
   const { data: kidFromUrl } = useApiQuery<Kid>(
@@ -111,6 +121,10 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
         profilePhotoUrl: kid.profilePhotoUrl ?? '',
       });
       setProfilePhotoFile(null);
+      const existingConditions = kid.medicalConditions || [];
+      const other = existingConditions.find(c => !PREDEFINED_MEDICAL_CONDITIONS.includes(c)) || '';
+      setOtherCondition(other);
+      setShowOtherInput(!!other);
     }
   }, [open, kid, form]);
 
@@ -333,55 +347,85 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
               <label htmlFor="currentlyInSports" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Currently in sports
               </label>
-            </div>
-
-             <CustomFormField
+            </div>             <CustomFormField
                       label="Medical Conditions (Optional)"
                       error={form.formState.errors.medicalConditions?.message}
                     >
                       <div className="space-y-3">
-                        {[
-                          'Asthma',
-                          'Allergies',
-                          'Diabetes',
-                          'Heart conditions',
-                          'Joint issues',
-                          'Others',
-                        ].map(condition => {
+                        {[...PREDEFINED_MEDICAL_CONDITIONS, 'Others'].map(condition => {
                           const selectedConditions =
                             form.watch('medicalConditions') || [];
+                          const isChecked = condition === 'Others' ? showOtherInput : selectedConditions.includes(condition);
 
                           return (
-                            <div
-                              key={condition}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`medical-condition-${condition}`}
-                                checked={selectedConditions.includes(condition)}
-                                onCheckedChange={checked => {
-                                  if (checked === true) {
-                                    form.setValue('medicalConditions', [
-                                      ...selectedConditions,
-                                      condition,
-                                    ]);
-                                  } else {
-                                    form.setValue(
-                                      'medicalConditions',
-                                      selectedConditions.filter(
-                                        item => item !== condition
-                                      )
-                                    );
-                                  }
-                                }}
-                              />
+                            <div key={condition} className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`medical-condition-${condition}`}
+                                  checked={isChecked}
+                                  onCheckedChange={checked => {
+                                    if (condition === 'Others') {
+                                      if (checked === true) {
+                                        setShowOtherInput(true);
+                                        if (otherCondition.trim()) {
+                                          form.setValue('medicalConditions', [
+                                            ...selectedConditions.filter(c => PREDEFINED_MEDICAL_CONDITIONS.includes(c)),
+                                            otherCondition.trim(),
+                                          ]);
+                                        }
+                                      } else {
+                                        setShowOtherInput(false);
+                                        form.setValue(
+                                          'medicalConditions',
+                                          selectedConditions.filter(
+                                            item => PREDEFINED_MEDICAL_CONDITIONS.includes(item)
+                                          )
+                                        );
+                                      }
+                                    } else {
+                                      if (checked === true) {
+                                        form.setValue('medicalConditions', [
+                                          ...selectedConditions,
+                                          condition,
+                                        ]);
+                                      } else {
+                                        form.setValue(
+                                          'medicalConditions',
+                                          selectedConditions.filter(
+                                            item => item !== condition
+                                          )
+                                        );
+                                      }
+                                    }
+                                  }}
+                                />
 
-                              <label
-                                htmlFor={`medical-condition-${condition}`}
-                                className="text-sm font-normal leading-none"
-                              >
-                                {condition}
-                              </label>
+                                <label
+                                  htmlFor={`medical-condition-${condition}`}
+                                  className="text-sm font-normal leading-none"
+                                >
+                                  {condition}
+                                </label>
+                              </div>
+                              {condition === 'Others' && showOtherInput && (
+                                <div className="pl-6 pt-1">
+                                  <Input
+                                    placeholder="Specify medical condition"
+                                    value={otherCondition}
+                                    onChange={e => {
+                                      const val = e.target.value;
+                                      setOtherCondition(val);
+                                      const base = selectedConditions.filter(c => PREDEFINED_MEDICAL_CONDITIONS.includes(c));
+                                      if (val.trim()) {
+                                        form.setValue('medicalConditions', [...base, val.trim()]);
+                                      } else {
+                                        form.setValue('medicalConditions', base);
+                                      }
+                                    }}
+                                    className="max-w-md"
+                                  />
+                                </div>
+                              )}
                             </div>
                           );
                         })}
