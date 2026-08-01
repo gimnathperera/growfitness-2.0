@@ -15,6 +15,7 @@ import type { UploadPresignDto, UploadFinalizeDto, UploadDeleteDto } from '@grow
 import type { JwtPayload } from '../auth/auth.service';
 import { Kid, KidDocument } from '../../infra/database/schemas/kid.schema';
 import { User, UserDocument } from '../../infra/database/schemas/user.schema';
+import { Banner, BannerDocument } from '../../infra/database/schemas/banner.schema';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class UploadsService {
     private readonly config: ConfigService,
     @InjectModel(Kid.name) private readonly kidModel: Model<KidDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Banner.name) private readonly bannerModel: Model<BannerDocument>,
     private readonly auditService: AuditService
   ) {
     this.bucketName = this.config.get<string>('GCS_BUCKET_NAME', '');
@@ -82,6 +84,8 @@ export class UploadsService {
         return `public/avatars/coaches/${entityId}/${id}.${ext}`;
       case UploadKind.COACH_CV:
         return `public/cvs/coaches/${entityId}/${id}.${ext}`;
+      case UploadKind.BANNER:
+        return `public/banners/${entityId}/${id}.${ext}`;
       default:
         throw new BadRequestException('Invalid upload kind');
     }
@@ -97,6 +101,8 @@ export class UploadsService {
         return `public/avatars/coaches/${entityId}/`;
       case UploadKind.COACH_CV:
         return `public/cvs/coaches/${entityId}/`;
+      case UploadKind.BANNER:
+        return `public/banners/${entityId}/`;
       default:
         throw new BadRequestException('Invalid upload kind');
     }
@@ -147,6 +153,10 @@ export class UploadsService {
       await this.assertKidAvatarAuth(dto.entityId, user);
     } else if (dto.kind === UploadKind.PARENT_AVATAR) {
       await this.assertParentAvatarAuth(dto.entityId, user);
+    } else if (dto.kind === UploadKind.BANNER) {
+      if (user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can upload banner files');
+      }
     } else {
       if (user.role !== UserRole.ADMIN) {
         throw new ForbiddenException('Only admins can upload coach files');
@@ -201,6 +211,14 @@ export class UploadsService {
       await this.userModel
         .findByIdAndUpdate(dto.entityId, { $set: { 'parentProfile.photoUrl': publicUrl } })
         .exec();
+    } else if (dto.kind === UploadKind.BANNER) {
+      if (user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Only admins can finalize banner files');
+      }
+      const banner = await this.bannerModel.findById(dto.entityId).exec();
+      if (banner) {
+        await this.bannerModel.findByIdAndUpdate(dto.entityId, { imageUrl: publicUrl }).exec();
+      }
     } else {
       if (user.role !== UserRole.ADMIN) {
         throw new ForbiddenException('Only admins can finalize coach files');

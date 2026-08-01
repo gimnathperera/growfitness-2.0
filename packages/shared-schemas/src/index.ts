@@ -276,7 +276,8 @@ export const UploadPresignSchema = z
     if (
       data.kind === UploadKind.KID_AVATAR ||
       data.kind === UploadKind.PARENT_AVATAR ||
-      data.kind === UploadKind.COACH_PHOTO
+      data.kind === UploadKind.COACH_PHOTO ||
+      data.kind === UploadKind.BANNER
     ) {
       if (!imageContentTypesUpload.has(data.contentType)) {
         ctx.addIssue({

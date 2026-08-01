@@ -90,6 +90,7 @@ export enum UploadKind {
   PARENT_AVATAR = 'parentAvatar',
   COACH_PHOTO = 'coachPhoto',
   COACH_CV = 'coachCv',
+  BANNER = 'banner',
 }
 
 /** Response from POST /uploads/presign */

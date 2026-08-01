@@ -20,9 +20,10 @@ import {
 import { FormField as CustomFormField } from '@/components/common/FormField';
 import { FileUpload } from '@/components/common/FileUpload';
 import { UpdateBannerSchema, UpdateBannerDto } from '@grow-fitness/shared-schemas';
-import { Banner, BannerTargetAudience } from '@grow-fitness/shared-types';
+import { Banner, BannerTargetAudience, UploadKind } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { bannersService } from '@/services/banners.service';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 import { useToast } from '@/hooks/useToast';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useModalParams } from '@/hooks/useModalParams';
@@ -100,6 +101,11 @@ export function EditBannerDialog({ open, onOpenChange, banner: bannerProp }: Edi
     }
   );
 
+  const handleFileUpload = async (file: File) => {
+    const res = await uploadFileViaGcs(UploadKind.BANNER, banner.id, file);
+    return res.publicUrl;
+  };
+
   const onSubmit = (data: UpdateBannerDto) => {
     updateMutation.mutate(data);
   };
@@ -127,6 +133,7 @@ export function EditBannerDialog({ open, onOpenChange, banner: bannerProp }: Edi
                 <FileUpload
                   value={form.watch('imageUrl')}
                   onChange={(url) => form.setValue('imageUrl', url)}
+                  onFileUpload={handleFileUpload}
                   accept="image/*"
                   maxSize={5 * 1024 * 1024}
                 />

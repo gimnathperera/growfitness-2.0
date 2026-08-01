@@ -20,9 +20,10 @@ import {
 import { FormField as CustomFormField } from '@/components/common/FormField';
 import { FileUpload } from '@/components/common/FileUpload';
 import { CreateBannerSchema, CreateBannerDto } from '@grow-fitness/shared-schemas';
-import { BannerTargetAudience } from '@grow-fitness/shared-types';
+import { BannerTargetAudience, UploadKind } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { bannersService } from '@/services/banners.service';
+import { uploadFileViaGcs } from '@/services/uploads.service';
 import { useToast } from '@/hooks/useToast';
 import { useModalParams } from '@/hooks/useModalParams';
 
@@ -81,6 +82,14 @@ export function CreateBannerDialog({ open, onOpenChange }: CreateBannerDialogPro
     }
   );
 
+  const handleFileUpload = async (file: File) => {
+    const tempId = Array.from({ length: 24 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+    const res = await uploadFileViaGcs(UploadKind.BANNER, tempId, file);
+    return res.publicUrl;
+  };
+
   const onSubmit = (data: CreateBannerDto) => {
     createMutation.mutate(data);
   };
@@ -108,6 +117,7 @@ export function CreateBannerDialog({ open, onOpenChange }: CreateBannerDialogPro
                 <FileUpload
                   value={form.watch('imageUrl')}
                   onChange={(url) => form.setValue('imageUrl', url)}
+                  onFileUpload={handleFileUpload}
                   accept="image/*"
                   maxSize={5 * 1024 * 1024}
                 />
