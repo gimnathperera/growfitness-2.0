@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const HeadCoachSection: React.FC = () => (
   <section className="relative overflow-hidden px-6 md:px-12 py-24" style={{ background: "var(--gf-green-deep)" }}>
@@ -22,13 +22,11 @@ export const HeadCoachSection: React.FC = () => (
           >
             <span style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--gf-green-deep)" }}>SS</span>
           </div>
-          <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "rgba(35,182,133,0.2)" }}>
-            <Users size={40} color="#23b685" strokeWidth={1.5} />
-          </div>
-          <div className="text-center px-6">
-            <p style={{ fontFamily: "var(--font-alt)", fontWeight: 700, fontSize: 15, color: "var(--gf-green-deep)" }}>Coach photo here</p>
-            <p className="text-[13px] mt-1" style={{ color: "var(--fg-2)" }}>Portrait crop recommended</p>
-          </div>
+          <img
+            src="/images/team/Stephan.jpg"
+            alt="Stephan Sivaraj - Head Coach"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div
           className="absolute whitespace-nowrap rounded-full px-5 py-2"

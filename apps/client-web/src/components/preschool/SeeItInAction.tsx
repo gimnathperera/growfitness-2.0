@@ -1,5 +1,3 @@
-import { Play } from "lucide-react";
-
 export default function SeeItInAction() {
   return (
     <section style={{ background: "var(--gf-green-deep)" }}>
@@ -15,24 +13,18 @@ export default function SeeItInAction() {
         </p>
 
         <div
-          className="rounded-3xl h-[300px] sm:h-[340px] md:h-[380px] lg:h-[420px] flex flex-col items-center justify-center gap-4"
+          className="rounded-3xl h-[300px] sm:h-[340px] md:h-[380px] lg:h-[420px] overflow-hidden"
           style={{ background: "rgba(255,255,255,0.05)" }}
         >
-          <button
-            className="w-16 h-16 rounded-full flex items-center justify-center gf-card-lift"
-            style={{ background: "rgba(255,255,255,0.12)" }}
-          >
-            <Play size={22} color="#fff" fill="#fff" />
-          </button>
-          <p className="text-white font-bold text-2xl">
-            See a session in action
-          </p>
-          <p
-            className="text-xl text-center max-w-[400px]"
-            style={{ color: "rgba(255,255,255,0.55)" }}
-          >
-            Drop in session footage or a photo here — real kids, mid-activity.
-          </p>
+          <video
+            src="/images/home/final.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            className="w-full h-full object-cover rounded-3xl"
+          />
         </div>
       </div>
     </section>

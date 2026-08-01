@@ -15,8 +15,14 @@ interface HeroSectionProps {
 }
 
 export default function Hero({ slide, setSlide }: HeroSectionProps) {
-  const [banners] = useState<Banner[]>([]);
-  const [loading] = useState(true);
+  const [banners] = useState<Banner[]>([
+    { id: '1', imageUrl: '/images/pre-school/DSC00706.jpg' } as Banner,
+    { id: '2', imageUrl: '/images/pre-school/1.jpeg' } as Banner,
+    { id: '3', imageUrl: '/images/pre-school/DSC00914-2.jpg' } as Banner,
+    { id: '4', imageUrl: '/images/pre-school/DSC00991-2.jpg' } as Banner,
+    { id: '5', imageUrl: '/images/pre-school/DSC01063-2.jpg' } as Banner,
+  ]);
+  const [loading] = useState(false);
   
   useEffect(() => {
     const displayBanners = banners.length > 0 ? banners : [{ id: 'default', imageUrl: '/images/kids-jumping.png' } as Banner];

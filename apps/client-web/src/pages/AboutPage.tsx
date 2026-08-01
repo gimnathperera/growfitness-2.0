@@ -1,4 +1,4 @@
-import { Image as ImageIcon, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import WhyWeStarted from "@/components/about/WhyWeStarted";
 import WhoWeAre from "@/components/about/WhoWeAre";
 
@@ -17,14 +17,8 @@ export default function AboutPage() {
           className="
             border border-gray-200 
             rounded-3xl 
-            bg-[var(--gf-green-100)] 
-            border-[var(--line)] 
-            shadow-[0_10px_0_var(--gf-green-deep)]
-            flex flex-col 
-            items-center 
-            justify-center 
-            gap-3
-            aspect-[16/7]
+            overflow-hidden
+            aspect-[16/9]
             w-full
           "
           style={{ 
@@ -32,16 +26,11 @@ export default function AboutPage() {
             boxShadow: "0 10px 0 var(--gf-ink)",
           }}
         >
-          <ImageIcon size={26} style={{ color: "var(--fg-3)" }} />
-          <span 
-            style={{ 
-              fontSize: 13, 
-              fontWeight: 500, 
-              color: "var(--fg-3)" 
-            }}
-          >
-            Drop your team photo here
-          </span>
+          <img
+            src="/images/team/DSC00079.jpg"
+            alt="Grow Fitness Team"
+            className="w-full h-full object-cover"
+          />
         </div>
       </section>
 
@@ -94,7 +83,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="gf-scope" style={{ position: "relative", overflow: "hidden", background: "var(--gf-green-deep)" }}>
         <div style={{ maxWidth: 760, margin: "0 auto", padding: "112px 24px", position: "relative", textAlign: "center" }}>
-          <h2 className="text-7xl" style={{ fontFamily: "var(--font-display)", lineHeight: 1.05, textTransform: "uppercase", color: "#fff", margin: 0 }}>
+          <h2 className="text-6xl" style={{ fontFamily: "var(--font-display)", lineHeight: 1.05, textTransform: "uppercase", color: "#fff", margin: 0 }}>
             Everything we do<br />comes back to<br /><span style={{ color: "var(--gf-sun)" }}>one thing.</span>
           </h2>
           <p className="text-2xl" style={{ marginTop: 24, lineHeight: 1.6, color: "rgba(255,255,255,0.7)", maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>

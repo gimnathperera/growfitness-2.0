@@ -1,5 +1,3 @@
-import { MessageCircle, Heart } from "lucide-react";
-
 export function VideoComparison() {
   return (
     <section className="px-6 py-16" style={{ backgroundColor: "var(--gf-ink)" }}>
@@ -14,58 +12,52 @@ export function VideoComparison() {
         <div className="relative grid grid-cols-1 md:grid-cols-2">
           {/* Group Sessions */}
           <div
-            className="flex h-[60vh] min-h-[500px] max-h-[750px] flex-col items-center justify-center gap-5 opacity-80"
+            className="relative h-[60vh] min-h-[500px] max-h-[750px] overflow-hidden"
             style={{ backgroundColor: "rgba(35,182,133,0.18)" }}
           >
-            <span
-              className="flex h-20 w-20 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "var(--gf-green)",
-                color: "white",
-              }}
-            >
-              <MessageCircle size={34} />
-            </span>
-
-            <p className="text-center text-3xl font-extrabold uppercase text-white">
-              Group
-              <br />
-              <span style={{ color: "var(--gf-green)" }}>
-                Sessions
-              </span>
-            </p>
-
-            <p className="text-sm text-white/40">
-              Video coming soon
-            </p>
+            <video
+              src="/images/programs/final.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-4 left-4">
+              <p className="text-center text-3xl font-extrabold uppercase text-white">
+                Group
+                <br />
+                <span style={{ color: "var(--gf-green)" }}>
+                  Sessions
+                </span>
+              </p>
+            </div>
           </div>
 
           {/* Personal Training */}
           <div
-            className="flex h-[60vh] min-h-[500px] max-h-[750px] flex-col items-center justify-center gap-5 opacity-80"
+            className="relative h-[60vh] min-h-[500px] max-h-[750px] overflow-hidden"
             style={{ backgroundColor: "rgba(255,253,119,0.05)" }}
           >
-            <span
-              className="flex h-20 w-20 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "var(--gf-sun)",
-                color: "var(--gf-ink)",
-              }}
-            >
-              <Heart size={34} />
-            </span>
-
-            <p className="text-center text-3xl font-extrabold uppercase text-white">
-              Personal
-              <br />
-              <span style={{ color: "var(--gf-sun)" }}>
-                Training
-              </span>
-            </p>
-
-            <p className="text-sm text-white/40">
-              Video coming soon
-            </p>
+            <video
+              src="/images/programs/PT 1.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-4 left-4">
+              <p className="text-center text-3xl font-extrabold uppercase text-white">
+                Personal
+                <br />
+                <span style={{ color: "var(--gf-sun)" }}>
+                  Training
+                </span>
+              </p>
+            </div>
           </div>
 
           {/* VS Badge */}

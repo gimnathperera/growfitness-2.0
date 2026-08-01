@@ -37,7 +37,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ slide, setSlide }) => 
     return () => clearInterval(interval);
   }, [banners.length, setSlide]);
 
-  const defaultImage = '/images/kids-jumping.png';
+  const defaultImage = '/images/home/IMG_8014.jpg';
   const displayBanners = banners.length > 0 ? banners : [{ id: 'default', imageUrl: defaultImage } as Banner];
   const total = displayBanners.length;
   const currentBanner = displayBanners[slide];
@@ -242,3 +242,4 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ slide, setSlide }) => 
   </section>
   );
 };
+

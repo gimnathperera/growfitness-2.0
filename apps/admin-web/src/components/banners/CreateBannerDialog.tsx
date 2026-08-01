@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FormField as CustomFormField } from '@/components/common/FormField';
+import { FileUpload } from '@/components/common/FileUpload';
 import { CreateBannerSchema, CreateBannerDto } from '@grow-fitness/shared-schemas';
 import { BannerTargetAudience } from '@grow-fitness/shared-types';
 import { useApiMutation } from '@/hooks/useApiMutation';
@@ -100,11 +101,16 @@ export function CreateBannerDialog({ open, onOpenChange }: CreateBannerDialogPro
           <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 min-h-0">
             <form onSubmit={form.handleSubmit(onSubmit)} id="create-banner-form" className="space-y-4">
               <CustomFormField
-                label="Image URL"
+                label="Banner Image"
                 required
                 error={form.formState.errors.imageUrl?.message}
               >
-                <Input {...form.register('imageUrl')} placeholder="https://example.com/banner.jpg" />
+                <FileUpload
+                  value={form.watch('imageUrl')}
+                  onChange={(url) => form.setValue('imageUrl', url)}
+                  accept="image/*"
+                  maxSize={5 * 1024 * 1024}
+                />
               </CustomFormField>
 
               <CustomFormField label="Order" required error={form.formState.errors.order?.message}>

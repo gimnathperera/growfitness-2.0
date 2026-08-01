@@ -5,6 +5,7 @@ const FOUNDERS = [
     borderColor: "var(--gf-sun)",
     circle: "var(--gf-green)",
     roleColor: "var(--gf-green)",
+    image: "/images/team/Samuel.jpg",
     paragraphs: [
       "Before Grow Fitness, Samuel worked in marketing. Good training in understanding people, but not where he wanted to build a career. Frustrated with an education system that boxes kids into what they're \"good at\" too early, he set out to build the opposite: a place where kids discover their own talent, at their own pace.",
       "He's studying the NSCA Essentials of Strength Training and Conditioning, and is a CPD certified Nutrition Advisor for recreational athletes. But the real reason runs deeper than fitness: Samuel believes sport builds the same muscle as entrepreneurship, and sees Grow Fitness as one step toward raising a generation of Sri Lankan kids who grow up to build things of their own."
@@ -16,6 +17,7 @@ const FOUNDERS = [
     borderColor: "var(--gf-green)",
     circle: "var(--gf-sun)",
     roleColor: "var(--gf-sun)",
+    image: "/images/team/Stephan.jpg",
     paragraphs: [
       "Stephan is a former professional rugby player (CR&FC, Havelock SC) and former Vice-Captain of the St. Peter's College 1st XV. He later became a Certified Physical Fitness Trainer and fitness trainer for the D.S. Senanayake College 1st XV.",
       "Samuel wouldn't stop nagging him about doing something bigger with all that experience. Stephan didn't need much convincing. He naturally enjoys being around kids, playing with them, building games. The talent and the love were already there; Grow Fitness just became the place where both could matter."
@@ -27,21 +29,25 @@ const CREW = [
   {
     name: "Apsara",
     role: "PROJECT MANAGER",
+    image: "/images/team/apsara.jpg",
     body: "CAPM qualified, with a Level 5 Diploma in Astronomy and Astrophysics. The unsung hero of the team, focused on the projects that push Grow Fitness to the next level."
   },
   {
     name: "Steve Mathies",
     role: "SALES & PARTNERSHIPS",
+    image: "/images/team/Steve .jpg",
     body: "We call him our Swiss Knife. Sales, partnerships, coaching support, session coordination. If it needs doing and nobody's sure whose job it is, it's probably his by the end of the day."
   },
   {
     name: "Sheron Yoshuwa",
     role: "CONTENT CREATOR",
+    image: "/images/team/sheron.jpg",
     body: "Sheron tells our story. If a photo, video, or post made you stop scrolling and look us up, that was probably him."
   },
   {
     name: "Rivin Sathnidu",
     role: "ASST. HEAD COACH",
+    image: "/images/team/Riven.jpg",
     body: "A former award-winning gymnast and schoolboy rugby player, Level 5 certified personal trainer, and former physical trainer of the D.S. Senanayake College 1st XV Rugby Team."
   }
 ];
@@ -113,14 +119,20 @@ export default function WhoWeAre() {
                 width: 100,
                 height: 100,
                 borderRadius: "999px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                overflow: "hidden",
                 marginBottom: 20,
                 border: `3px solid ${f.circle}`,
                 background: "rgba(255,255,255,0.04)"
               }}>
-                <span style={{ fontSize: 10, color: "var(--fg-3)" }}>{f.name}</span>
+                <img
+                  src={f.image}
+                  alt={f.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
+                  }}
+                />
               </div>
               <p style={{
                 fontSize: 32,
@@ -195,16 +207,20 @@ export default function WhoWeAre() {
                 width: 76,
                 height: 76,
                 borderRadius: "999px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                overflow: "hidden",
                 marginBottom: 16,
                 border: "3px solid var(--gf-green)",
                 background: "rgba(255,255,255,0.04)"
               }}>
-                <span style={{ fontSize: 8, color: "var(--fg-3)" }}>
-                  {c.name.split(" ")[0]}
-                </span>
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
+                  }}
+                />
               </div>
               <p style={{
                 fontSize: 20,
