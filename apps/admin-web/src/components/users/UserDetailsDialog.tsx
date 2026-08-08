@@ -321,7 +321,7 @@ export function UserDetailsDialog({ open, onOpenChange, user: userProp }: UserDe
                                   <div className="flex items-start gap-2">
                                     <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                                     <div className="space-y-1.5">
-                                      <div className="text-xs font-extrabold uppercase tracking-wider text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>Medical conditions</div>
+                                      <div className="text-xs font-extrabold uppercase tracking-wider text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>Conditions</div>
                                       <div className="flex flex-wrap gap-1.5">
                                         {kid.medicalConditions.map((c, i) => (
                                           <Badge key={i} variant="destructive" className="font-extrabold uppercase tracking-wider">{c}</Badge>

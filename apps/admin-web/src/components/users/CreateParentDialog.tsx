@@ -362,7 +362,7 @@ export function CreateParentDialog({ open, onOpenChange }: CreateParentDialogPro
                     </div>
 
                     <CustomFormField
-                      label="Medical Conditions (Optional)"
+                      label="Conditions (Optional)"
                       error={form.formState.errors.kids?.[index]?.medicalConditions?.message}
                     >
                       <div className="space-y-3">

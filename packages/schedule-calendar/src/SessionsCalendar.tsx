@@ -4,14 +4,11 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { EventInput, EventContentArg } from '@fullcalendar/core';
-import { SessionStatus, sessionIsExtraSession, type Session } from '@grow-fitness/shared-types';
-import { CALENDAR_STYLES } from './calendarStyles';
-import { getStatusColor } from './sessionEventUtils';
 
 export interface SessionsCalendarProps {
   /** FullCalendar event objects. extendedProps should be Session. */
   events: EventInput[];
-  onSessionClick: (session: Session) => void;
+  onSessionClick: (session: any) => void;
   /** Called when the calendar view or date range changes (e.g. for refetching). */
   onDatesSet?: (start: string, end: string) => void;
   loading?: boolean;
@@ -26,16 +23,6 @@ export interface SessionsCalendarProps {
 // ── Breakpoints ───────────────────────────────────────────────────────────────
 const MOBILE_BP = 640;
 
-type DisplayStatusVariant = 'normal' | 'cancelled' | 'extra' | 'free';
-
-function getDisplayVariant(session: Session): DisplayStatusVariant {
-  if (session.status === SessionStatus.CANCELLED) return 'cancelled';
-  if (sessionIsExtraSession(session)) return 'extra';
-  if (session.isFreeSession) return 'free';
-  return 'normal';
-}
-
-// ── Container-width hook ──────────────────────────────────────────────────────
 function useContainerWidth(ref: React.RefObject<HTMLDivElement>) {
   const [width, setWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 1024
@@ -52,7 +39,6 @@ function useContainerWidth(ref: React.RefObject<HTMLDivElement>) {
   return width;
 }
 
-// Helper function to determine contrast color
 function getContrastColor(hexColor: string): 'white' | 'black' {
   const color = hexColor.replace('#', '');
   const r = parseInt(color.substring(0, 2), 16);
@@ -62,95 +48,62 @@ function getContrastColor(hexColor: string): 'white' | 'black' {
   return luminance > 0.5 ? 'black' : 'white';
 }
 
-// ── Unified event renderer (dot + title, all views) ───────────────────────────
 function EventContent({ arg }: { arg: EventContentArg }) {
-  const session = arg.event.extendedProps as Session;
-  const displayVariant = getDisplayVariant(session);
+  const session = arg.event.extendedProps as any;
   const isMonth = arg.view.type === 'dayGridMonth';
   const isTime = arg.view.type === 'timeGridWeek' || arg.view.type === 'timeGridDay';
 
-  const coachColor = (session as any).coachColor || 
-    (session.coachId && typeof session.coachId === 'object' 
-      ? (session.coachId as any).coachProfile?.assignedColor 
-      : undefined);
+  const coachColor = session?.coachColor || '#23B685';
+  const computedContrastColor = getContrastColor(coachColor);
+  const dotColor = coachColor;
+  const textColor = computedContrastColor;
 
-  const isCancelled = displayVariant === 'cancelled';
-  const hasCoachColor = !isCancelled && coachColor;
-  const computedContrastColor = hasCoachColor ? getContrastColor(coachColor) : undefined;
-
-  const dotColor = hasCoachColor ? coachColor : getStatusColor(session.status);
-  const textColor = isCancelled 
-    ? '#9aa0a6' 
-    : (hasCoachColor ? computedContrastColor : '#3c4043');
-  const timeColor = isCancelled 
-    ? '#9aa0a6' 
-    : (hasCoachColor ? computedContrastColor : (displayVariant === 'free' ? '#d97706' : displayVariant === 'extra' ? '#7e22ce' : '#1a9e72'));
-
-  const customStyle = hasCoachColor ? {
+  const customStyle = {
     backgroundColor: coachColor,
     color: computedContrastColor,
     borderRadius: isMonth ? '3px' : '0 4px 4px 0',
     borderLeft: isTime ? `3px solid ${computedContrastColor === 'white' ? '#ffffff80' : '#00000080'}` : undefined,
-    padding: isMonth ? '2px 4px' : '4px 6px',
-  } : undefined;
+    padding: isMonth ? '4px 6px' : '4px 6px',
+  };
 
   return (
     <div 
-      className={`fc-custom-event ${isMonth ? 'fc-custom-event--month' : 'fc-custom-event--time'} ${displayVariant !== 'normal' ? `fc-event-${displayVariant}` : ''}`}
+      className={`fc-custom-event ${isMonth ? 'fc-custom-event--month' : 'fc-custom-event--time'}`}
       style={customStyle}
     >
-      {/* Dot */}
       <span
         className="fc-custom-dot"
         style={{ 
           backgroundColor: dotColor, 
           flexShrink: 0,
-          border: hasCoachColor ? `1px solid ${computedContrastColor === 'white' ? '#ffffffaa' : '#000000aa'}` : undefined
         }}
       />
 
-      {/* Content */}
       <div className="fc-custom-body">
-        {/* Time — only shown in week/day views */}
         {isTime && arg.timeText && (
           <span
             className="fc-custom-time"
-            style={{ color: timeColor }}
+            style={{ color: textColor }}
           >
             {arg.timeText}
           </span>
         )}
 
-        {/* Title row */}
         <div className="fc-custom-title-row">
           <span
             className="fc-custom-title"
             style={{
               color: textColor,
-              textDecoration: displayVariant === 'cancelled' ? 'line-through' : 'none',
             }}
           >
-            {displayVariant === 'cancelled' && <span className="fc-custom-x">✕ </span>}
             {arg.event.title}
           </span>
-
-          {/* Badges */}
-          {displayVariant === 'cancelled' && (
-            <span className="fc-badge fc-badge-cancelled">Cancelled</span>
-          )}
-          {displayVariant === 'extra' && (
-            <span className="fc-badge fc-badge-extra">Extra</span>
-          )}
-          {displayVariant === 'free' && (
-            <span className="fc-badge fc-badge-free">Free</span>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 export function SessionsCalendar({
   events,
   onSessionClick,
@@ -180,7 +133,7 @@ export function SessionsCalendar({
   }, [scrollToNow, isMobile]);
 
   const handleEventClick = (info: { event: { extendedProps: unknown } }) =>
-    onSessionClick(info.event.extendedProps as Session);
+    onSessionClick(info.event.extendedProps);
 
   const handleEventDrop = (info: { event: { id: string; start: Date | null; end: Date | null } }) => {
     const { event } = info;
@@ -213,13 +166,11 @@ export function SessionsCalendar({
         <span className="day-name-short">
           {arg.date.toLocaleDateString('en-US', { weekday: 'narrow' })}
         </span>
-        <span className="day-number">{arg.date.getDate()}</span>
       </div>
     )
     : (arg: { date: Date }) => (
       <div className="fc-col-header-cell-cushion">
         <span className="day-name">{arg.date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-        <span className="day-number">{arg.date.getDate()}</span>
       </div>
     );
 
@@ -248,8 +199,6 @@ export function SessionsCalendar({
 
       <style dangerouslySetInnerHTML={{
         __html: `
-${CALENDAR_STYLES}
-
 /* ── Strip FC default event chrome ─────────────────────── */
 .calendar-container .fc-event {
   background: transparent !important;
@@ -258,15 +207,29 @@ ${CALENDAR_STYLES}
   padding: 0 !important;
   cursor: pointer;
 }
+
+/* ── Style day names in header ─────────────────────────── */
+.calendar-container .fc-col-header-cell-cushion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+}
+
+.calendar-container .day-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3c4043;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 .calendar-container .fc-event-main {
   padding: 0 !important;
   height: 100%;
 }
-/* Remove FC's built-in dot in month view */
 .calendar-container .fc-daygrid-event-dot {
   display: none !important;
 }
-/* Remove default time text FC injects (we render our own) */
 .calendar-container .fc-event-time {
   display: none !important;
 }
@@ -281,10 +244,11 @@ ${CALENDAR_STYLES}
   box-sizing: border-box;
 }
 
-/* Month: single-line row */
+/* Month: allow wrapping */
 .fc-custom-event--month {
-  padding: 1px 4px;
-  align-items: center;
+  padding: 4px 6px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 /* Week/Day: card with subtle bg */
@@ -295,32 +259,17 @@ ${CALENDAR_STYLES}
   border-left: 3px solid #23B685;
   border-radius: 0 4px 4px 0;
 }
-/* Cancelled week/day card */
-.fc-custom-event--time.fc-event-cancelled {
-  background-color: #f8f9fa;
-  border-left-color: #dadce0;
-  opacity: 0.75;
-}
-/* Free week/day card */
-.fc-custom-event--time.fc-event-free {
-  background-color: #fffbeb;
-  border-left-color: #f59e0b;
-}
-/* Extra week/day card */
-.fc-custom-event--time.fc-event-extra {
-  background-color: #faf5ff;
-  border-left-color: #8b5cf6;
-}
 
 /* ── Dot ─────────────────────────────────────────────────── */
 .fc-custom-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  margin-top: 4px;
+  margin-top: 3px;
+  flex-shrink: 0;
 }
 .fc-custom-event--month .fc-custom-dot {
-  margin-top: 0;
+  margin-top: 2px;
 }
 
 /* ── Body ────────────────────────────────────────────────── */
@@ -343,49 +292,20 @@ ${CALENDAR_STYLES}
 /* ── Title row ───────────────────────────────────────────── */
 .fc-custom-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
   flex-wrap: wrap;
   min-width: 0;
+  width: 100%;
 }
 .fc-custom-title {
   font-size: 12px;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.4;
-}
-.fc-custom-x {
-  font-size: 10px;
-}
-
-/* ── Badges ─────────────────────────────────────────────── */
-.fc-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0 5px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-  line-height: 1.7;
-  flex-shrink: 0;
-}
-.fc-badge-cancelled {
-  background: #fce8e6;
-  color: #c5221f;
-}
-.fc-badge-extra {
-  background: #faf5ff;
-  color: #7e22ce;
-  border: 1px solid #8b5cf6;
-}
-.fc-badge-free {
-  background: #fffbeb;
-  color: #d97706;
-  border: 1px solid #f59e0b;
+  white-space: normal;
+  word-break: break-word;
+  overflow: visible;
+  line-height: 1.3;
+  flex: 1;
 }
 
 /* ── Mobile overrides ───────────────────────────────────── */
@@ -410,6 +330,7 @@ ${CALENDAR_STYLES}
     width: 100%;
     display: flex;
     justify-content: center;
+    gap: 4px;
   }
   .calendar-container .fc-button {
     padding: 4px 10px !important;
@@ -437,24 +358,195 @@ ${CALENDAR_STYLES}
     text-transform: uppercase;
     color: #70757a;
   }
-  .fc-col-header-mobile .day-number {
-    font-size: 16px;
-    font-weight: 600;
-  }
   .calendar-container .fc-scroller {
     overflow-x: hidden !important;
   }
-  /* Compact event text on mobile */
-  .fc-custom-title   { font-size: 11px; }
-  .fc-custom-time    { font-size: 9px; }
-  .fc-badge          { font-size: 8px; padding: 0 3px; }
-  .fc-custom-event--time { padding: 2px 4px; }
+
+  /* ── MOBILE MONTH VIEW - Allow wrapping and vertical display ── */
+  .calendar-container .fc-daygrid-day-cell {
+    height: auto !important;
+    vertical-align: top;
+    padding: 4px 2px !important;
+  }
+  .calendar-container .fc-daygrid-day-frame {
+    min-height: 80px !important;
+  }
+  .calendar-container .fc-daygrid-day-events {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .fc-custom-event--month {
+    flex-direction: column;
+    padding: 6px 4px;
+    gap: 3px;
+  }
+  .fc-custom-event--month .fc-custom-title {
+    font-size: 11px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.2;
+  }
+  .fc-custom-event--month .fc-custom-dot {
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  /* ── MOBILE WEEKLY/DAY VIEW - Improve readability ── */
+  .calendar-container .fc-timegrid-event {
+    margin: 1px !important;
+  }
+  .fc-custom-event--time {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 4px 6px !important;
+    min-height: auto !important;
+  }
+  .fc-custom-event--time .fc-custom-dot {
+    display: none !important;
+  }
+  .fc-custom-event--time .fc-custom-body {
+    width: 100% !important;
+  }
+  .fc-custom-event--time .fc-custom-time {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
+  .fc-custom-event--time .fc-custom-title {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+  }
+
+  /* ── MOBILE WEEKLY/DAY VIEW - Improve readability ── */
+  .calendar-container .fc-timegrid-event {
+    margin: 1px !important;
+    height: auto !important;
+    min-height: 40px !important;
+  }
+  .fc-custom-event--time {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 6px 8px !important;
+    min-height: auto !important;
+    height: auto !important;
+  }
+  .fc-custom-event--time .fc-custom-dot {
+    display: none !important;
+  }
+  .fc-custom-event--time .fc-custom-body {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .fc-custom-event--time .fc-custom-time {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    margin-bottom: 3px !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+  }
+  .fc-custom-event--time .fc-custom-title {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: 100% !important;
+  }
+  .calendar-container .fc-timegrid-slot {
+    height: 50px !important;
+  }
+  .calendar-container .fc-timegrid-slots {
+    min-height: 400px !important;
+  }
+  /* Ensure week view is also responsive */
+  .calendar-container .fc-col-header {
+    padding: 4px 0 !important;
+  }
 }
 
 /* ── Tablet tweaks ───────────────────────────────────────── */
 @media (min-width: 640px) and (max-width: 1023px) {
   .calendar-container .fc-toolbar-title { font-size: 16px !important; }
   .calendar-container .fc-timegrid-slot { height: 44px !important; }
+}
+
+/* ── Button styling ───────────────────────────────────────── */
+.calendar-container .fc-button {
+  background-color: #ffffff !important;
+  border: 1px solid #e8eaed !important;
+  color: #3c4043 !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+}
+
+.calendar-container .fc-button:hover {
+  background-color: #f8f9fa !important;
+  border-color: #d0d2d6 !important;
+  color: #23B685 !important;
+}
+
+.calendar-container .fc-button:focus {
+  outline: 2px solid #23B685 !important;
+  outline-offset: 2px !important;
+}
+
+.calendar-container .fc-button-active {
+  background-color: #23B685 !important;
+  border-color: #23B685 !important;
+  color: #ffffff !important;
+}
+
+.calendar-container .fc-button-active:hover {
+  background-color: #1da073 !important;
+  border-color: #1da073 !important;
+  color: #ffffff !important;
+}
+
+.calendar-container .fc-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Button icons (prev/next) */
+.calendar-container .fc-button .fc-icon {
+  color: inherit !important;
+}
+
+/* Today button special styling */
+.calendar-container .fc-today-button {
+  font-weight: 600 !important;
+  color: #23B685 !important;
+  border-color: #23B685 !important;
+}
+
+.calendar-container .fc-today-button:hover {
+  background-color: #23B685 !important;
+  color: #ffffff !important;
+}
+
+/* Button group spacing */
+.calendar-container .fc-button-group {
+  display: flex;
+  gap: 4px;
+}
+
+.calendar-container .fc-toolbar-chunk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 ` }} />
 
@@ -472,7 +564,7 @@ ${CALENDAR_STYLES}
         editable={editable}
         selectable={editable}
         selectMirror={editable}
-        dayMaxEvents={isMobile ? 2 : true}
+        dayMaxEvents={isMobile ? false : true}
         weekends={true}
         height={isMobile ? 'auto' : height}
         eventClick={handleEventClick}

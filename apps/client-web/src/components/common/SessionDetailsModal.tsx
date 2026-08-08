@@ -353,13 +353,13 @@ export default function SessionDetailsDialog({
                   <h3 className="font-extrabold text-sm text-[var(--gf-green-deep)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Session Info</h3>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 md:h-16 md:w-16 rounded-lg bg-[var(--gf-green-50)]/30 flex items-center justify-center flex-shrink-0 border border-[var(--gf-green-deep)] shadow-[2px_2px_0_0_var(--gf-green-deep)]">
+                  {/* <div className="h-12 w-12 md:h-16 md:w-16 rounded-lg bg-[var(--gf-green-50)]/30 flex items-center justify-center flex-shrink-0 border border-[var(--gf-green-deep)] shadow-[2px_2px_0_0_var(--gf-green-deep)]">
                     {displaySession.type === SessionType.GROUP ? (
                       <Users className="h-6 w-6 md:h-8 md:w-8 text-[var(--gf-green-deep)]" />
                     ) : (
                       <User className="h-6 w-6 md:h-8 md:w-8 text-[var(--gf-green-deep)]" />
                     )}
-                  </div>
+                  </div> */}
                   <div className="flex-1 min-w-0">
                     <p className="font-extrabold text-sm truncate text-[var(--gf-green-deep)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                       {formatSessionType(displaySession.type)}
@@ -463,27 +463,16 @@ export default function SessionDetailsDialog({
           </div>
 
           {/* Right Main Content - fixed-height panel. The tab list stays put; each TabsContent scrolls on its own. */}
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden p-2.5 sm:p-4 md:p-6 bg-[var(--gf-cream)] mx-2 sm:mx-4 my-2 sm:my-4 lg:mt-4 rounded-xl sm:rounded-2xl border-2 border-[var(--gf-green-deep)] shadow-[3px_3px_0_0_var(--gf-green-deep)] sm:shadow-[4px_4px_0_0_var(--gf-green-deep)]">
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden p-2.5 sm:p-4 md:p-6 bg-[var(--gf-cream)] mx-2 sm:mx-4 my-2 sm:my-4 lg:mt-4 rounded-xl sm:rounded-2xl">
             {isLoading ? (
               <div className="bg-[var(--gf-green-50)]/30 flex items-center justify-center h-48 sm:h-64 rounded-2xl border border-dashed border-[var(--line)]">
                 <p className="text-[var(--gf-green)] font-extrabold animate-pulse text-sm sm:text-base" style={{ fontFamily: 'var(--font-display)' }}>Loading...</p>
               </div>
-            ) : (
-              <Tabs defaultValue="overview" className="w-full flex-1 min-h-0 flex flex-col">
-                <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex sm:inline-flex gap-1.5 sm:gap-2 bg-[var(--gf-cream)] rounded-xl p-1 flex-shrink-0">
-                  <TabsTrigger value="overview" className="border-2 border-[var(--gf-green-deep)] shadow-[2px_2px_0_0_var(--gf-green-deep)] text-xs sm:text-sm font-extrabold uppercase tracking-wide text-[var(--fg-2)] hover:text-[var(--gf-green-deep)] hover:bg-[var(--gf-green-50)]/40 data-[state=active]:!bg-[var(--gf-green)] data-[state=active]:text-white rounded-lg min-h-[38px]">
-                    Overview
-                  </TabsTrigger>
-                  {shouldShowKidsTab && (
-                    <TabsTrigger value="kids" className="border-2 border-[var(--gf-green-deep)] shadow-[2px_2px_0_0_var(--gf-green-deep)] text-xs sm:text-sm font-extrabold uppercase tracking-wide text-[var(--fg-2)] hover:text-[var(--gf-green-deep)] hover:bg-[var(--gf-green-50)]/40 data-[state=active]:!bg-[var(--gf-green)] data-[state=active]:text-white rounded-lg min-h-[38px]">
-                      Kids {totalKids > 0 && `(${totalKids})`}
-                    </TabsTrigger>
-                  )}
-                </TabsList>
-
-                <TabsContent value="overview" className="flex-1 min-h-0 overflow-y-auto mt-3 sm:mt-6 space-y-3 sm:space-y-6 pb-4">
-                  {/* Session Details */}
-                  <div className="rounded-xl sm:rounded-2xl border-2 border-[var(--gf-green-deep)] bg-[var(--gf-paper)] p-3 sm:p-5 pt-4 sm:pt-12 shadow-[3px_3px_0_0_var(--gf-green-deep)] sm:shadow-[4px_4px_0_0_var(--gf-green-deep)]">
+            ) : role === 'PARENT' ? (
+              /* Parent view: Show overview directly without tabs */
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-3 sm:space-y-6 pb-4">
+                {/* Session Details */}
+                <div className="rounded-xl sm:rounded-2xl border-2 border-[var(--gf-green-deep)] bg-[var(--gf-paper)] p-3 sm:p-5 pt-4 sm:pt-12 shadow-[3px_3px_0_0_var(--gf-green-deep)] sm:shadow-[4px_4px_0_0_var(--gf-green-deep)]">
                     <h3 className="font-extrabold text-sm sm:text-lg mb-3 sm:mb-5 text-[var(--gf-green-deep)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Session Information</h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
@@ -589,62 +578,185 @@ export default function SessionDetailsDialog({
                       )}
                     </div>
                   </div>
-                </TabsContent>
-
-                {shouldShowKidsTab && (
-                  <TabsContent value="kids" className="flex-1 min-h-0 overflow-y-auto mt-3 sm:mt-6 pb-4">
-                    {totalKids === 0 ? (
-                      <div className="text-center py-8 sm:py-12">
-                        <Baby className="h-10 w-10 sm:h-12 sm:w-12 text-[var(--gf-green)] mx-auto mb-3 sm:mb-4" />
-                        <p className="text-xs sm:text-sm text-[var(--gf-green-deep)] font-extrabold" style={{ fontFamily: 'var(--font-display)' }}>
-                          No kids enrolled in this session
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
-                        {kids.map(kidOrId => {
-                          const kidId =
-                            typeof kidOrId === 'string'
-                              ? kidOrId
-                              : (kidOrId as Kid | SessionKidRef).id;
-                          const kid =
-                            typeof kidOrId === 'string'
-                              ? ({
-                                  id: kidOrId,
-                                  parentId: '',
-                                  name: 'Loading...',
-                                  gender: '',
-                                  birthDate: new Date(0),
-                                  currentlyInSports: false,
-                                  medicalConditions: [],
-                                  sessionType: SessionType.GROUP,
-                                  createdAt: new Date(),
-                                  updatedAt: new Date(),
-                                } satisfies Kid)
-                              : (kidOrId as Kid | SessionKidRef);
-
-                          return (
-                            <SessionKidCard
-                              key={kidId}
-                              kid={kid}
-                              isLoading={typeof kidOrId === 'string'}
-                            />
-                          );
-                        })}
-                      </div>
+                </div>
+              ) : (
+                /* Coach/Admin view: Show tabs */
+                <Tabs defaultValue="overview" className="w-full flex-1 min-h-0 flex flex-col">
+                  <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex sm:inline-flex gap-1.5 sm:gap-2 bg-[var(--gf-cream)] rounded-xl p-1 flex-shrink-0">
+                    <TabsTrigger value="overview" className="border-2 border-[var(--gf-green-deep)] shadow-[2px_2px_0_0_var(--gf-green-deep)] text-xs sm:text-sm font-extrabold uppercase tracking-wide text-[var(--fg-2)] hover:text-[var(--gf-green-deep)] hover:bg-[var(--gf-green-50)]/40 data-[state=active]:!bg-[var(--gf-green)] data-[state=active]:text-white rounded-lg min-h-[38px]">
+                      Overview
+                    </TabsTrigger>
+                    {shouldShowKidsTab && (
+                      <TabsTrigger value="kids" className="border-2 border-[var(--gf-green-deep)] shadow-[2px_2px_0_0_var(--gf-green-deep)] text-xs sm:text-sm font-extrabold uppercase tracking-wide text-[var(--fg-2)] hover:text-[var(--gf-green-deep)] hover:bg-[var(--gf-green-50)]/40 data-[state=active]:!bg-[var(--gf-green)] data-[state=active]:text-white rounded-lg min-h-[38px]">
+                        Kids {totalKids > 0 && `(${totalKids})`}
+                      </TabsTrigger>
                     )}
+                  </TabsList>
+
+                  <TabsContent value="overview" className="flex-1 min-h-0 overflow-y-auto mt-3 sm:mt-6 space-y-3 sm:space-y-6 pb-4">
+                    {/* Session Details */}
+                    <div className="rounded-xl sm:rounded-2xl border-2 border-[var(--gf-green-deep)] bg-[var(--gf-paper)] p-3 sm:p-5 pt-4 sm:pt-12 shadow-[3px_3px_0_0_var(--gf-green-deep)] sm:shadow-[4px_4px_0_0_var(--gf-green-deep)]">
+                      <h3 className="font-extrabold text-sm sm:text-lg mb-3 sm:mb-5 text-[var(--gf-green-deep)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Session Information</h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
+                        {/* Date & Time */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Date & Time
+                          </p>
+                          <p className="text-xs sm:text-sm font-extrabold break-words text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>
+                            {formatDateTime(displaySession.dateTime)}
+                          </p>
+                        </div>
+
+                        {/* Coach */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Coach
+                          </p>
+                          <p className="text-xs sm:text-sm font-extrabold break-words text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>{coachName}</p>
+                        </div>
+
+                        {/* Location */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 sm:col-span-2 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Location
+                          </p>
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[var(--gf-green)] mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-extrabold break-words text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>{locationName}</p>
+                              {locationData?.placeUrl && (
+                                <a
+                                  href={locationData.placeUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs sm:text-sm text-[var(--gf-green-deep)] hover:underline mt-1 inline-flex items-center gap-1.5 break-all font-extrabold"
+                                  style={{ fontFamily: 'var(--font-display)' }}
+                                >
+                                  <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                                  Open map / place link
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Type */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Type
+                          </p>
+                          <Badge variant="outline" className="w-fit border-[var(--gf-green-deep)] text-[var(--gf-green-deep)] font-extrabold text-[10px] sm:text-xs" style={{ fontFamily: 'var(--font-display)' }}>
+                            {formatSessionType(displaySession.type)}
+                          </Badge>
+                        </div>
+
+                        {/* Duration */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Duration
+                          </p>
+                          <p className="text-xs sm:text-sm font-extrabold text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>{displaySession.duration} minutes</p>
+                        </div>
+
+                        {/* Status */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Status
+                          </p>
+                          <StatusBadge status={displaySession.status} />
+                        </div>
+
+                        {/* Free Session */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Free Session
+                          </p>
+                          <p className="text-xs sm:text-sm font-extrabold text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>
+                            {displaySession.isFreeSession ? 'Yes' : 'No'}
+                          </p>
+                        </div>
+
+                        {/* Extra session */}
+                        <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 border">
+                          <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                            Extra Session
+                          </p>
+                          <p className="text-xs sm:text-sm font-extrabold text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>
+                            {sessionIsExtraSession(displaySession) ? 'Yes' : 'No'}
+                          </p>
+                        </div>
+
+                        {/* Capacity (Group only) */}
+                        {isGroupSession && capacity > 0 && (
+                          <div className="bg-[var(--gf-green-50)]/30 rounded-xl p-3 sm:p-4 space-y-1 sm:col-span-2 border border-[var(--gf-green-deep)]">
+                            <p className="text-[10px] sm:text-xs font-extrabold text-[var(--gf-green)] uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                              Capacity
+                            </p>
+                            <p className="text-xs sm:text-sm font-extrabold text-[var(--gf-green-deep)]" style={{ fontFamily: 'var(--font-display)' }}>
+                              {enrolled} / {capacity}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </TabsContent>
-                )}
-              </Tabs>
-            )}
+
+                  {shouldShowKidsTab && (
+                    <TabsContent value="kids" className="flex-1 min-h-0 overflow-y-auto mt-3 sm:mt-6 pb-4">
+                      {totalKids === 0 ? (
+                        <div className="text-center py-8 sm:py-12">
+                          <Baby className="h-10 w-10 sm:h-12 sm:w-12 text-[var(--gf-green)] mx-auto mb-3 sm:mb-4" />
+                          <p className="text-xs sm:text-sm text-[var(--gf-green-deep)] font-extrabold" style={{ fontFamily: 'var(--font-display)' }}>
+                            No kids enrolled in this session
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
+                          {kids.map(kidOrId => {
+                            const kidId =
+                              typeof kidOrId === 'string'
+                                ? kidOrId
+                                : (kidOrId as Kid | SessionKidRef).id;
+                            const kid =
+                              typeof kidOrId === 'string'
+                                ? ({
+                                    id: kidId,
+                                    parentId: '',
+                                    name: 'Loading...',
+                                    gender: '',
+                                    birthDate: new Date(0),
+                                    currentlyInSports: false,
+                                    medicalConditions: [],
+                                    sessionType: SessionType.GROUP,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date(),
+                                  } satisfies Kid)
+                                : (kidOrId as Kid | SessionKidRef);
+
+                            return (
+                              <SessionKidCard
+                                key={kidId}
+                                kid={kid}
+                                isLoading={typeof kidOrId === 'string'}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </TabsContent>
+                  )}
+                </Tabs>
+              )}
+            </div>
           </div>
-        </div>
-        <RescheduleSessionDialog
-          open={rescheduleOpen}
-          onClose={() => setRescheduleOpen(false)}
-          sessionId={displaySession.id}
-        />
-      </DialogContent>
-    </Dialog>
-  );
-}
+          <RescheduleSessionDialog
+            open={rescheduleOpen}
+            onClose={() => setRescheduleOpen(false)}
+            sessionId={displaySession.id}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }

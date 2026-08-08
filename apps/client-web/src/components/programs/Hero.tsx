@@ -11,6 +11,8 @@ export function Hero() {
           top: "clamp(-40px, -5vw, -80px)",
           opacity: 0.1
         }}
+        loading="lazy"
+        decoding="async"
       />
       <img
         src="/images/Grow VI Elements/Icons/Mix abs.png"
@@ -22,6 +24,8 @@ export function Hero() {
           bottom: "clamp(-10px, -2vw, -20px)",
           opacity: 0.1
         }}
+        loading="lazy"
+        decoding="async"
       />
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 md:py-28 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
@@ -70,6 +74,8 @@ export function Hero() {
               minWidth: "320px",
               height: "auto"
             }}
+            loading="lazy"
+            decoding="async"
           />
         </div>
       </div>

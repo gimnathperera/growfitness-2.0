@@ -132,6 +132,10 @@ export default function WhoWeAre() {
                     height: "100%",
                     objectFit: "cover"
                   }}
+                  loading="lazy"
+                  decoding="async"
+                  width="100"
+                  height="100"
                 />
               </div>
               <p style={{
@@ -220,6 +224,10 @@ export default function WhoWeAre() {
                     height: "100%",
                     objectFit: "cover"
                   }}
+                  loading="lazy"
+                  decoding="async"
+                  width="76"
+                  height="76"
                 />
               </div>
               <p style={{

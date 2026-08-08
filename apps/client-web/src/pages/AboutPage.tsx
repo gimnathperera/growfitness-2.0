@@ -30,6 +30,10 @@ export default function AboutPage() {
             src="/images/team/DSC00079.jpg"
             alt="Grow Fitness Team"
             className="w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
+            width="1180"
+            height="664"
           />
         </div>
       </section>
@@ -64,12 +68,16 @@ export default function AboutPage() {
           alt="mix abs"
           className="absolute w-[200px] opacity-10 pointer-events-none"
           style={{ top: -40, left: -70 }}
+          loading="lazy"
+          decoding="async"
         />
         <img
           src="/images/Grow VI Elements/Icons/Mix abs.png"
           alt="mix abs"
           className="absolute w-[200px] opacity-10 pointer-events-none"
           style={{ bottom: -10, right: 50 }}
+          loading="lazy"
+          decoding="async"
         />
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "96px 24px", position: "relative", textAlign: "start" }}>
           <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--gf-green-deep)", marginBottom: 24 }}>In their words</p>
@@ -98,6 +106,8 @@ export default function AboutPage() {
           alt="flower"
           className="absolute w-[360px] opacity-10 pointer-events-none"
           style={{ right: -60, bottom: -80 }}
+          loading="lazy"
+          decoding="async"
         />
       </section>
       <div className="gf-scope" style={{ borderTop: ".5px solid rgba(15, 18, 15, 0.75)" }} />

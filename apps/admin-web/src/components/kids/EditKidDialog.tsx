@@ -348,7 +348,7 @@ export function EditKidDialog({ open, onOpenChange, kid: kidProp }: EditKidDialo
                 Currently in sports
               </label>
             </div>             <CustomFormField
-                      label="Medical Conditions (Optional)"
+                      label="Conditions (Optional)"
                       error={form.formState.errors.medicalConditions?.message}
                     >
                       <div className="space-y-3">

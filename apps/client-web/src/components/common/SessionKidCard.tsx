@@ -233,13 +233,13 @@ export function SessionKidCard({ kid, isLoading }: SessionKidCardProps) {
                 </div>
               )}
 
-              {/* Medical Conditions */}
+              {/* Conditions */}
               {kid.medicalConditions?.length > 0 && (
                 <div className="flex items-start gap-3 rounded-lg border p-3 bg-background">
                   <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground mb-2">
-                      Medical Conditions
+                      Conditions
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {kid.medicalConditions.map((c, i) => (

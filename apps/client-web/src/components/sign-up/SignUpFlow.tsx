@@ -12,12 +12,14 @@ import {
   parentQuestions,
   kidsNamesQuestion,
   kidAttributeQuestions,
+  signupQuestions,
 } from './SignUpQuestions';
 import QuestionRenderer from '../common/QuestionRenderer';
 // import ProgressBar from '../common/ProgressBar';
 import ConfettiCelebration from './ConfettiCelebration';
 import type { SessionType } from '@grow-fitness/shared-types';
 import SharedButton from '../common/SharedButton';
+import ProgressBar from '../common/ProgressBar';
 
 interface SignupFlowProps {
   onSubmit: (data: CreateParentDto) => Promise<void> | void;
@@ -95,6 +97,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
   const currentStepConfig = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
+  const progress = ((currentStep + 1) / signupQuestions.length) * 100;
 
   const handleAddKid = () => {
     append(createEmptyKid());
@@ -354,6 +357,7 @@ const SignupFlow: React.FC<SignupFlowProps> = ({
 
   const renderForm = () => (
     <>
+    <ProgressBar progress={progress} currentStep={currentStep + 1} totalSteps={signupQuestions.length} />
       <div className="flex-1 flex flex-col px-4">
         <form 
           onSubmit={(e) => {

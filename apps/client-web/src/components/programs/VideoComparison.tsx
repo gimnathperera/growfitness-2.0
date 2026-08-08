@@ -22,6 +22,7 @@ export function VideoComparison() {
               loop
               playsInline
               controls
+              preload="metadata"
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-4 left-4">
@@ -47,6 +48,7 @@ export function VideoComparison() {
               loop
               playsInline
               controls
+              preload="metadata"
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-4 left-4">

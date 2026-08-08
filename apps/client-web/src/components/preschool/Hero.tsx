@@ -48,12 +48,16 @@ export default function Hero({ slide, setSlide }: HeroSectionProps) {
         alt="flower"
         className="absolute w-[360px] opacity-10 pointer-events-none animate-spin-slow"
         style={{ right: -60, top: -80 }}
+        loading="lazy"
+        decoding="async"
       />
       <img
         src="/images/Grow VI Elements/Icons/Mix abs 2.png"
         alt="mix abs"
         className="absolute w-[240px] opacity-30 pointer-events-none"
         style={{ left: -40, bottom: -20 }}
+        loading="lazy"
+        decoding="async"
       />
       <div className="mx-auto max-w-7xl px-6 md:px-10 pt-16 sm:pt-20 md:pt-28 grid md:grid-cols-2 gap-8 md:gap-14 items-center relative">
         <div>
@@ -143,6 +147,10 @@ export default function Hero({ slide, setSlide }: HeroSectionProps) {
                       src={currentBanner.imageUrl || defaultImage}
                       alt="hero image"
                       className="w-full h-full object-cover"
+                      loading="eager"
+                      decoding="async"
+                      width="600"
+                      height="600"
                     />
                   ) : (
                     <>
@@ -188,6 +196,8 @@ export default function Hero({ slide, setSlide }: HeroSectionProps) {
                       alt="users"
                       className="w-[60px] h-[60px] object-contain"
                       style={{ color: "#23b685" }}
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   <div>

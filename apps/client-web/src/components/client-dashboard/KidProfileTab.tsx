@@ -719,13 +719,13 @@ export function KidProfileTab() {
 
           <Separator />
 
-          {/* Section: Medical Conditions */}
+          {/* Section: Conditions */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Stethoscope className="h-5 w-5 text-[var(--gf-green)]" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--gf-green-deep)]">
-                  Medical Conditions
+                  Conditions
                 </h3>
               </div>
               {selectedConditionsCount > 0 && isEditing && (
@@ -811,7 +811,7 @@ export function KidProfileTab() {
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground italic px-1">
-                    No medical conditions recorded.
+                    No conditions recorded.
                   </div>
                 )}
               </div>

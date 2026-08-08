@@ -368,7 +368,7 @@ export function CreateKidDialog({ open, onOpenChange }: CreateKidDialogProps) {
               </div>
 
               <CustomFormField
-                label="Medical Conditions (Optional)"
+                label="Conditions (Optional)"
                 error={form.formState.errors.medicalConditions?.message}
               >
                 <div className="space-y-3">

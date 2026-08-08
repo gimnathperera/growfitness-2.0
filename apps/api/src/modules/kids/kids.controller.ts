@@ -136,7 +136,7 @@ export class KidsController {
         medicalConditions: {
           type: 'array',
           items: { type: 'string' },
-          description: 'List of medical conditions (optional)',
+          description: 'List of conditions (optional)',
           example: ['Asthma'],
         },
         sessionType: {
@@ -201,7 +201,7 @@ export class KidsController {
         medicalConditions: {
           type: 'array',
           items: { type: 'string' },
-          description: 'List of medical conditions',
+          description: 'List of conditions',
         },
         sessionType: {
           type: 'string',

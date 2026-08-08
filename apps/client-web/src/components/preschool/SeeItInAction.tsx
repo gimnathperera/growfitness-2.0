@@ -23,6 +23,7 @@ export default function SeeItInAction() {
             loop
             playsInline
             controls
+            preload="metadata"
             className="w-full h-full object-cover rounded-3xl"
           />
         </div>

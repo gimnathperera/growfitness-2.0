@@ -216,7 +216,7 @@ export function KidDetailsDialog({ open, onOpenChange, kid: kidProp }: KidDetail
                 <section>
                   <h2 className="text-sm font-extrabold uppercase tracking-wider text-[var(--gf-green-deep)] mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
                     <Heart className="h-4 w-4 text-[var(--gf-green-deep)]" />
-                    Medical Conditions
+                    Conditions
                   </h2>
                   <Card className="border-2 border-[var(--gf-green-deep)]/30 bg-[var(--gf-paper)] shadow-[2px_2px_0_0_var(--gf-green-deep)]">
                     <CardContent className="p-5">
@@ -229,7 +229,7 @@ export function KidDetailsDialog({ open, onOpenChange, kid: kidProp }: KidDetail
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-[var(--fg-2)] font-semibold">No medical conditions reported.</p>
+                        <p className="text-sm text-[var(--fg-2)] font-semibold">No conditions reported.</p>
                       )}
                     </CardContent>
                   </Card>

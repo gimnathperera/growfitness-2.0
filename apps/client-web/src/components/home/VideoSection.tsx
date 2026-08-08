@@ -2,7 +2,7 @@ import React from 'react';
 
 export const VideoSection: React.FC = () => (
   <section className="relative overflow-hidden px-6 md:px-12 py-24" style={{ background: "var(--gf-cream)" }}>
-    <img src="images/Grow VI Elements/Icons/Mix abs 2.png" alt='Personal' className="absolute w-[200px] opacity-30 pointer-events-none" style={{ left: -20, bottom: -20 }} />
+    <img src="/images/Grow VI Elements/Icons/Mix abs 2.png" alt='Personal' className="absolute w-[200px] opacity-30 pointer-events-none" style={{ left: -20, bottom: -20 }} loading="lazy" decoding="async" />
 
     <div className="max-w-[1240px] mx-auto relative z-10">
       <div className="text-center mb-13">
@@ -23,6 +23,7 @@ export const VideoSection: React.FC = () => (
           loop
           playsInline
           controls
+          preload="metadata"
           className="w-full h-full object-cover rounded-[32px]"
         />
       </div>

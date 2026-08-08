@@ -164,9 +164,9 @@ export const kidAttributeQuestions: KidQuestion[] = [
     id: 'medicalConditions',
     section: 'kid',
     type: 'multiselect',
-    title: 'Does {name} have any medical conditions we should know about?',
+    title: 'Does {name} have any conditions we should know about?',
     subtitle: 'Select all that apply, or leave blank if none',
-    perChildLabel: "{name}'s medical conditions",
+    perChildLabel: "{name}'s conditions",
     placeholder: 'Select conditions',
     required: false,
     options: [

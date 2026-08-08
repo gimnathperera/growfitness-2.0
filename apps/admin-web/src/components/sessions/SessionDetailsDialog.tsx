@@ -143,7 +143,7 @@ function KidCard({ kid }: { kid: any }) {
                                   <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                                   <div>
                                     <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--gf-green-deep)] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                                      Medical Conditions
+                                      Conditions
                                     </p>
                                     <div className="flex flex-wrap gap-1">
                                       {kid.medicalConditions.map((condition: string, idx: number) => (

@@ -49,12 +49,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ slide, setSlide }) => 
     alt="flower"
     className="absolute w-[360px] opacity-70 pointer-events-none animate-spin-slow"
     style={{ right: -60, top: -80 }}
+    loading="lazy"
+    decoding="async"
   />
    <img
     src="/images/Grow VI Elements/Icons/Mix abs 2.png"
     alt="mix abs"
     className="absolute w-[240px] opacity-50 pointer-events-none"
     style={{ left: -40, bottom: -20 }}
+    loading="lazy"
+    decoding="async"
    />
 
     <div className="max-w-[1240px] mx-auto grid md:grid-cols-2 gap-16 items-center relative z-10">
@@ -128,6 +132,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ slide, setSlide }) => 
               alt="users"
               className="w-[26px] h-[26px] object-contain"
               style={{ color: "#23b685" }}
+              loading="lazy"
+              decoding="async"
             />
             <div>
               <p className="font-bold text-[15px]" style={{ color: "var(--gf-green-deep)" }}>500+</p>
@@ -185,6 +191,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ slide, setSlide }) => 
               src={currentBanner.imageUrl || defaultImage}
               alt="hero image"
               className="w-full h-full object-cover"
+              loading="eager"
+              decoding="async"
+              width="600"
+              height="600"
             />
           ) : (
             <>
@@ -230,6 +240,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ slide, setSlide }) => 
               alt="users"
               className="w-[60px] h-[60px] object-contain"
               style={{ color: "#23b685" }}
+              loading="lazy"
+              decoding="async"
             />
           </div>
           <div>
