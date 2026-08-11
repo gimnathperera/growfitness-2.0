@@ -392,6 +392,11 @@ export class UsersService {
           });
         }
       }
+      // Send registration request received email to the parent
+      await this.notificationService.sendRegistrationReceived({
+        email: parent.email,
+        parentName: parent.parentProfile?.name,
+      }).catch(err => this.logger.error(`Failed to send registration request received email to ${parent.email}`, err));
     }
 
     // Log audit if actorId is provided (admin creation)

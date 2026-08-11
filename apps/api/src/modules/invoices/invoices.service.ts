@@ -367,9 +367,11 @@ export class InvoicesService {
       if (parent) {
         const p = parent as any;
         await this.notificationService.sendNewInvoiceToParent({
-          email: p.email,
           phone: p.phone ?? '',
           recipientName: p.parentProfile?.name,
+          invoiceId: invoiceIdStr,
+          amount: invoice.totalAmount,
+          dueDate: invoice.dueDate,
         });
       }
     }
@@ -454,15 +456,18 @@ export class InvoicesService {
       invoice.parentId
     ) {
       const parentIdStr = invoice.parentId.toString();
-      const parent = await this.userModel.findById(parentIdStr).select('email phone').lean().exec();
+      const parent = await this.userModel.findById(parentIdStr).select('email phone parentProfile').lean().exec();
       const email = parent ? (parent as any).email : undefined;
       const phone = parent ? (parent as any).phone : undefined;
+      const recipientName = parent ? (parent as any).parentProfile?.name : undefined;
       await this.notificationService.sendInvoiceUpdate({
         invoiceId: invoice._id.toString(),
         parentId: parentIdStr,
         status: updateDto.status,
         email,
         phone,
+        recipientName,
+        amount: invoice.totalAmount,
       });
       await this.notificationService.createNotification({
         userId: parentIdStr,
@@ -500,6 +505,7 @@ export class InvoicesService {
             phone: c.phone ?? '',
             coachName: c.coachProfile?.name,
             invoiceId: invoice._id.toString(),
+            amount: invoice.totalAmount,
           });
         }
       }

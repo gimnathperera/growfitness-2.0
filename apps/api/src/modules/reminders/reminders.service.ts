@@ -137,6 +137,9 @@ export class RemindersService {
             email,
             phone: phone ?? '',
             recipientName: name,
+            invoiceId: (inv as any)._id?.toString?.(),
+            amount: (inv as any).totalAmount,
+            dueDate: (inv as any).dueDate,
           });
         }
         await this.notificationService.createNotification({

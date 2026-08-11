@@ -12,6 +12,7 @@ export interface EmailData {
   to: string;
   subject: string;
   body: string;
+  html?: string;
   attachments?: EmailAttachment[];
 }
 
@@ -83,6 +84,7 @@ export class EmailProvider {
         to: data.to,
         subject: data.subject,
         body: data.body,
+        hasHtml: !!data.html,
         attachmentCount: data.attachments?.length ?? 0,
         attachments:
           data.attachments?.map(a => ({
@@ -115,6 +117,7 @@ export class EmailProvider {
         to: data.to,
         subject: data.subject,
         text: data.body,
+        ...(data.html ? { html: data.html } : {}),
         ...(sanitizedAttachments.length ? { attachments: sanitizedAttachments } : {}),
       };
 

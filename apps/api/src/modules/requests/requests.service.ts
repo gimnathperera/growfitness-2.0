@@ -277,12 +277,23 @@ export class RequestsService {
     }
     await request.save();
 
+    // Query session and populate locationId to get details for the email/SMS
+    const session = sessionId
+      ? await this.sessionModel.findById(sessionId).populate('locationId').exec()
+      : null;
+    const locationName = (session?.locationId as any)?.name ?? 'Grow Fitness Center';
+    const locationAddress = (session?.locationId as any)?.address ?? '';
+
     await this.notificationService.sendFreeSessionConfirmation({
       email: request.email,
       phone: request.phone,
       parentName: request.parentName,
       kidName: request.kidName,
       sessionId: request.selectedSessionId?.toString(),
+      sessionTitle: session?.title,
+      dateTime: session?.dateTime,
+      locationName,
+      locationAddress,
     });
 
     const parent = await this.userModel
@@ -1344,6 +1355,13 @@ export class RequestsService {
       entityType: 'UserRegistrationRequest',
       entityId: id,
     });
+
+    // Notify parent via email and SMS that registration request was rejected
+    await this.notificationService.sendRegistrationRejected({
+      email: parent.email,
+      phone: parent.phone ?? undefined,
+      parentName: parent.parentProfile?.name,
+    }).catch(err => this.logger.error(`Failed to send registration rejection email/SMS to ${parent.email}`, err));
 
     await this.auditService.log({
       actorId: actorId instanceof Types.ObjectId ? actorId.toString() : actorId,
