@@ -119,6 +119,8 @@ describe('InvoicesService', () => {
         _id: 'invoice-1',
         type: InvoiceType.PARENT_INVOICE,
         parentId: 'parent-1',
+        totalAmount: 4500,
+        dueDate: new Date('2026-08-31T00:00:00Z'),
       }),
     });
     userModel.findById = jest.fn().mockReturnValue({
@@ -147,6 +149,9 @@ describe('InvoicesService', () => {
     expect(notificationService.sendNewInvoiceSmsToParent).toHaveBeenCalledWith({
       phone: '0711111111',
       recipientName: 'Parent One',
+      invoiceId: 'invoice-1',
+      amount: 4500,
+      dueDate: new Date('2026-08-31T00:00:00Z'),
     });
   });
 

@@ -182,6 +182,7 @@ describe('RequestsService registration rejection notifications', () => {
     expect(notificationService.sendRegistrationRejected).toHaveBeenCalledTimes(1);
     expect(notificationService.sendRegistrationRejected).toHaveBeenCalledWith({
       email: 'parent@example.com',
+      phone: '0711111111',
       parentName: 'Parent One',
     });
   });

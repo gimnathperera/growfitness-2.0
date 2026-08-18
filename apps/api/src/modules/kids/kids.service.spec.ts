@@ -65,7 +65,8 @@ describe('KidsService', () => {
         sessionType: SessionType.GROUP,
         gender: 'Female',
       });
-      expect(pipeline[0].$match.$or).toHaveLength(2);
+      const searchMatch = pipeline.find((stage: any) => stage.$match?.$or);
+      expect(searchMatch.$match.$or).toHaveLength(9);
 
       const facet = pipeline.find((stage: any) => stage.$facet).$facet;
       expect(facet.total).toEqual([{ $count: 'count' }]);

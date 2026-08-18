@@ -369,6 +369,9 @@ export class InvoicesService {
         await this.notificationService.sendNewInvoiceSmsToParent({
           phone: p.phone ?? '',
           recipientName: p.parentProfile?.name,
+          invoiceId: invoiceIdStr,
+          amount: invoice.totalAmount,
+          dueDate: invoice.dueDate,
         });
       }
     }
@@ -472,6 +475,8 @@ export class InvoicesService {
           status: updateDto.status,
           email,
           phone,
+          recipientName: parentName,
+          amount: invoice.totalAmount,
         });
         await this.notificationService.createNotification({
           userId: parentIdStr,
@@ -515,6 +520,7 @@ export class InvoicesService {
             email: (admin as any).email,
             parentName,
             invoiceId: invoice._id.toString(),
+            amount: invoice.totalAmount,
           });
         }
       }

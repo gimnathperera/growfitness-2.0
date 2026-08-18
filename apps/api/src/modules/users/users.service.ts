@@ -382,7 +382,9 @@ export class UsersService {
       await this.notificationService.sendRegistrationReceived({
         email: parent.email,
         parentName,
-      });
+      }).catch(err =>
+        this.logger.error(`Failed to send registration request received email to ${parent.email}`, err)
+      );
       for (const a of admins) {
         const adminId = (a as any)._id?.toString?.();
         if (adminId) {

@@ -121,6 +121,7 @@ describe('SessionsService urgent cancellation notifications', () => {
     const notificationService = {
       createNotification: jest.fn().mockResolvedValue({}),
       sendSessionChange: jest.fn().mockResolvedValue(undefined),
+      sendSessionDeleted: jest.fn().mockResolvedValue(undefined),
       sendUrgentSessionCancellation: jest.fn().mockResolvedValue(undefined),
     };
     const googleCalendarSync = {
@@ -176,14 +177,20 @@ describe('SessionsService urgent cancellation notifications', () => {
 
   it('does not send urgent cancellation alerts when deleting a session', async () => {
     const { service, sessionModel, notificationService } = createService(SessionStatus.SCHEDULED);
-    sessionModel.findById = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue({
-        _id: 'session-1',
-        title: 'Boxing Basics',
-        coachId: 'coach-1',
-        kids: ['kid-1', 'kid-2'],
-      }),
-    });
+    const deletedSession = {
+      _id: 'session-1',
+      title: 'Boxing Basics',
+      coachId: 'coach-1',
+      kids: ['kid-1', 'kid-2'],
+      dateTime: new Date('2026-08-01T04:30:00Z'),
+    };
+    sessionModel.findById = jest
+      .fn()
+      .mockReturnValueOnce({ exec: jest.fn().mockResolvedValue(deletedSession) })
+      .mockReturnValueOnce(chainableFindById({
+        ...deletedSession,
+        locationId: { name: 'Main Studio' },
+      }));
 
     await service.delete('session-1', 'admin-1');
 

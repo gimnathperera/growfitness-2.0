@@ -667,7 +667,8 @@ export class SessionsService {
 
       const sessionPopulated = await this.sessionModel
         .findById(id)
-        .populate('coachId', 'email phone')
+        .populate('coachId', 'email phone coachProfile')
+        .populate('locationId')
         .populate('kids')
         .exec();
       if (sessionPopulated) {
@@ -691,45 +692,63 @@ export class SessionsService {
           });
         }
 
+        const locationName = (sessionPopulated.locationId as any)?.name ?? 'Grow Fitness Center';
+
         const coachUser = coachIdStr
-          ? await this.userModel.findById(coachIdStr).select('email phone').lean().exec()
+          ? await this.userModel.findById(coachIdStr).select('email phone coachProfile').lean().exec()
           : null;
         if (coachUser && (coachUser as any).email) {
+          const coachName = (coachUser as any).coachProfile?.name ?? 'Coach';
           await this.notificationService.sendSessionChange({
             email: (coachUser as any).email,
             phone: (coachUser as any).phone ?? '',
             sessionId: id,
             changes: changesStr,
-          });
+            sessionTitle: session.title,
+            dateTime: session.dateTime,
+            locationName,
+          }).catch(err => this.logger.error(`Failed to send session update notification to coach`, err));
           if (sendUrgentCancellation) {
             await this.notificationService.sendUrgentSessionCancellation({
               email: (coachUser as any).email,
               phone: (coachUser as any).phone ?? '',
               title: session.title,
               date: urgentCancellationDate,
-            });
+              recipientName: coachName,
+              dateTime: session.dateTime,
+              locationName,
+            }).catch(err => this.logger.error(`Failed to send urgent cancellation notification to coach`, err));
           }
         }
         for (const parentId of parentIds) {
           const parent = await this.userModel
             .findById(parentId)
-            .select('email phone')
+            .select('email phone parentProfile')
             .lean()
             .exec();
           if (parent && (parent as any).email) {
+            const parentName = (parent as any).parentProfile?.name ?? 'Parent';
             await this.notificationService.sendSessionChange({
               email: (parent as any).email,
               phone: (parent as any).phone ?? '',
               sessionId: id,
               changes: changesStr,
-            });
+              sessionTitle: session.title,
+              dateTime: session.dateTime,
+              locationName,
+            }).catch(err => this.logger.error(`Failed to send session update notification to parent ${parentId}`, err));
             if (sendUrgentCancellation) {
               await this.notificationService.sendUrgentSessionCancellation({
                 email: (parent as any).email,
                 phone: (parent as any).phone ?? '',
                 title: session.title,
                 date: urgentCancellationDate,
-              });
+                recipientName: parentName,
+                dateTime: session.dateTime,
+                locationName,
+              }).catch(err =>
+                this.logger.error(`Failed to send urgent cancellation notification to parent ${parentId}`, err)
+              );
             }
           }
         }
@@ -838,6 +857,40 @@ export class SessionsService {
         entityType: 'Session',
         entityId: id,
       });
+    }
+
+    // Lookup session populated for delete details to get location name for SMS/Email
+    const sessionPopulatedForDelete = await this.sessionModel
+      .findById(id)
+      .populate('locationId')
+      .lean()
+      .exec();
+    const locationName = (sessionPopulatedForDelete?.locationId as any)?.name ?? 'Grow Fitness Center';
+
+    const coachUser = await this.userModel.findById(coachIdStr).select('email phone coachProfile').lean().exec();
+    if (coachUser && (coachUser as any).email) {
+      await this.notificationService.sendSessionDeleted({
+        email: (coachUser as any).email,
+        phone: (coachUser as any).phone ?? '',
+        recipientName: (coachUser as any).coachProfile?.name ?? 'Coach',
+        sessionTitle: session.title,
+        dateTime: session.dateTime,
+        locationName,
+      }).catch(err => this.logger.error(`Failed to send session deleted notification to coach`, err));
+    }
+
+    for (const parentId of parentIds) {
+      const parent = await this.userModel.findById(parentId).select('email phone parentProfile').lean().exec();
+      if (parent && (parent as any).email) {
+        await this.notificationService.sendSessionDeleted({
+          email: (parent as any).email,
+          phone: (parent as any).phone ?? '',
+          recipientName: (parent as any).parentProfile?.name ?? 'Parent',
+          sessionTitle: session.title,
+          dateTime: session.dateTime,
+          locationName,
+        }).catch(err => this.logger.error(`Failed to send session deleted notification to parent ${parentId}`, err));
+      }
     }
 
     await this.sessionModel.findByIdAndDelete(id).exec();
