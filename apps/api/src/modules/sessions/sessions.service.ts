@@ -22,6 +22,7 @@ import { ErrorCode } from '../../common/enums/error-codes.enum';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { GoogleCalendarSyncService } from '../google-calendar/google-calendar-sync.service';
 import type { SessionSortField } from './dto/get-sessions-query.dto';
+import { formatSessionNotificationDate } from '../../common/utils/notification-date.util';
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -676,6 +677,9 @@ export class SessionsService {
           sessionPopulated.coachId?.toString?.();
         const parentIds = await this.getParentIdsFromKidIds(sessionPopulated.kids ?? []);
         const recipientIds = [coachIdStr, ...parentIds].filter(Boolean);
+        const sendUrgentCancellation =
+          previousStatus !== SessionStatus.CANCELLED && session.status === SessionStatus.CANCELLED;
+        const urgentCancellationDate = formatSessionNotificationDate(session.dateTime);
 
         for (const userId of recipientIds) {
           await this.notificationService.createNotification({
@@ -688,7 +692,6 @@ export class SessionsService {
           });
         }
 
-        const isCancelled = session.status === SessionStatus.CANCELLED;
         const locationName = (sessionPopulated.locationId as any)?.name ?? 'Grow Fitness Center';
 
         const coachUser = coachIdStr
@@ -696,25 +699,25 @@ export class SessionsService {
           : null;
         if (coachUser && (coachUser as any).email) {
           const coachName = (coachUser as any).coachProfile?.name ?? 'Coach';
-          if (isCancelled) {
-            await this.notificationService.sendSessionCancelled({
+          await this.notificationService.sendSessionChange({
+            email: (coachUser as any).email,
+            phone: (coachUser as any).phone ?? '',
+            sessionId: id,
+            changes: changesStr,
+            sessionTitle: session.title,
+            dateTime: session.dateTime,
+            locationName,
+          }).catch(err => this.logger.error(`Failed to send session update notification to coach`, err));
+          if (sendUrgentCancellation) {
+            await this.notificationService.sendUrgentSessionCancellation({
               email: (coachUser as any).email,
               phone: (coachUser as any).phone ?? '',
+              title: session.title,
+              date: urgentCancellationDate,
               recipientName: coachName,
-              sessionTitle: session.title,
               dateTime: session.dateTime,
               locationName,
-            }).catch(err => this.logger.error(`Failed to send session cancelled notification to coach`, err));
-          } else {
-            await this.notificationService.sendSessionChange({
-              email: (coachUser as any).email,
-              phone: (coachUser as any).phone ?? '',
-              sessionId: id,
-              changes: changesStr,
-              sessionTitle: session.title,
-              dateTime: session.dateTime,
-              locationName,
-            }).catch(err => this.logger.error(`Failed to send session update notification to coach`, err));
+            }).catch(err => this.logger.error(`Failed to send urgent cancellation notification to coach`, err));
           }
         }
         for (const parentId of parentIds) {
@@ -725,25 +728,27 @@ export class SessionsService {
             .exec();
           if (parent && (parent as any).email) {
             const parentName = (parent as any).parentProfile?.name ?? 'Parent';
-            if (isCancelled) {
-              await this.notificationService.sendSessionCancelled({
+            await this.notificationService.sendSessionChange({
+              email: (parent as any).email,
+              phone: (parent as any).phone ?? '',
+              sessionId: id,
+              changes: changesStr,
+              sessionTitle: session.title,
+              dateTime: session.dateTime,
+              locationName,
+            }).catch(err => this.logger.error(`Failed to send session update notification to parent ${parentId}`, err));
+            if (sendUrgentCancellation) {
+              await this.notificationService.sendUrgentSessionCancellation({
                 email: (parent as any).email,
                 phone: (parent as any).phone ?? '',
+                title: session.title,
+                date: urgentCancellationDate,
                 recipientName: parentName,
-                sessionTitle: session.title,
                 dateTime: session.dateTime,
                 locationName,
-              }).catch(err => this.logger.error(`Failed to send session cancelled notification to parent ${parentId}`, err));
-            } else {
-              await this.notificationService.sendSessionChange({
-                email: (parent as any).email,
-                phone: (parent as any).phone ?? '',
-                sessionId: id,
-                changes: changesStr,
-                sessionTitle: session.title,
-                dateTime: session.dateTime,
-                locationName,
-              }).catch(err => this.logger.error(`Failed to send session update notification to parent ${parentId}`, err));
+              }).catch(err =>
+                this.logger.error(`Failed to send urgent cancellation notification to parent ${parentId}`, err)
+              );
             }
           }
         }

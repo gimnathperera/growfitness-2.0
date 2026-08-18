@@ -11,6 +11,7 @@ import { Session } from '../../infra/database/schemas/session.schema';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notifications/notifications.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { RequestStatus } from '@grow-fitness/shared-types';
 
 function chainableFind(result: unknown[] = []) {
   const chain: any = {
@@ -113,5 +114,85 @@ describe('RequestsService list sorting', () => {
       { $skip: 10 },
       { $limit: 5 },
     ]);
+  });
+});
+
+describe('RequestsService registration rejection notifications', () => {
+  function createService(requestStatus: RequestStatus) {
+    const request = {
+      _id: 'registration-1',
+      parentId: 'parent-1',
+      status: requestStatus,
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+    const userRegistrationModel = {
+      findById: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(request) }),
+    };
+    const parent = {
+      _id: 'parent-1',
+      email: 'parent@example.com',
+      phone: '0711111111',
+      parentProfile: { name: 'Parent One' },
+      status: undefined,
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+    const userModel = {
+      findById: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(parent) }),
+    };
+    const kidModel = {
+      find: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([{ _id: 'kid-1' }]) }),
+    };
+    const notificationService = {
+      createNotification: jest.fn().mockResolvedValue({}),
+      sendRegistrationRejected: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const service = new RequestsService(
+      {} as any,
+      {} as any,
+      {} as any,
+      userRegistrationModel as any,
+      userModel as any,
+      kidModel as any,
+      {} as any,
+      { log: jest.fn().mockResolvedValue({}) } as any,
+      notificationService as any,
+      {} as any
+    );
+
+    return { service, request, notificationService };
+  }
+
+  it('sends in-app and email when a registration transitions to denied', async () => {
+    const { service, request, notificationService } = createService(RequestStatus.PENDING);
+
+    await service.rejectUserRegistrationRequest('registration-1', '507f1f77bcf86cd799439011');
+
+    expect(request.status).toBe(RequestStatus.DENIED);
+    expect(notificationService.createNotification).toHaveBeenCalledTimes(1);
+    expect(notificationService.createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'parent-1',
+        type: 'REGISTRATION_REJECTED',
+        title: 'Registration not approved',
+        entityType: 'UserRegistrationRequest',
+        entityId: 'registration-1',
+      })
+    );
+    expect(notificationService.sendRegistrationRejected).toHaveBeenCalledTimes(1);
+    expect(notificationService.sendRegistrationRejected).toHaveBeenCalledWith({
+      email: 'parent@example.com',
+      phone: '0711111111',
+      parentName: 'Parent One',
+    });
+  });
+
+  it('does not resend rejection notifications when already denied', async () => {
+    const { service, notificationService } = createService(RequestStatus.DENIED);
+
+    await service.rejectUserRegistrationRequest('registration-1', '507f1f77bcf86cd799439011');
+
+    expect(notificationService.createNotification).not.toHaveBeenCalled();
+    expect(notificationService.sendRegistrationRejected).not.toHaveBeenCalled();
   });
 });

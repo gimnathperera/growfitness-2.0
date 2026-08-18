@@ -379,6 +379,12 @@ export class UsersService {
         .exec();
       const requestId = registrationRequest._id.toString();
       const parentName = parent.parentProfile?.name ?? parent.email;
+      await this.notificationService.sendRegistrationReceived({
+        email: parent.email,
+        parentName,
+      }).catch(err =>
+        this.logger.error(`Failed to send registration request received email to ${parent.email}`, err)
+      );
       for (const a of admins) {
         const adminId = (a as any)._id?.toString?.();
         if (adminId) {
@@ -392,11 +398,6 @@ export class UsersService {
           });
         }
       }
-      // Send registration request received email to the parent
-      await this.notificationService.sendRegistrationReceived({
-        email: parent.email,
-        parentName: parent.parentProfile?.name,
-      }).catch(err => this.logger.error(`Failed to send registration request received email to ${parent.email}`, err));
     }
 
     // Log audit if actorId is provided (admin creation)

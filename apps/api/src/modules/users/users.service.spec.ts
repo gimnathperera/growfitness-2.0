@@ -8,7 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notifications/notifications.service';
 import { UserCascadeService } from './user-cascade.service';
-import { UserRole, UserStatus } from '@grow-fitness/shared-types';
+import { RequestStatus, UserRole, UserStatus } from '@grow-fitness/shared-types';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -157,5 +157,95 @@ describe('UsersService', () => {
         { $limit: 25 },
       ]);
     });
+  });
+});
+
+describe('UsersService parent registration notifications', () => {
+  function createService() {
+    const userModel: any = jest.fn().mockImplementation((data: any) => ({
+      ...data,
+      _id: 'parent-1',
+      save: jest.fn().mockResolvedValue(undefined),
+      toObject: jest.fn().mockReturnValue({ ...data, id: 'parent-1' }),
+    }));
+    userModel.findOne = jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
+    userModel.find = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue([{ _id: 'admin-1' }]),
+    });
+
+    const kidModel: any = jest.fn().mockImplementation((data: any) => ({
+      ...data,
+      save: jest.fn().mockResolvedValue({ ...data, _id: 'kid-1' }),
+    }));
+
+    const userRegistrationRequestModel: any = jest.fn().mockImplementation((data: any) => ({
+      ...data,
+      _id: 'registration-1',
+      save: jest.fn().mockResolvedValue(undefined),
+    }));
+
+    const notificationService = {
+      createNotification: jest.fn().mockResolvedValue({}),
+      sendRegistrationReceived: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const service = new UsersService(
+      userModel,
+      kidModel,
+      userRegistrationRequestModel,
+      { hashPassword: jest.fn().mockResolvedValue('hashed') } as any,
+      { log: jest.fn().mockResolvedValue({}) } as any,
+      notificationService as any,
+      { deleteParentHard: jest.fn(), deleteCoachHard: jest.fn() } as any
+    );
+
+    return { service, userRegistrationRequestModel, notificationService };
+  }
+
+  const dto = {
+    email: 'parent@example.com',
+    phone: '0711111111',
+    password: 'password',
+    name: 'Parent One',
+    location: 'Colombo',
+    kids: [
+      {
+        name: 'Kid One',
+        gender: 'Male',
+        birthDate: '2020-01-01',
+        currentlyInSports: false,
+        medicalConditions: [],
+        sessionType: 'INDIVIDUAL',
+      },
+    ],
+  };
+
+  it('sends a received-confirmation email once for public parent registrations', async () => {
+    const { service, userRegistrationRequestModel, notificationService } = createService();
+
+    await service.createParent(dto as any, null);
+
+    expect(userRegistrationRequestModel).toHaveBeenCalledWith({
+      parentId: 'parent-1',
+      status: RequestStatus.PENDING,
+    });
+    expect(notificationService.sendRegistrationReceived).toHaveBeenCalledTimes(1);
+    expect(notificationService.sendRegistrationReceived).toHaveBeenCalledWith({
+      email: 'parent@example.com',
+      parentName: 'Parent One',
+    });
+    expect(notificationService.createNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send received-confirmation email when an admin creates a parent', async () => {
+    const { service, userRegistrationRequestModel, notificationService } = createService();
+
+    await service.createParent(dto as any, 'admin-1');
+
+    expect(userRegistrationRequestModel).not.toHaveBeenCalled();
+    expect(notificationService.sendRegistrationReceived).not.toHaveBeenCalled();
+    expect(notificationService.createNotification).not.toHaveBeenCalled();
   });
 });

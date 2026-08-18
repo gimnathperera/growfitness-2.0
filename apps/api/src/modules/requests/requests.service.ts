@@ -1283,6 +1283,8 @@ export class RequestsService {
       });
     }
 
+    const previousStatus = request.status;
+
     // Get parentId - handle both ObjectId and populated object
     if (!request.parentId) {
       throw new NotFoundException({
@@ -1347,21 +1349,26 @@ export class RequestsService {
 
     await request.save();
 
-    await this.notificationService.createNotification({
-      userId: parentIdString,
-      type: NotificationType.REGISTRATION_REJECTED,
-      title: 'Registration not approved',
-      body: 'Your account registration was not approved. Please contact support if you have questions.',
-      entityType: 'UserRegistrationRequest',
-      entityId: id,
-    });
+    const transitionedToDenied =
+      previousStatus !== RequestStatus.DENIED && request.status === RequestStatus.DENIED;
+    if (transitionedToDenied) {
+      await this.notificationService.createNotification({
+        userId: parentIdString,
+        type: NotificationType.REGISTRATION_REJECTED,
+        title: 'Registration not approved',
+        body: 'Your account registration was not approved. Please contact support if you have questions.',
+        entityType: 'UserRegistrationRequest',
+        entityId: id,
+      });
 
-    // Notify parent via email and SMS that registration request was rejected
-    await this.notificationService.sendRegistrationRejected({
-      email: parent.email,
-      phone: parent.phone ?? undefined,
-      parentName: parent.parentProfile?.name,
-    }).catch(err => this.logger.error(`Failed to send registration rejection email/SMS to ${parent.email}`, err));
+      await this.notificationService.sendRegistrationRejected({
+        email: parent.email,
+        phone: parent.phone ?? undefined,
+        parentName: parent.parentProfile?.name,
+      }).catch(err =>
+        this.logger.error(`Failed to send registration rejection email/SMS to ${parent.email}`, err)
+      );
+    }
 
     await this.auditService.log({
       actorId: actorId instanceof Types.ObjectId ? actorId.toString() : actorId,

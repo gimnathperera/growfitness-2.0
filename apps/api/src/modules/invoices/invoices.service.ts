@@ -366,7 +366,7 @@ export class InvoicesService {
       });
       if (parent) {
         const p = parent as any;
-        await this.notificationService.sendNewInvoiceToParent({
+        await this.notificationService.sendNewInvoiceSmsToParent({
           phone: p.phone ?? '',
           recipientName: p.parentProfile?.name,
           invoiceId: invoiceIdStr,
@@ -441,6 +441,7 @@ export class InvoicesService {
       });
     }
 
+    const previousStatus = invoice.status;
     invoice.status = updateDto.status as InvoiceStatus;
     if (updateDto.status === InvoiceStatus.PAID && updateDto.paidAt) {
       invoice.paidAt = new Date(updateDto.paidAt);
@@ -449,65 +450,110 @@ export class InvoicesService {
     await invoice.save();
 
     const invoiceWasSentToRecipient = invoice.pdfEmailedAt != null;
+    const statusChanged = previousStatus !== invoice.status;
+    const transitionedToPaid =
+      previousStatus !== InvoiceStatus.PAID && invoice.status === InvoiceStatus.PAID;
+    const shouldNotifyParentStatus =
+      invoiceWasSentToRecipient && statusChanged && invoice.type === InvoiceType.PARENT_INVOICE;
+    const shouldNotifyParentPaid =
+      transitionedToPaid && invoice.type === InvoiceType.PARENT_INVOICE;
 
-    if (
-      invoiceWasSentToRecipient &&
-      invoice.type === InvoiceType.PARENT_INVOICE &&
-      invoice.parentId
-    ) {
+    if (invoice.parentId && (shouldNotifyParentStatus || shouldNotifyParentPaid)) {
       const parentIdStr = invoice.parentId.toString();
-      const parent = await this.userModel.findById(parentIdStr).select('email phone parentProfile').lean().exec();
+      const parent = await this.userModel
+        .findById(parentIdStr)
+        .select('email phone parentProfile')
+        .lean()
+        .exec();
       const email = parent ? (parent as any).email : undefined;
       const phone = parent ? (parent as any).phone : undefined;
-      const recipientName = parent ? (parent as any).parentProfile?.name : undefined;
-      await this.notificationService.sendInvoiceUpdate({
-        invoiceId: invoice._id.toString(),
-        parentId: parentIdStr,
-        status: updateDto.status,
-        email,
-        phone,
-        recipientName,
-        amount: invoice.totalAmount,
-      });
-      await this.notificationService.createNotification({
-        userId: parentIdStr,
-        type: NotificationType.INVOICE_STATUS_UPDATED,
-        title: 'Invoice updated',
-        body: `Your invoice status has been updated to: ${updateDto.status}.`,
-        entityType: 'Invoice',
-        entityId: invoice._id.toString(),
-      });
-    }
+      const parentName = (parent as any)?.parentProfile?.name ?? email ?? 'Unknown parent';
+      if (shouldNotifyParentStatus) {
+        await this.notificationService.sendInvoiceUpdate({
+          invoiceId: invoice._id.toString(),
+          parentId: parentIdStr,
+          status: updateDto.status,
+          email,
+          phone,
+          recipientName: parentName,
+          amount: invoice.totalAmount,
+        });
+        await this.notificationService.createNotification({
+          userId: parentIdStr,
+          type: NotificationType.INVOICE_STATUS_UPDATED,
+          title: 'Invoice updated',
+          body: `Your invoice status has been updated to: ${updateDto.status}.`,
+          entityType: 'Invoice',
+          entityId: invoice._id.toString(),
+        });
+      }
 
-    if (invoiceWasSentToRecipient && invoice.type === InvoiceType.COACH_PAYOUT && invoice.coachId) {
-      const coachIdStr = invoice.coachId.toString();
-      await this.notificationService.createNotification({
-        userId: coachIdStr,
-        type: NotificationType.INVOICE_STATUS_UPDATED,
-        title: 'Payout invoice updated',
-        body:
-          updateDto.status === InvoiceStatus.PAID
-            ? 'Your payout has been marked as paid.'
-            : `Your payout invoice status has been updated to: ${updateDto.status}.`,
-        entityType: 'Invoice',
-        entityId: invoice._id.toString(),
-      });
-      if (updateDto.status === InvoiceStatus.PAID) {
-        const coach = await this.userModel
-          .findById(coachIdStr)
-          .select('email phone coachProfile')
+      if (transitionedToPaid) {
+        await this.notificationService.sendPaymentReceiptToParent({
+          email,
+          parentName,
+          invoiceId: invoice._id.toString(),
+          status: invoice.status,
+          totalAmount: invoice.totalAmount,
+          paidAt: invoice.paidAt,
+        });
+
+        const admins = await this.userModel
+          .find({ role: UserRole.ADMIN })
+          .select('_id email')
           .lean()
           .exec();
-        if (coach) {
-          const c = coach as any;
-          await this.notificationService.sendCoachPayoutPaid({
-            email: c.email,
-            phone: c.phone ?? '',
-            coachName: c.coachProfile?.name,
+        const paymentMessage = `Parent ${parentName} has successfully paid Invoice #${invoice._id.toString()}.`;
+        for (const admin of admins) {
+          const adminId = (admin as any)._id?.toString?.();
+          if (adminId) {
+            await this.notificationService.createNotification({
+              userId: adminId,
+              type: NotificationType.PAYMENT_RECEIVED,
+              title: 'Payment Received',
+              body: paymentMessage,
+              entityType: 'Invoice',
+              entityId: invoice._id.toString(),
+            });
+          }
+          await this.notificationService.sendAdminPaymentReceived({
+            email: (admin as any).email,
+            parentName,
             invoiceId: invoice._id.toString(),
             amount: invoice.totalAmount,
           });
         }
+      }
+    }
+
+    if (
+      transitionedToPaid &&
+      invoice.type === InvoiceType.COACH_PAYOUT &&
+      invoice.coachId
+    ) {
+      const coachIdStr = invoice.coachId.toString();
+      const coach = await this.userModel
+        .findById(coachIdStr)
+        .select('email phone coachProfile')
+        .lean()
+        .exec();
+      const coachName = (coach as any)?.coachProfile?.name ?? 'Coach';
+      await this.notificationService.createNotification({
+        userId: coachIdStr,
+        type: NotificationType.INVOICE_STATUS_UPDATED,
+        title: 'Payment Processed',
+        body: `Hello ${coachName}, your monthly payment has been processed.`,
+        entityType: 'Invoice',
+        entityId: invoice._id.toString(),
+      });
+      if (coach) {
+        const c = coach as any;
+        await this.notificationService.sendCoachPayoutPaid({
+          email: c.email,
+          phone: c.phone ?? '',
+          coachName: c.coachProfile?.name,
+          invoiceId: invoice._id.toString(),
+        });
       }
     }
 

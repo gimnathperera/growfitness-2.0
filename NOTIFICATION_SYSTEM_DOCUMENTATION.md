@@ -55,12 +55,16 @@ Here is the detailed catalog of every notification scenario currently implemente
 
 ### Scenario 1: User Registration Request (Public Sign Up)
 * **Trigger Event**: [users.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/users/users.service.ts) → `createParent()` (when `actorId` is null, indicating a public registration)
-* **Notification Type**: In-App
-* **Recipient(s)**: All Administrators (`UserRole.ADMIN`)
+* **Notification Type**: In-App, Email
+* **Recipient(s)**: All Administrators (`UserRole.ADMIN`) and the registering parent
 * **Message Content**:
-  * **Title**: `New user registration request`
-  * **Body**: `{{parentName}} has requested to join.` *(where parentName is parent.parentProfile.name or parent.email)*
-  * **Entity Info**: `entityType: 'UserRegistrationRequest'`, `entityId: {{requestId}}`
+  * **Admin In-App**:
+    * **Title**: `New user registration request`
+    * **Body**: `{{parentName}} has requested to join.` *(where parentName is parent.parentProfile.name or parent.email)*
+    * **Entity Info**: `entityType: 'UserRegistrationRequest'`, `entityId: {{requestId}}`
+  * **Parent Email**:
+    * **Subject**: `Registration Request Received`
+    * **Body**: `Hello {{parentName}}, we have received your request to join. Our team will review it shortly.`
 * **Timing**: Immediate (Synchronous)
 
 ### Scenario 2: User Registration Approved
@@ -79,13 +83,17 @@ Here is the detailed catalog of every notification scenario currently implemente
 
 ### Scenario 3: User Registration Rejected
 * **Trigger Event**: [requests.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/requests/requests.service.ts) → `rejectUserRegistrationRequest()`
-* **Notification Type**: In-App
+* **Notification Type**: In-App, Email
 * **Recipient(s)**: The Parent who signed up
 * **Message Content**:
-  * **Title**: `Registration not approved`
-  * **Body**: `Your account registration was not approved. Please contact support if you have questions.`
-  * **Entity Info**: `entityType: 'UserRegistrationRequest'`, `entityId: {{id}}`
-* **Timing**: Immediate (Synchronous)
+  * **In-App**:
+    * **Title**: `Registration not approved`
+    * **Body**: `Your account registration was not approved. Please contact support if you have questions.`
+    * **Entity Info**: `entityType: 'UserRegistrationRequest'`, `entityId: {{id}}`
+  * **Email**:
+    * **Subject**: `Registration Request Not Approved`
+    * **Body**: `Hello {{parentName}}, your account registration request could not be approved at this time. Please contact support.`
+* **Timing**: Immediate only when the request transitions from a non-denied status to `DENIED`
 
 ### Scenario 4: Password Reset Request
 * **Trigger Event**: [auth.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/auth/auth.service.ts) → `requestPasswordReset()` → calls [notifications.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/notifications/notifications.service.ts) → `sendPasswordResetEmail()`
@@ -272,6 +280,9 @@ Here is the detailed catalog of every notification scenario currently implemente
   * **Email & SMS**:
     * **Subject**: `Session Update`
     * **Body / Message**: `Your session has been updated: {{changes}}` *(where changes is changesStr)*
+  * **Urgent Cancellation Email & SMS** *(additional, only when status transitions from non-cancelled to `CANCELLED`)*:
+    * **Subject**: `URGENT: Session Cancelled`
+    * **Body / Message**: `URGENT: Session '{{title}}' scheduled on {{date}} has been cancelled.`
 * **Timing**: Immediate (Synchronous)
 
 ### Scenario 19: Session Deleted
@@ -297,9 +308,9 @@ Here is the detailed catalog of every notification scenario currently implemente
       * **Title**: `New invoice`
       * **Body**: `A new invoice has been issued for you. Please log in to view and pay.`
       * **Entity Info**: `entityType: 'Invoice'`, `entityId: {{id}}`
-    * **Email & SMS Alert**:
-      * **Subject**: `New Invoice`
-      * **Body / Message**: `Hello {{recipientName}}, you have a new invoice from Grow Fitness. Please log in to view and pay.`
+    * **SMS Alert**:
+      * **Message**: `Hello {{recipientName}}, you have a new invoice from Grow Fitness. Please log in to view and pay.`
+    * **Email Note**: No separate non-PDF `New Invoice` email is sent on first delivery; the PDF email is the single invoice email.
   * **Outbound Coach Channels (If Coach Payout)**:
     * **In-App**:
       * **Title**: `New payout invoice`
@@ -308,9 +319,9 @@ Here is the detailed catalog of every notification scenario currently implemente
 * **Timing**: Immediate on Admin dispatch. (Synchronous)
 
 ### Scenario 21: Invoice Payment Status Updated
-* **Trigger Event**: [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) → `updatePaymentStatus()` (only triggers notifications if the invoice has been previously sent via PDF)
+* **Trigger Event**: [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) → `updatePaymentStatus()` (generic parent status updates require a previously sent PDF; paid-transition notifications fire on the status transition)
 * **Notification Type**: In-App, Email, SMS
-* **Recipient(s)**: Parent (if `PARENT_INVOICE`) or Coach (if `COACH_PAYOUT`)
+* **Recipient(s)**: Parent (if `PARENT_INVOICE`), administrators on parent paid transition, or coach on payout paid transition
 * **Message Content**:
   * **Parent Invoice**:
     * **In-App**:
@@ -320,12 +331,23 @@ Here is the detailed catalog of every notification scenario currently implemente
     * **Email & SMS**:
       * **Subject**: `Invoice Update`
       * **Body / Message**: `Your invoice status has been updated to: {{status}}`
-  * **Coach Payout**:
+    * **Additional Receipt Email** *(only when status transitions from non-paid to `PAID`)*:
+      * **Subject**: `Payment Receipt for Invoice #{{id}}`
+      * **Body**: `Thank you! We have received your payment. Your receipt details are enclosed.`
+  * **Admin Payment Received** *(parent invoices only, when status transitions from non-paid to `PAID`)*:
     * **In-App**:
-      * **Title**: `Payout invoice updated`
-      * **Body**: `Your payout has been marked as paid.` (or `Your payout invoice status has been updated to: {{status}}.` if status is not paid)
+      * **Title**: `Payment Received`
+      * **Body**: `Parent {{parentName}} has successfully paid Invoice #{{id}}.`
       * **Entity Info**: `entityType: 'Invoice'`, `entityId: {{id}}`
-    * **Email & SMS Alert** *(Only if status updated to `PAID`)*:
+    * **Email**:
+      * **Subject**: `Payment Received`
+      * **Body**: `Parent {{parentName}} has successfully paid Invoice #{{id}}.`
+  * **Coach Payout** *(only when status transitions from non-paid to `PAID`)*:
+    * **In-App**:
+      * **Title**: `Payment Processed`
+      * **Body**: `Hello {{coachName}}, your monthly payment has been processed.`
+      * **Entity Info**: `entityType: 'Invoice'`, `entityId: {{id}}`
+    * **Email & SMS Alert**:
       * **Subject**: `Payment Processed`
       * **Body / Message**: `Hello {{coachName}}, your monthly payment has been processed.`
 * **Timing**: Immediate (Synchronous)
@@ -430,7 +452,7 @@ graph TD
   3. Launches Puppeteer instance to convert HTML string to PDF binary buffer.
   4. Calls `sendInvoicePdfEmail()` passing the PDF buffer. `NotificationService` calls `EmailProvider` to send email with the attachment.
   5. If the invoice has never been emailed before, updates database flag and calls `notifyRecipientsInvoiceDeliveredOnce`.
-  6. `InvoicesService` emits secondary in-app alerts and email/SMS confirmation alerts to the parent.
+  6. `InvoicesService` emits the first-send in-app notification and SMS alert. It does not emit a second non-PDF invoice email.
 
 ---
 
@@ -438,9 +460,9 @@ graph TD
 
 | Scenario | Trigger File | Recipient | Type | Message | Status (Enabled by default) |
 |---|---|---|---|---|---|
-| User Reg Request | [users.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/users/users.service.ts) | Admins | In-App | `{{name}} has requested to join.` | Active |
+| User Reg Request | [users.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/users/users.service.ts) | Admins, Parent | In-App, Email | `{{name}} has requested to join.` / `Registration Request Received` | Active |
 | Registration Approved | [requests.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/requests/requests.service.ts) | Parent | In-App, Email, SMS | `Hello {{name}}, your Grow Fitness account has been approved.` | Active |
-| Registration Rejected | [requests.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/requests/requests.service.ts) | Parent | In-App | `Your account registration was not approved.` | Active |
+| Registration Rejected | [requests.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/requests/requests.service.ts) | Parent | In-App, Email | `Your account registration was not approved.` | Active |
 | Password Reset Request | [auth.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/auth/auth.service.ts) | Requester | Email | `Click the link below to reset your password: {{resetUrl}}` | Active |
 | Profile Updated (Self) | [users.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/users/users.service.ts) | Parent | In-App | `Your profile information was saved.` | Active |
 | Profile Updated (Admin) | [users.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/users/users.service.ts) | Parent | In-App | `An administrator updated your profile information.` | Active |
@@ -455,12 +477,14 @@ graph TD
 | Extra Session Denied | [requests.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/requests/requests.service.ts) | Parent | In-App | `Your extra session request has been denied.` | Active |
 | Session Scheduled (Single) | [sessions.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/sessions/sessions.service.ts) | Coach, Parents | In-App | `Session "{{session.title}}" has been scheduled.` | Active |
 | Session Scheduled (Recur) | [sessions.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/sessions/sessions.service.ts) | Coach, Parents | In-App | `{{count}} recurring sessions for "{{title}}" were scheduled.` | Active |
-| Session Updated | [sessions.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/sessions/sessions.service.ts) | Coach, Parents | In-App, Email, SMS | `Session "{{title}}": {{changes}}` | Active |
+| Session Updated / Cancelled | [sessions.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/sessions/sessions.service.ts) | Coach, Parents | In-App, Email, SMS | `Session "{{title}}": {{changes}}`; cancelled transitions also send `URGENT: Session Cancelled` email/SMS | Active |
 | Session Deleted | [sessions.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/sessions/sessions.service.ts) | Coach, Parents | In-App | `Session "{{title}}" has been deleted.` | Active |
 | Invoice PDF Delivered | [invoice-pdf.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoice-pdf.service.ts) | Recipient | Email | `Please find your Grow Fitness invoice attached as a PDF.` | Active |
-| New Invoice (First Send) | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Parent | In-App, Email, SMS | `Hello {{name}}, you have a new invoice from Grow Fitness.` | Active |
-| Invoice Status Updated | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Parent/Coach | In-App, Email, SMS | `Your invoice status has been updated to: {{status}}.` | Active |
-| Payout Processed (PAID) | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Coach | Email, SMS | `Hello {{coachName}}, your monthly payment has been processed.` | Active |
+| New Invoice (First Send) | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Parent | In-App, Email PDF, SMS | One PDF email, one `New invoice` in-app notification, one SMS alert | Active |
+| Invoice Status Updated | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Parent | In-App, Email, SMS | `Your invoice status has been updated to: {{status}}.` | Active |
+| Parent Payment Receipt (PAID) | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Parent | Email | `Payment Receipt for Invoice #{{id}}` | Active |
+| Admin Payment Received (PAID) | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Admins | In-App, Email | `Parent {{parentName}} has successfully paid Invoice #{{id}}.` | Active |
+| Payout Processed (PAID) | [invoices.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/invoices/invoices.service.ts) | Coach | In-App, Email, SMS | `Hello {{coachName}}, your monthly payment has been processed.` | Active |
 | Admin Invoice Creation Rem. | [reminders.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/reminders/reminders.service.ts) | Admins | In-App | `You have {{count}} completed session(s)... Remember to create/send...` | Active |
 | Parent Invoice Reminder | [reminders.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/reminders/reminders.service.ts) | Parent | In-App | `You have an outstanding or soon-due invoice.` | Active |
 | Month-End Payment Rem. | [reminders.service.ts](file:///Users/wandanamaddumage/Developer/growfitness-2.0/apps/api/src/modules/reminders/reminders.service.ts) | Parent | In-App, Email, SMS | `Friendly reminder: you have an outstanding invoice...` | Active |
